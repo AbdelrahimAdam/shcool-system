@@ -1,4 +1,25 @@
+# =========================
+# Dependencies
+# =========================
+node_modules/
+
+# =========================
+# Build outputs
+# =========================
+dist/
+dist-ssr/
+coverage/
+
+# =========================
+# Environment variables (IMPORTANT 🔐)
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
 # Logs
+# =========================
 logs
 *.log
 npm-debug.log*
@@ -7,33 +28,39 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
+# =========================
+# OS files
+# =========================
 .DS_Store
-dist
-dist-ssr
-coverage
-*.local
+Thumbs.db
 
-# Editor directories and files
+# =========================
+# Editor / IDE
+# =========================
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-
 *.tsbuildinfo
-
 .eslintcache
 
-# Cypress
+# =========================
+# Testing
+# =========================
 /cypress/videos/
 /cypress/screenshots/
-
-# Vitest
 __screenshots__/
 
+# =========================
 # Vite
+# =========================
 *.timestamp-*-*.mjs
+
+# =========================
+# Misc
+# =========================
+*.local
