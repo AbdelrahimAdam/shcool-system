@@ -1,5 +1,16 @@
 <template>
   <div class="flex items-center gap-3">
+    <!-- Mobile Menu Button (for parent/student layouts) -->
+    <button 
+      @click="emitToggleSidebar" 
+      class="lg:hidden p-2 rounded-lg hover:bg-secondary-100 transition-colors"
+      title="Toggle Menu"
+    >
+      <svg class="w-5 h-5 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+
     <!-- Language Switcher -->
     <button 
       @click="toggleLanguage" 
@@ -10,7 +21,7 @@
         {{ languageStore.currentLocale === 'en' ? 'عربي' : 'EN' }}
       </span>
     </button>
-    
+
     <!-- Notifications -->
     <div class="relative">
       <button 
@@ -27,14 +38,14 @@
           {{ notificationCount > 9 ? '9+' : notificationCount }}
         </span>
       </button>
-      
+
       <!-- Notifications Dropdown -->
       <div 
         v-if="showNotifications" 
         class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-secondary-200 z-50 overflow-hidden"
       >
         <div class="p-3 border-b border-secondary-100 bg-secondary-50">
-          <h3 class="text-sm font-semibold text-secondary-900">Notifications</h3>
+          <h3 class="text-sm font-semibold text-secondary-900">{{ languageStore.t('notifications') }}</h3>
         </div>
         <div class="max-h-96 overflow-y-auto">
           <div v-for="notification in notifications" :key="notification.id" class="p-3 border-b border-secondary-100 hover:bg-secondary-50">
@@ -42,12 +53,12 @@
             <p class="text-xs text-secondary-400 mt-1">{{ formatRelativeTime(notification.created_at) }}</p>
           </div>
           <div v-if="notifications.length === 0" class="p-4 text-center text-sm text-secondary-400">
-            No notifications
+            {{ languageStore.t('noNotifications') }}
           </div>
         </div>
       </div>
     </div>
-    
+
     <!-- User Menu -->
     <div class="relative">
       <button 
@@ -65,7 +76,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      
+
       <!-- User Dropdown -->
       <div 
         v-if="showUserMenu" 
@@ -76,14 +87,14 @@
           <p class="text-xs text-secondary-500">{{ userRole }}</p>
         </div>
         <router-link 
-          to="/admin/profile" 
+          :to="profileRoute"
           class="flex items-center gap-3 px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50"
           @click="showUserMenu = false"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
-          My Profile
+          {{ languageStore.t('myProfile') }}
         </router-link>
         <div class="border-t border-secondary-100 my-1"></div>
         <button 
@@ -93,7 +104,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
-          Logout
+          {{ languageStore.t('logout') }}
         </button>
       </div>
     </div>
@@ -102,11 +113,12 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const languageStore = useLanguageStore()
 
@@ -138,6 +150,23 @@ const userInitials = computed(() => {
   if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
 })
+
+const profileRoute = computed(() => {
+  const role = authStore.role
+  if (role === 'super_admin') return '/super-admin/profile'
+  if (role === 'admin') return '/admin/profile'
+  if (role === 'teacher') return '/teacher/profile'
+  if (role === 'accountant') return '/accountant/profile'
+  if (role === 'parent') return '/parent/profile'
+  if (role === 'student') return '/student/profile'
+  return '/profile'
+})
+
+const emit = defineEmits(['toggle-sidebar'])
+
+const emitToggleSidebar = () => {
+  emit('toggle-sidebar')
+}
 
 const toggleUserMenu = () => {
   showUserMenu.value = !showUserMenu.value
