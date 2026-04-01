@@ -23,7 +23,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     }
 })
 
-// Custom fetch wrapper for retry logic (not overriding internal methods)
+// Custom fetch wrapper for retry logic
 const fetchWithRetry = async (url, options, retries = 3) => {
     let lastError
     
@@ -42,40 +42,58 @@ const fetchWithRetry = async (url, options, retries = 3) => {
     throw lastError
 }
 
+// Helper function to get access token safely
+const getAccessToken = async () => {
+    try {
+        const { data: { session } } = await supabase.auth.getSession()
+        return session?.access_token || null
+    } catch (error) {
+        console.error('Error getting access token:', error)
+        return null
+    }
+}
+
+// Helper function to build headers with auth
+const buildAuthHeaders = async (additionalHeaders = {}) => {
+    const accessToken = await getAccessToken()
+    const headers = {
+        'apikey': supabaseAnonKey,
+        'Content-Type': 'application/json',
+        ...additionalHeaders
+    }
+    
+    if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`
+    }
+    
+    return headers
+}
+
 // Add a helper method for authenticated requests with retry
 export const supabaseWithRetry = {
     ...supabase,
     
     async query(table, query = {}) {
-        const session = await supabase.auth.getSession()
-        const accessToken = session.data.session?.access_token
-        
         const url = `${supabaseUrl}/rest/v1/${table}?${new URLSearchParams(query).toString()}`
+        const headers = await buildAuthHeaders()
+        
         const options = {
             method: 'GET',
-            headers: {
-                'apikey': supabaseAnonKey,
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
+            headers
         }
         
         return fetchWithRetry(url, options)
     },
     
     async insert(table, data) {
-        const session = await supabase.auth.getSession()
-        const accessToken = session.data.session?.access_token
-        
         const url = `${supabaseUrl}/rest/v1/${table}`
+        const headers = await buildAuthHeaders({
+            'Prefer': 'return=representation'
+        })
+        
         const options = {
             method: 'POST',
-            headers: {
-                'apikey': supabaseAnonKey,
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation'
-            },
+            headers,
             body: JSON.stringify(data)
         }
         
@@ -83,18 +101,14 @@ export const supabaseWithRetry = {
     },
     
     async update(table, id, data) {
-        const session = await supabase.auth.getSession()
-        const accessToken = session.data.session?.access_token
-        
         const url = `${supabaseUrl}/rest/v1/${table}?id=eq.${id}`
+        const headers = await buildAuthHeaders({
+            'Prefer': 'return=representation'
+        })
+        
         const options = {
             method: 'PATCH',
-            headers: {
-                'apikey': supabaseAnonKey,
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation'
-            },
+            headers,
             body: JSON.stringify(data)
         }
         
@@ -102,18 +116,37 @@ export const supabaseWithRetry = {
     },
     
     async delete(table, id) {
-        const session = await supabase.auth.getSession()
-        const accessToken = session.data.session?.access_token
-        
         const url = `${supabaseUrl}/rest/v1/${table}?id=eq.${id}`
+        const headers = await buildAuthHeaders()
+        
         const options = {
             method: 'DELETE',
-            headers: {
-                'apikey': supabaseAnonKey,
-                'Authorization': `Bearer ${accessToken}`
-            }
+            headers
         }
         
         return fetchWithRetry(url, options)
+    },
+    
+    // New helper method for making authenticated requests with proper error handling
+    async request(method, table, options = {}) {
+        const url = `${supabaseUrl}/rest/v1/${table}${options.params ? `?${new URLSearchParams(options.params).toString()}` : ''}`
+        const headers = await buildAuthHeaders(options.headers)
+        
+        const fetchOptions = {
+            method,
+            headers,
+            ...(options.body && { body: JSON.stringify(options.body) })
+        }
+        
+        return fetchWithRetry(url, fetchOptions)
+    },
+    
+    // Helper to check if user is authenticated
+    async isAuthenticated() {
+        const accessToken = await getAccessToken()
+        return !!accessToken
     }
 }
+
+// Also export the getAccessToken helper for use elsewhere if needed
+export const getAuthToken = getAccessToken
