@@ -62,8 +62,8 @@
               <th class="px-3 py-2 text-center">{{ languageStore.t('late') }}</th>
               <th class="px-3 py-2 text-center">{{ languageStore.t('excused') }}</th>
               <th class="px-3 py-2 text-center">{{ languageStore.t('attendanceRate') }}</th>
-             </thead>
-            </thead>
+            </tr>
+          </thead>
           <tbody>
             <tr v-for="row in reportData" :key="row.student_id" class="border-t hover:bg-gray-50">
               <td class="px-3 py-2 font-medium">{{ row.student_name }}</td>
