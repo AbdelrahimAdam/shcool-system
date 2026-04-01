@@ -1,10 +1,16 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4">
-    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-      <h2 class="text-2xl font-bold text-center mb-6">{{ languageStore.t('parentRegistration') }}</h2>
-      
-      <form @submit.prevent="handleRegister">
-        <div class="space-y-4">
+  <div class="min-h-screen bg-gray-50 flex flex-col">
+    <!-- Public Header with Navigation -->
+    <PublicHeader />
+    
+    <div class="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+        <div class="text-center mb-8">
+          <h2 class="text-3xl font-bold text-gray-900">{{ languageStore.t('parentRegistration') }}</h2>
+          <p class="text-sm text-gray-600 mt-2">{{ languageStore.t('createAccount') }}</p>
+        </div>
+        
+        <form @submit.prevent="handleRegister" class="space-y-6">
           <div>
             <label class="form-label">{{ languageStore.t('fullName') }} *</label>
             <input v-model="form.full_name" type="text" required class="form-input" />
@@ -54,26 +60,29 @@
             <input v-model="form.confirm_password" type="password" required class="form-input" />
           </div>
           
-          <div class="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
+          <div class="bg-yellow-50 p-3 rounded-lg text-sm text-yellow-800">
             {{ languageStore.t('parentRegistrationNote') }}
           </div>
           
           <button type="submit" :disabled="isLoading" class="btn-primary w-full">
             {{ isLoading ? languageStore.t('loading') : languageStore.t('register') }}
           </button>
+        </form>
+        
+        <!-- Login Link -->
+        <div class="mt-6 text-center">
+          <p class="text-sm text-gray-600">
+            {{ languageStore.t('alreadyHaveAccount') }}
+            <router-link to="/login" class="text-primary-600 hover:text-primary-700 font-medium">
+              {{ languageStore.t('login') }}
+            </router-link>
+          </p>
         </div>
-      </form>
-      
-      <!-- Login Link -->
-      <div class="mt-6 text-center">
-        <p class="text-sm text-gray-600">
-          {{ languageStore.t('alreadyHaveAccount') }}
-          <router-link to="/login" class="text-primary-600 hover:text-primary-800 font-medium">
-            {{ languageStore.t('login') }}
-          </router-link>
-        </p>
       </div>
     </div>
+
+    <!-- Public Footer -->
+    <PublicFooter />
   </div>
 </template>
 
@@ -82,6 +91,8 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/services/supabase'
 import { useLanguageStore } from '@/stores/language'
+import PublicHeader from '@/components/public/PublicHeader.vue'
+import PublicFooter from '@/components/public/PublicFooter.vue'
 
 const router = useRouter()
 const languageStore = useLanguageStore()
@@ -167,18 +178,16 @@ const handleRegister = async () => {
     
     console.log('Creating parent record:', parentData)
     
-    const { data: parent, error: parentError } = await supabase
+    const { error: parentError } = await supabase
       .from('parents')
       .insert([parentData])
-      .select()
-      .single()
     
     if (parentError) {
       console.error('Parent creation error:', parentError)
       throw parentError
     }
     
-    console.log('Parent record created:', parent)
+    console.log('Parent record created')
     
     // Step 3: Create user record in public.users
     const userData = {
@@ -193,18 +202,16 @@ const handleRegister = async () => {
     
     console.log('Creating user record:', userData)
     
-    const { data: user, error: userError } = await supabase
+    const { error: userError } = await supabase
       .from('users')
       .insert([userData])
-      .select()
-      .single()
     
     if (userError) {
       console.error('User creation error:', userError)
       throw userError
     }
     
-    console.log('User record created:', user)
+    console.log('User record created')
     
     // Show success message
     alert(languageStore.t('registrationSuccess') + ' ' + languageStore.t('pendingAdminApproval'))

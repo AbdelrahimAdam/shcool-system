@@ -52,6 +52,10 @@ export const useLanguageStore = defineStore('language', () => {
       cancelled: 'Cancelled',
       select: 'Select',
       
+      // School Name
+      schoolName: 'Zack International Schools and Kindergarten',
+      tagline: 'Where Excellence Meets Values',
+      
       // Parent Dashboard
       parentDashboard: 'Parent Dashboard',
       myChildren: 'My Children',
@@ -68,6 +72,7 @@ export const useLanguageStore = defineStore('language', () => {
       noChildren: 'No children found',
       viewDetails: 'View Details',
       childDetails: 'Child Details',
+      childrenAttendance: 'Children Attendance',
       
       // Admin Dashboard - Pending Approvals
       pendingParentRegistrations: 'Pending Parent Registrations',
@@ -94,6 +99,14 @@ export const useLanguageStore = defineStore('language', () => {
       noRecentActivity: 'No recent activity',
       attendanceTrend: 'Attendance Trend',
       revenueOverview: 'Revenue Overview',
+      generateAndExportReports: 'Generate and export reports',
+      performanceReportDesc: 'View student performance across subjects',
+      attendanceReportDesc: 'View attendance statistics by class',
+      revenueReportDesc: 'View revenue and payment statistics',
+      pendingPaymentsReportDesc: 'View all pending payments',
+      viewAndExportAttendance: 'View and export attendance records',
+      tryDifferentFilters: 'Try different filters',
+      noAttendanceRecords: 'No attendance records found',
       
       // Teacher related
       teacherName: 'Teacher Name',
@@ -195,6 +208,7 @@ export const useLanguageStore = defineStore('language', () => {
       attendanceRecord: 'Attendance Record',
       recentAttendance: 'Recent Attendance',
       noAttendance: 'No attendance records found',
+      markedBy: 'Marked By',
       
       // Payment related
       amount: 'Amount',
@@ -302,7 +316,6 @@ export const useLanguageStore = defineStore('language', () => {
       totalUsers: 'Total Users',
       totalRevenue: 'Total Revenue',
       recentSchools: 'Recent Schools',
-      schoolName: 'School Name',
       createdAt: 'Created At',
       addSchool: 'Add School',
       slug: 'Slug',
@@ -359,6 +372,14 @@ export const useLanguageStore = defineStore('language', () => {
       sendMessage: 'Send a Message',
       messageSent: 'Message sent successfully!',
       admissionsNote: 'Fill out this form and our admissions team will contact you soon.',
+      learnMore: 'Learn More',
+      whyChooseUsDesc: 'Discover what makes Zack International Schools the perfect choice for your child\'s education',
+      ourPrograms: 'Our Programs',
+      ourProgramsDesc: 'Comprehensive educational programs designed for every stage of development',
+      startYourJourney: 'Start Your Journey Today',
+      startYourJourneyDesc: 'Join our community of learners and discover the joy of education at Zack International Schools',
+      contactUsToday: 'Contact Us Today',
+      grades: 'Grades',
       
       // Navigation
       home: 'Home',
@@ -383,6 +404,7 @@ export const useLanguageStore = defineStore('language', () => {
       registrationFailed: 'Registration failed. Please try again.',
       registrationSuccess: 'Registration successful!',
       pleaseSelectSchool: 'Please select a school',
+      welcomeBack: 'Welcome back',
       
       // Footer
       footerAboutText: 'Providing quality education for future leaders since 2000. We are committed to excellence in teaching and learning.',
@@ -395,7 +417,6 @@ export const useLanguageStore = defineStore('language', () => {
       allRightsReserved: 'All rights reserved',
       
       // Messages
-      welcomeBack: 'Welcome back',
       noData: 'No data found',
       confirmDelete: 'Are you sure you want to delete this?',
       operationSuccessful: 'Operation completed successfully',
@@ -478,6 +499,10 @@ export const useLanguageStore = defineStore('language', () => {
       cancelled: 'ملغي',
       select: 'اختر',
       
+      // School Name
+      schoolName: 'رياض ومدارس زاك العالمية',
+      tagline: 'حيث تلتقي التميز بالقيم',
+      
       // Parent Dashboard
       parentDashboard: 'لوحة تحكم ولي الأمر',
       myChildren: 'أطفالي',
@@ -494,6 +519,7 @@ export const useLanguageStore = defineStore('language', () => {
       noChildren: 'لا يوجد أطفال',
       viewDetails: 'عرض التفاصيل',
       childDetails: 'تفاصيل الطفل',
+      childrenAttendance: 'حضور الأطفال',
       
       // Admin Dashboard - Pending Approvals
       pendingParentRegistrations: 'تسجيلات أولياء الأمور المعلقة',
@@ -520,6 +546,14 @@ export const useLanguageStore = defineStore('language', () => {
       noRecentActivity: 'لا يوجد نشاط حديث',
       attendanceTrend: 'اتجاه الحضور',
       revenueOverview: 'نظرة عامة على الإيرادات',
+      generateAndExportReports: 'إنشاء وتصدير التقارير',
+      performanceReportDesc: 'عرض أداء الطلاب في المواد المختلفة',
+      attendanceReportDesc: 'عرض إحصائيات الحضور حسب الفصل',
+      revenueReportDesc: 'عرض إحصائيات الإيرادات والمدفوعات',
+      pendingPaymentsReportDesc: 'عرض جميع المدفوعات المعلقة',
+      viewAndExportAttendance: 'عرض وتصدير سجلات الحضور',
+      tryDifferentFilters: 'جرب عوامل تصفية مختلفة',
+      noAttendanceRecords: 'لا توجد سجلات حضور',
       
       // Teacher related
       teacherName: 'اسم المعلم',
@@ -621,6 +655,7 @@ export const useLanguageStore = defineStore('language', () => {
       attendanceRecord: 'سجل الحضور',
       recentAttendance: 'الحضور الأخير',
       noAttendance: 'لا توجد سجلات حضور',
+      markedBy: 'تم بواسطة',
       
       // Payment related
       amount: 'المبلغ',
@@ -728,7 +763,6 @@ export const useLanguageStore = defineStore('language', () => {
       totalUsers: 'إجمالي المستخدمين',
       totalRevenue: 'إجمالي الإيرادات',
       recentSchools: 'أحدث المدارس',
-      schoolName: 'اسم المدرسة',
       createdAt: 'تاريخ الإنشاء',
       addSchool: 'إضافة مدرسة',
       slug: 'المعرف',
@@ -785,6 +819,14 @@ export const useLanguageStore = defineStore('language', () => {
       sendMessage: 'أرسل رسالة',
       messageSent: 'تم إرسال الرسالة بنجاح!',
       admissionsNote: 'املأ هذا النموذج وسيتواصل معك فريق القبول قريباً.',
+      learnMore: 'اعرف المزيد',
+      whyChooseUsDesc: 'اكتشف ما يجعل مدارس زاك العالمية الخيار الأمثل لتعليم طفلك',
+      ourPrograms: 'برامجنا',
+      ourProgramsDesc: 'برامج تعليمية شاملة مصممة لكل مرحلة من مراحل التطور',
+      startYourJourney: 'ابدأ رحلتك اليوم',
+      startYourJourneyDesc: 'انضم إلى مجتمعنا التعليمي واكتشف متعة التعلم في مدارس زاك العالمية',
+      contactUsToday: 'اتصل بنا اليوم',
+      grades: 'الصفوف',
       
       // Navigation
       home: 'الرئيسية',
@@ -809,6 +851,7 @@ export const useLanguageStore = defineStore('language', () => {
       registrationFailed: 'فشل التسجيل. يرجى المحاولة مرة أخرى.',
       registrationSuccess: 'تم التسجيل بنجاح!',
       pleaseSelectSchool: 'يرجى اختيار المدرسة',
+      welcomeBack: 'مرحباً بعودتك',
       
       // Footer
       footerAboutText: 'توفير تعليم عالي الجودة لقادة المستقبل منذ عام 2000. نحن ملتزمون بالتميز في التعليم والتعلم.',
@@ -821,7 +864,6 @@ export const useLanguageStore = defineStore('language', () => {
       allRightsReserved: 'جميع الحقوق محفوظة',
       
       // Messages
-      welcomeBack: 'مرحباً بعودتك',
       noData: 'لا توجد بيانات',
       confirmDelete: 'هل أنت متأكد من الحذف؟',
       operationSuccessful: 'تمت العملية بنجاح',

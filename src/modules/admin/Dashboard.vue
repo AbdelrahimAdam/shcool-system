@@ -212,7 +212,7 @@
             </div>
             <div>
               <label class="form-label">{{ languageStore.t('studentNumber') }} *</label>
-              <input v-model="studentForm.student_number" type="text" required class="form-input" />
+              <input v-model="studentForm.student_number" type="text" required class="form-input" placeholder="STU-2024-000001" />
               <p class="text-xs text-secondary-400 mt-1">{{ languageStore.t('studentNumberHelp') }}</p>
             </div>
             <div>
@@ -223,6 +223,9 @@
                   {{ cls.name }} ({{ languageStore.t('grade') }} {{ cls.grade_level }})
                 </option>
               </select>
+            </div>
+            <div class="bg-yellow-50 p-3 rounded-lg">
+              <p class="text-sm text-yellow-800">{{ languageStore.t('approveStudentNote') }}</p>
             </div>
           </div>
           <div class="modal-footer">
@@ -283,6 +286,7 @@ const fetchDashboardData = async () => {
       parent:parents(full_name, phone, email)
     `)
     .eq('status', 'pending')
+    .order('created_at', { ascending: false })
   
   pendingStudents.value = students || []
   
@@ -383,7 +387,8 @@ const rejectParent = async (parent) => {
 const showApproveStudentModal = (student) => {
   selectedStudent.value = student
   const year = new Date().getFullYear()
-  studentForm.value.student_number = `STU-${year}-${Date.now().toString().slice(-6)}`
+  const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+  studentForm.value.student_number = `STU-${year}-${randomNum}`
   studentForm.value.class_id = null
   showStudentModal.value = true
 }
@@ -392,32 +397,56 @@ const confirmApproveStudent = async () => {
   isSubmitting.value = true
   const schoolId = authStore.profile?.school_id
   
-  const { error } = await supabase
-    .from('students')
-    .update({
-      school_id: schoolId,
-      student_number: studentForm.value.student_number,
-      class_id: studentForm.value.class_id,
-      status: 'active'
-    })
-    .eq('id', selectedStudent.value.id)
+  // Validate class selection
+  if (!studentForm.value.class_id) {
+    alert('Please select a class for the student')
+    isSubmitting.value = false
+    return
+  }
   
-  if (error) {
-    alert('Error approving student')
-  } else {
+  // Validate student number
+  if (!studentForm.value.student_number || studentForm.value.student_number.trim() === '') {
+    alert('Please enter a valid student number')
+    isSubmitting.value = false
+    return
+  }
+  
+  try {
+    const { error } = await supabase
+      .from('students')
+      .update({
+        school_id: schoolId,
+        student_number: studentForm.value.student_number,
+        class_id: studentForm.value.class_id,
+        status: 'active'
+      })
+      .eq('id', selectedStudent.value.id)
+    
+    if (error) throw error
+    
     alert('Student approved successfully!')
     closeStudentModal()
     await fetchDashboardData()
+    
+  } catch (error) {
+    console.error('Error approving student:', error)
+    alert('Error approving student: ' + error.message)
+  } finally {
+    isSubmitting.value = false
   }
-  
-  isSubmitting.value = false
 }
 
 const rejectStudent = async (student) => {
   if (confirm(languageStore.t('confirmDelete'))) {
-    await supabase.from('students').delete().eq('id', student.id)
-    alert('Student rejected and removed')
-    await fetchDashboardData()
+    const { error } = await supabase
+      .from('students')
+      .delete()
+      .eq('id', student.id)
+    
+    if (!error) {
+      alert('Student rejected and removed')
+      await fetchDashboardData()
+    }
   }
 }
 
