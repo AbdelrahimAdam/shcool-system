@@ -48,7 +48,7 @@ export const useAuthStore = defineStore('auth', {
 
                 console.log('Auth success, user ID:', authData.user.id)
 
-                // Fetch profile with proper await
+                // Fetch profile with maybeSingle to handle missing profiles gracefully
                 const { data: profile, error: profileError } = await supabase
                     .from('users')
                     .select(`
@@ -56,7 +56,7 @@ export const useAuthStore = defineStore('auth', {
                         schools (*)
                     `)
                     .eq('id', authData.user.id)
-                    .single()
+                    .maybeSingle()
 
                 if (profileError) {
                     console.error('Profile fetch error:', profileError)
@@ -77,8 +77,8 @@ export const useAuthStore = defineStore('auth', {
                         schools: null
                     }
                     
-                    // Try to save the profile
-                    await supabase
+                    // Try to save the profile in background
+                    supabase
                         .from('users')
                         .upsert([{
                             id: basicProfile.id,
@@ -88,6 +88,8 @@ export const useAuthStore = defineStore('auth', {
                             school_id: basicProfile.school_id,
                             is_active: basicProfile.is_active
                         }])
+                        .then(() => console.log('Profile saved in background'))
+                        .catch(err => console.error('Failed to save profile:', err))
                     
                     this.user = authData.user
                     this.profile = basicProfile
@@ -95,18 +97,26 @@ export const useAuthStore = defineStore('auth', {
                     this.school = null
                     this.isAuthenticated = true
                     
-                    // Update user metadata
-                    await supabase.auth.updateUser({
+                    // Update user metadata in background
+                    supabase.auth.updateUser({
                         data: { 
                             role: basicProfile.role, 
                             school_id: basicProfile.school_id,
                             full_name: basicProfile.full_name
                         }
-                    })
+                    }).catch(err => console.error('Failed to update metadata:', err))
                     
                     cacheService.set(`user_${basicProfile.id}`, basicProfile, 3600000)
                     
+                    // Small delay to ensure state is fully updated
+                    await new Promise(resolve => setTimeout(resolve, 50))
+                    
                     return { success: true, role: basicProfile.role }
+                }
+
+                if (!profile) {
+                    console.error('No profile found')
+                    throw new Error('Profile not found')
                 }
 
                 console.log('User profile loaded:', profile)
@@ -118,14 +128,14 @@ export const useAuthStore = defineStore('auth', {
                 this.school = profile.schools || null
                 this.isAuthenticated = true
 
-                // Update user metadata
-                await supabase.auth.updateUser({
+                // Update user metadata in background
+                supabase.auth.updateUser({
                     data: { 
                         role: profile.role, 
                         school_id: profile.school_id,
                         full_name: profile.full_name
                     }
-                })
+                }).catch(err => console.error('Failed to update metadata:', err))
 
                 cacheService.set(`user_${profile.id}`, profile, 3600000)
 
@@ -159,9 +169,22 @@ export const useAuthStore = defineStore('auth', {
 
         async getCurrentUser() {
             try {
-                const { data: { user }, error: userError } = await supabase.auth.getUser()
-                if (userError) throw userError
+                // First check if there's a session using getSession (more reliable)
+                const { data: { session } } = await supabase.auth.getSession()
+                
+                // If no session, user is not authenticated
+                if (!session) {
+                    console.log('No active session found')
+                    this.isAuthenticated = false
+                    this.user = null
+                    this.profile = null
+                    this.role = null
+                    return null
+                }
+
+                const user = session.user
                 if (!user) {
+                    console.log('No user in session')
                     this.isAuthenticated = false
                     return null
                 }
@@ -180,7 +203,7 @@ export const useAuthStore = defineStore('auth', {
                     return cachedProfile
                 }
 
-                // Fetch profile from database
+                // Fetch profile from database using maybeSingle
                 const { data: profile, error: profileError } = await supabase
                     .from('users')
                     .select('*, schools(*)')
@@ -207,8 +230,8 @@ export const useAuthStore = defineStore('auth', {
                         schools: null
                     }
                     
-                    // Save the profile
-                    const { error: insertError } = await supabase
+                    // Save the profile in background (don't await)
+                    supabase
                         .from('users')
                         .insert([{
                             id: newProfile.id,
@@ -218,16 +241,8 @@ export const useAuthStore = defineStore('auth', {
                             school_id: newProfile.school_id,
                             is_active: newProfile.is_active
                         }])
-                    
-                    if (insertError) {
-                        console.error('Failed to create profile:', insertError)
-                        // Use in-memory profile
-                        this.profile = newProfile
-                        this.user = user
-                        this.role = newProfile.role
-                        this.isAuthenticated = true
-                        return newProfile
-                    }
+                        .then(() => console.log('Profile created in background'))
+                        .catch(err => console.error('Failed to create profile:', err))
                     
                     this.profile = newProfile
                     this.user = user
@@ -248,6 +263,17 @@ export const useAuthStore = defineStore('auth', {
                 cacheService.set(`user_${user.id}`, profile, 3600000)
                 return profile
             } catch (error) {
+                // Handle session missing error gracefully
+                if (error?.message?.includes('Auth session missing') || 
+                    error?.message?.includes('session') ||
+                    error?.status === 401) {
+                    console.log('No auth session, user not logged in')
+                    this.isAuthenticated = false
+                    this.user = null
+                    this.profile = null
+                    this.role = null
+                    return null
+                }
                 console.error('Get current user error:', error)
                 this.isAuthenticated = false
                 return null
@@ -262,14 +288,16 @@ export const useAuthStore = defineStore('auth', {
                     .from('users')
                     .select('*, schools(*)')
                     .eq('id', this.user.id)
-                    .single()
+                    .maybeSingle()
                 
                 if (error) throw error
                 
                 this.profile = profile
-                this.role = profile.role
-                this.school = profile.schools
-                cacheService.set(`user_${this.user.id}`, profile, 3600000)
+                this.role = profile?.role || this.role
+                this.school = profile?.schools || null
+                if (profile) {
+                    cacheService.set(`user_${this.user.id}`, profile, 3600000)
+                }
                 
                 return profile
             } catch (error) {
@@ -287,12 +315,12 @@ export const useAuthStore = defineStore('auth', {
                     .update(updates)
                     .eq('id', this.user.id)
                     .select()
-                    .single()
+                    .maybeSingle()
                 
                 if (error) throw error
                 
                 this.profile = { ...this.profile, ...data }
-                this.role = data.role
+                this.role = data?.role || this.role
                 cacheService.set(`user_${this.user.id}`, this.profile, 3600000)
                 
                 return { success: true, data }
