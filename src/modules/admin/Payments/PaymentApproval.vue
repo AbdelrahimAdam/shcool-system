@@ -13,6 +13,8 @@
     <div class="card overflow-hidden">
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm">
+          
+          <!-- ✅ FIX: properly closed thead -->
           <thead class="bg-gray-50">
             <tr>
               <th class="px-4 py-3 text-left">{{ languageStore.t('paymentNumber') }}</th>
@@ -23,20 +25,28 @@
               <th class="px-4 py-3 text-left">{{ languageStore.t('proof') }}</th>
               <th class="px-4 py-3 text-left">{{ languageStore.t('dueDate') }}</th>
               <th class="px-4 py-3 text-center">{{ languageStore.t('actions') }}</th>
-            </thead>
+            </tr>
           </thead>
+
           <tbody>
             <tr v-for="payment in pendingPayments" :key="payment.id" class="border-t hover:bg-gray-50 transition-colors">
               <td class="px-4 py-3 font-mono text-sm">{{ payment.payment_number }}</td>
+
               <td class="px-4 py-3">
                 <div class="font-medium text-gray-900">{{ payment.student?.full_name }}</div>
                 <div class="text-xs text-gray-500">{{ payment.student?.student_number }}</div>
               </td>
-              <td class="px-4 py-3 text-right font-medium">{{ formatCurrency(payment.amount) }}</td>
+
+              <td class="px-4 py-3 text-right font-medium">
+                {{ formatCurrency(payment.amount) }}
+              </td>
+
               <td class="px-4 py-3">
                 <span class="badge-neutral">{{ languageStore.t(payment.payment_method) }}</span>
               </td>
+
               <td class="px-4 py-3">{{ payment.bankak_number || '-' }}</td>
+
               <td class="px-4 py-3">
                 <a 
                   v-if="payment.proof_image_url" 
@@ -52,7 +62,9 @@
                 </a>
                 <span v-else class="text-gray-400">-</span>
               </td>
+
               <td class="px-4 py-3">{{ formatDate(payment.due_date) }}</td>
+
               <td class="px-4 py-3 text-center">
                 <div class="flex items-center justify-center gap-2">
                   <button 
@@ -60,26 +72,33 @@
                     class="btn-success text-sm px-3 py-1.5 inline-flex items-center gap-1"
                     :disabled="isProcessing === payment.id"
                   >
-                    <svg v-if="isProcessing === payment.id" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <span v-if="isProcessing !== payment.id">
+                      {{ languageStore.t('approve') }}
+                    </span>
+                    <svg v-else class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span v-else>{{ languageStore.t('approve') }}</span>
                   </button>
+
                   <button 
                     @click="rejectPayment(payment.id)" 
                     class="btn-danger text-sm px-3 py-1.5 inline-flex items-center gap-1"
                     :disabled="isProcessing === payment.id"
                   >
-                    <svg v-if="isProcessing === payment.id" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <span v-if="isProcessing !== payment.id">
+                      {{ languageStore.t('reject') }}
+                    </span>
+                    <svg v-else class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span v-else>{{ languageStore.t('reject') }}</span>
                   </button>
                 </div>
               </td>
             </tr>
+
+            <!-- Empty state -->
             <tr v-if="pendingPayments.length === 0 && !isLoading">
               <td colspan="8" class="text-center py-12">
                 <div class="flex flex-col items-center gap-2">
@@ -90,6 +109,8 @@
                 </div>
               </td>
             </tr>
+
+            <!-- Loading -->
             <tr v-if="isLoading">
               <td colspan="8" class="text-center py-12">
                 <div class="flex justify-center">
@@ -98,6 +119,7 @@
               </td>
             </tr>
           </tbody>
+
         </table>
       </div>
     </div>
@@ -140,7 +162,6 @@ const approvePayment = async (paymentId) => {
     
     if (error) throw error
     
-    // Refresh payments
     await paymentStore.fetchPayments(1, { status: 'pending' })
   } catch (error) {
     console.error('Error approving payment:', error)
@@ -166,7 +187,6 @@ const rejectPayment = async (paymentId) => {
     
     if (error) throw error
     
-    // Refresh payments
     await paymentStore.fetchPayments(1, { status: 'pending' })
   } catch (error) {
     console.error('Error rejecting payment:', error)
