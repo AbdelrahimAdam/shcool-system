@@ -1,8 +1,8 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- App Header for Authenticated Parent Dashboard -->
-    <AppHeader />
-    
+    <AppHeader @toggle-sidebar="toggleMobileMenu" />
+
     <div class="flex pt-16">
       <!-- Mobile Menu Overlay -->
       <div 
@@ -10,7 +10,7 @@
         class="fixed inset-0 bg-black/50 z-20 lg:hidden"
         @click="closeMobileMenu"
       ></div>
-      
+
       <!-- Parent Sidebar - Responsive -->
       <aside 
         class="fixed top-16 left-0 w-64 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out z-20 lg:translate-x-0 overflow-y-auto"
@@ -18,7 +18,7 @@
       >
         <ParentSidebar @close-mobile-menu="closeMobileMenu" />
       </aside>
-      
+
       <!-- Main Content -->
       <main class="flex-1 min-w-0 lg:ml-64">
         <div class="p-4 sm:p-6 lg:p-8">
@@ -56,11 +56,6 @@ const handleResize = () => {
     mobileMenuOpen.value = false
   }
 }
-
-// Expose toggle method to parent components if needed
-defineExpose({
-  toggleMobileMenu
-})
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)
