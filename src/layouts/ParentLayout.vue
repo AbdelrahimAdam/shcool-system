@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- Public Header for Parent Dashboard -->
-    <PublicHeader />
+    <!-- App Header for Authenticated Parent Dashboard -->
+    <AppHeader />
     
     <div class="flex pt-16">
       <!-- Mobile Menu Overlay -->
@@ -37,7 +37,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import PublicHeader from '@/components/public/PublicHeader.vue'
+import AppHeader from '@/components/common/AppHeader.vue'
 import ParentSidebar from '@/components/parent/ParentSidebar.vue'
 
 const mobileMenuOpen = ref(false)
