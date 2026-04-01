@@ -1,48 +1,49 @@
 <template>
   <header class="bg-white shadow-md sticky top-0 z-50">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center py-3 md:py-4">
-        <!-- Logo / School Name -->
+      <div class="flex justify-between items-center py-3 md:py-4 gap-4">
+        <!-- Logo / School Name - Responsive truncation -->
         <router-link 
           to="/" 
-          class="text-xl sm:text-2xl font-bold text-primary-600 hover:text-primary-700 transition-colors"
+          class="text-lg sm:text-xl md:text-2xl font-bold text-primary-600 hover:text-primary-700 transition-colors truncate max-w-[200px] sm:max-w-[300px] md:max-w-none"
+          :title="languageStore.t('schoolName')"
         >
           {{ languageStore.t('schoolName') }}
         </router-link>
 
         <!-- Desktop Navigation -->
-        <nav class="hidden md:flex items-center space-x-6 lg:space-x-8" :class="{ 'space-x-reverse': languageStore.isRTL }">
+        <nav class="hidden md:flex items-center space-x-4 lg:space-x-6" :class="{ 'space-x-reverse': languageStore.isRTL }">
           <router-link 
             to="/" 
-            class="text-gray-700 hover:text-primary-600 transition-colors font-medium"
+            class="text-gray-700 hover:text-primary-600 transition-colors font-medium whitespace-nowrap"
             :class="{ 'text-primary-600': $route.path === '/' }"
           >
             {{ languageStore.t('home') }}
           </router-link>
           <router-link 
             to="/about" 
-            class="text-gray-700 hover:text-primary-600 transition-colors font-medium"
+            class="text-gray-700 hover:text-primary-600 transition-colors font-medium whitespace-nowrap"
             :class="{ 'text-primary-600': $route.path === '/about' }"
           >
             {{ languageStore.t('about') }}
           </router-link>
           <router-link 
             to="/programs" 
-            class="text-gray-700 hover:text-primary-600 transition-colors font-medium"
+            class="text-gray-700 hover:text-primary-600 transition-colors font-medium whitespace-nowrap"
             :class="{ 'text-primary-600': $route.path === '/programs' }"
           >
             {{ languageStore.t('programs') }}
           </router-link>
           <router-link 
             to="/admissions" 
-            class="text-gray-700 hover:text-primary-600 transition-colors font-medium"
+            class="text-gray-700 hover:text-primary-600 transition-colors font-medium whitespace-nowrap"
             :class="{ 'text-primary-600': $route.path === '/admissions' }"
           >
             {{ languageStore.t('admissions') }}
           </router-link>
           <router-link 
             to="/contact" 
-            class="text-gray-700 hover:text-primary-600 transition-colors font-medium"
+            class="text-gray-700 hover:text-primary-600 transition-colors font-medium whitespace-nowrap"
             :class="{ 'text-primary-600': $route.path === '/contact' }"
           >
             {{ languageStore.t('contact') }}
@@ -50,11 +51,11 @@
         </nav>
 
         <!-- Right side: Language switcher and Login -->
-        <div class="flex items-center space-x-3 sm:space-x-4" :class="{ 'space-x-reverse': languageStore.isRTL }">
+        <div class="flex items-center gap-2 sm:gap-3" :class="{ 'flex-row-reverse': languageStore.isRTL }">
           <!-- Language Switcher -->
           <button 
             @click="toggleLanguage" 
-            class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+            class="px-2 sm:px-3 py-1.5 border border-gray-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 whitespace-nowrap"
             :title="languageStore.currentLocale === 'en' ? 'Switch to Arabic' : 'التبديل إلى الإنجليزية'"
           >
             {{ languageStore.currentLocale === 'en' ? 'عربي' : 'EN' }}
@@ -63,7 +64,7 @@
           <!-- Login Button -->
           <router-link 
             to="/login" 
-            class="bg-primary-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            class="bg-primary-600 text-white px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 whitespace-nowrap"
           >
             {{ languageStore.t('login') }}
           </router-link>
@@ -73,7 +74,7 @@
             @click="mobileMenuOpen = !mobileMenuOpen" 
             class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
-            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
