@@ -140,6 +140,22 @@ const routes = [
                 path: 'reports',
                 name: 'Reports',
                 component: () => import('../modules/admin/Reports/ReportViewer.vue')
+            },
+            // Exams routes
+            {
+                path: 'exams',
+                name: 'Exams',
+                component: () => import('../modules/admin/Exams/ExamList.vue')
+            },
+            {
+                path: 'exams/create',
+                name: 'CreateExam',
+                component: () => import('../modules/admin/Exams/ExamForm.vue')
+            },
+            {
+                path: 'exams/:id/edit',
+                name: 'EditExam',
+                component: () => import('../modules/admin/Exams/ExamForm.vue')
             }
         ]
     },
@@ -200,10 +216,25 @@ const routes = [
                 path: 'grades',
                 name: 'TeacherGrades',
                 component: () => import('../modules/teacher/Grades.vue')
+            },
+            {
+                path: 'exams',
+                name: 'TeacherExams',
+                component: () => import('../modules/teacher/Exams.vue')
+            },
+            {
+                path: 'exams/:id/edit',
+                name: 'TeacherEditExam',
+                component: () => import('../modules/teacher/ExamForm.vue')
+            },
+            {
+                path: 'grade-entry',
+                name: 'GradeEntry',
+                component: () => import('../modules/teacher/GradeEntry.vue')
             }
         ]
     },
-    // Accountant dashboard route - ADDED REPORTS ROUTE
+    // Accountant dashboard route
     {
         path: '/accountant',
         component: () => import('../layouts/AccountantLayout.vue'),

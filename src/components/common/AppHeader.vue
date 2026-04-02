@@ -16,7 +16,7 @@
         
         <!-- Logo / School Name -->
         <div class="flex items-center gap-2">
-          <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+          <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center shadow-sm">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
@@ -81,8 +81,8 @@
             @click="toggleUserMenu" 
             class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <div class="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
-              <span class="text-sm font-medium text-primary-700">{{ userInitials }}</span>
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center">
+              <span class="text-sm font-medium text-yellow-700">{{ userInitials }}</span>
             </div>
             <div class="hidden sm:block text-left">
               <p class="text-sm font-medium text-gray-900">{{ userFullName }}</p>

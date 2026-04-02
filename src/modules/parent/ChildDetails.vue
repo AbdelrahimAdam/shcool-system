@@ -1,115 +1,171 @@
 <template>
-  <div class="p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">{{ child?.full_name }} - {{ languageStore.t('childDetails') }}</h1>
-      <router-link to="/parent/children" class="btn-secondary">
-        ← {{ languageStore.t('back') }}
+  <div class="space-y-6 sm:space-y-8">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">{{ child?.full_name }}</h1>
+        <p class="text-sm sm:text-base text-gray-500 mt-1">{{ languageStore.t('childDetails') }}</p>
+      </div>
+      <router-link to="/parent/children" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-all duration-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        {{ languageStore.t('back') }}
       </router-link>
     </div>
     
+    <!-- Loading State -->
     <div v-if="loading" class="flex justify-center py-12">
-      <LoadingSpinner />
+      <div class="w-10 h-10 border-4 border-gray-200 border-t-yellow-500 rounded-full animate-spin"></div>
     </div>
     
-    <div v-else-if="child" class="space-y-6">
-      <!-- Student Information -->
-      <div class="card p-6">
-        <h2 class="text-lg font-semibold mb-4">{{ languageStore.t('personalInformation') }}</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p class="text-sm text-gray-500">{{ languageStore.t('fullName') }}</p>
-            <p class="font-medium">{{ child.full_name }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500">{{ languageStore.t('arabicName') }}</p>
-            <p class="font-medium">{{ child.arabic_name || '-' }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500">{{ languageStore.t('studentNumber') }}</p>
-            <p class="font-medium">{{ child.student_number }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500">{{ languageStore.t('class') }}</p>
-            <p class="font-medium">{{ child.class?.name || '-' }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500">{{ languageStore.t('dateOfBirth') }}</p>
-            <p class="font-medium">{{ formatDate(child.date_of_birth) }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500">{{ languageStore.t('gender') }}</p>
-            <p class="font-medium">{{ languageStore.t(child.gender) }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500">{{ languageStore.t('nationality') }}</p>
-            <p class="font-medium">{{ child.nationality || '-' }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500">{{ languageStore.t('religion') }}</p>
-            <p class="font-medium">{{ child.religion || '-' }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500">{{ languageStore.t('enrollmentDate') }}</p>
-            <p class="font-medium">{{ formatDate(child.enrollment_date) }}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500">{{ languageStore.t('status') }}</p>
-            <span :class="getStatusClass(child.status)">{{ languageStore.t(child.status) }}</span>
-          </div>
-          <div class="col-span-2">
-            <p class="text-sm text-gray-500">{{ languageStore.t('address') }}</p>
-            <p class="font-medium">{{ child.address || '-' }}</p>
-          </div>
-          <div class="col-span-2" v-if="child.medical_info">
-            <p class="text-sm text-gray-500">{{ languageStore.t('medicalInfo') }}</p>
-            <p class="font-medium">{{ child.medical_info }}</p>
+    <div v-else-if="child" class="space-y-6 sm:space-y-8">
+      <!-- Personal Information Card - 2 columns on mobile -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="relative">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-yellow-400 to-yellow-500"></div>
+          <div class="p-5 sm:p-6">
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              {{ languageStore.t('personalInformation') }}
+            </h2>
+            
+            <!-- 2 columns on mobile and desktop -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+              <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 uppercase tracking-wider">{{ languageStore.t('fullName') }}</p>
+                <p class="text-sm sm:text-base font-semibold text-gray-800 mt-1">{{ child.full_name }}</p>
+              </div>
+              
+              <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 uppercase tracking-wider">{{ languageStore.t('arabicName') }}</p>
+                <p class="text-sm sm:text-base font-medium text-gray-700 mt-1">{{ child.arabic_name || '-' }}</p>
+              </div>
+              
+              <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 uppercase tracking-wider">{{ languageStore.t('studentNumber') }}</p>
+                <p class="text-sm sm:text-base font-mono font-semibold text-gray-800 mt-1">{{ child.student_number }}</p>
+              </div>
+              
+              <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 uppercase tracking-wider">{{ languageStore.t('class') }}</p>
+                <p class="text-sm sm:text-base font-medium text-gray-700 mt-1">{{ child.class?.name || '-' }}</p>
+              </div>
+              
+              <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 uppercase tracking-wider">{{ languageStore.t('dateOfBirth') }}</p>
+                <p class="text-sm sm:text-base font-medium text-gray-700 mt-1">{{ formatDate(child.date_of_birth) }}</p>
+              </div>
+              
+              <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 uppercase tracking-wider">{{ languageStore.t('gender') }}</p>
+                <p class="text-sm sm:text-base font-medium text-gray-700 mt-1">{{ languageStore.t(child.gender) }}</p>
+              </div>
+              
+              <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 uppercase tracking-wider">{{ languageStore.t('nationality') }}</p>
+                <p class="text-sm sm:text-base font-medium text-gray-700 mt-1">{{ child.nationality || '-' }}</p>
+              </div>
+              
+              <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 uppercase tracking-wider">{{ languageStore.t('religion') }}</p>
+                <p class="text-sm sm:text-base font-medium text-gray-700 mt-1">{{ child.religion || '-' }}</p>
+              </div>
+              
+              <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 uppercase tracking-wider">{{ languageStore.t('enrollmentDate') }}</p>
+                <p class="text-sm sm:text-base font-medium text-gray-700 mt-1">{{ formatDate(child.enrollment_date) }}</p>
+              </div>
+              
+              <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 uppercase tracking-wider">{{ languageStore.t('status') }}</p>
+                <span :class="getStatusClass(child.status)" class="inline-block mt-1 text-xs px-2 py-1 rounded-lg font-medium">
+                  {{ languageStore.t(child.status) }}
+                </span>
+              </div>
+              
+              <div class="sm:col-span-2 bg-gray-50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 uppercase tracking-wider">{{ languageStore.t('address') }}</p>
+                <p class="text-sm sm:text-base font-medium text-gray-700 mt-1">{{ child.address || '-' }}</p>
+              </div>
+              
+              <div v-if="child.medical_info" class="sm:col-span-2 bg-yellow-50 rounded-lg p-3 border-l-4 border-yellow-400">
+                <p class="text-xs text-yellow-600 uppercase tracking-wider">{{ languageStore.t('medicalInfo') }}</p>
+                <p class="text-sm sm:text-base font-medium text-gray-700 mt-1">{{ child.medical_info }}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
       
-      <!-- Statistics Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="card p-6">
-          <div class="text-center">
-            <p class="text-gray-500 text-sm">{{ languageStore.t('attendanceRate') }}</p>
-            <p class="text-3xl font-bold text-green-600">{{ attendanceRate }}%</p>
+      <!-- Statistics Cards - 2 columns on mobile, 3 on desktop -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-all duration-200 group">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">{{ languageStore.t('attendanceRate') }}</p>
+              <p class="text-2xl sm:text-3xl font-bold text-green-600 mt-1">{{ attendanceRate }}%</p>
+            </div>
+            <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
           </div>
         </div>
-        <div class="card p-6">
-          <div class="text-center">
-            <p class="text-gray-500 text-sm">{{ languageStore.t('averageGrade') }}</p>
-            <p class="text-3xl font-bold text-primary-600">{{ averageGrade }}%</p>
+        
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-all duration-200 group">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">{{ languageStore.t('averageGrade') }}</p>
+              <p class="text-2xl sm:text-3xl font-bold text-blue-600 mt-1">{{ averageGrade }}%</p>
+            </div>
+            <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
           </div>
         </div>
-        <div class="card p-6">
-          <div class="text-center">
-            <p class="text-gray-500 text-sm">{{ languageStore.t('pendingPayments') }}</p>
-            <p class="text-3xl font-bold text-yellow-600">{{ pendingPayments }}</p>
+        
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-all duration-200 group sm:col-span-2 lg:col-span-1">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">{{ languageStore.t('pendingPayments') }}</p>
+              <p class="text-2xl sm:text-3xl font-bold text-yellow-600 mt-1">{{ pendingPayments }}</p>
+            </div>
+            <div class="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
       
-      <!-- Tabs -->
-      <div class="border-b border-gray-200">
-        <nav class="flex space-x-8">
+      <!-- Tabs - Responsive -->
+      <div class="border-b border-gray-200 overflow-x-auto">
+        <nav class="flex space-x-4 sm:space-x-8 min-w-max">
           <button 
             @click="activeTab = 'attendance'" 
-            class="py-2 px-1 border-b-2 font-medium text-sm"
-            :class="activeTab === 'attendance' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+            class="py-2 px-2 sm:px-3 border-b-2 font-medium text-sm transition-all duration-200"
+            :class="activeTab === 'attendance' ? 'border-yellow-500 text-yellow-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
           >
             {{ languageStore.t('attendance') }}
           </button>
           <button 
             @click="activeTab = 'grades'" 
-            class="py-2 px-1 border-b-2 font-medium text-sm"
-            :class="activeTab === 'grades' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+            class="py-2 px-2 sm:px-3 border-b-2 font-medium text-sm transition-all duration-200"
+            :class="activeTab === 'grades' ? 'border-yellow-500 text-yellow-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
           >
             {{ languageStore.t('grades') }}
           </button>
           <button 
             @click="activeTab = 'payments'" 
-            class="py-2 px-1 border-b-2 font-medium text-sm"
-            :class="activeTab === 'payments' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+            class="py-2 px-2 sm:px-3 border-b-2 font-medium text-sm transition-all duration-200"
+            :class="activeTab === 'payments' ? 'border-yellow-500 text-yellow-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
           >
             {{ languageStore.t('payments') }}
           </button>
@@ -117,121 +173,132 @@
       </div>
       
       <!-- Attendance Tab -->
-      <div v-if="activeTab === 'attendance'" class="card p-6">
-        <div class="flex gap-4 mb-6">
-          <div class="flex-1">
-            <label class="label">{{ languageStore.t('startDate') }}</label>
-            <input v-model="attendanceStartDate" type="date" class="input-field" />
+      <div v-if="activeTab === 'attendance'" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-5 sm:p-6">
+          <div class="flex flex-col sm:flex-row gap-4 mb-6">
+            <div class="flex-1">
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 block">{{ languageStore.t('startDate') }}</label>
+              <input v-model="attendanceStartDate" type="date" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all" />
+            </div>
+            <div class="flex-1">
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 block">{{ languageStore.t('endDate') }}</label>
+              <input v-model="attendanceEndDate" type="date" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all" />
+            </div>
+            <div class="flex items-end">
+              <button @click="loadAttendance" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md">
+                {{ languageStore.t('filter') }}
+              </button>
+            </div>
           </div>
-          <div class="flex-1">
-            <label class="label">{{ languageStore.t('endDate') }}</label>
-            <input v-model="attendanceEndDate" type="date" class="input-field" />
+          
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('date') }}</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('status') }}</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('notes') }}</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr v-for="record in attendanceRecords" :key="record.id" class="hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-3 text-sm text-gray-700">{{ formatDate(record.date) }}</td>
+                  <td class="px-4 py-3">
+                    <span :class="getAttendanceBadgeClass(record.status)" class="inline-block text-xs px-2 py-1 rounded-lg font-medium">
+                      {{ languageStore.t(record.status) }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-sm text-gray-500">{{ record.notes || '-' }}</td>
+                </tr>
+                <tr v-if="attendanceRecords.length === 0">
+                  <td colspan="3" class="text-center py-8 text-gray-500">{{ languageStore.t('noAttendance') }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="flex items-end">
-            <button @click="loadAttendance" class="btn-primary">{{ languageStore.t('filter') }}</button>
-          </div>
-        </div>
-        
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-4 py-2 text-left">{{ languageStore.t('date') }}</th>
-                <th class="px-4 py-2 text-left">{{ languageStore.t('status') }}</th>
-                <th class="px-4 py-2 text-left">{{ languageStore.t('notes') }}</th>
-               </tr>
-            </thead>
-            <tbody>
-              <tr v-for="record in attendanceRecords" :key="record.id" class="border-t">
-                <td class="px-4 py-2">{{ formatDate(record.date) }}</td>
-                <td class="px-4 py-2">
-                  <span :class="getAttendanceBadgeClass(record.status)">
-                    {{ languageStore.t(record.status) }}
-                  </span>
-                </td>
-                <td class="px-4 py-2">{{ record.notes || '-' }}</td>
-              </tr>
-              <tr v-if="attendanceRecords.length === 0">
-                <td colspan="3" class="text-center py-8 text-gray-500">{{ languageStore.t('noAttendance') }}</td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </div>
       
       <!-- Grades Tab -->
-      <div v-if="activeTab === 'grades'" class="card p-6">
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-4 py-2 text-left">{{ languageStore.t('subject') }}</th>
-                <th class="px-4 py-2 text-left">{{ languageStore.t('examType') }}</th>
-                <th class="px-4 py-2 text-center">{{ languageStore.t('score') }}</th>
-                <th class="px-4 py-2 text-center">{{ languageStore.t('percentage') }}</th>
-                <th class="px-4 py-2 text-center">{{ languageStore.t('grade') }}</th>
-                <th class="px-4 py-2 text-left">{{ languageStore.t('date') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="grade in grades" :key="grade.id" class="border-t">
-                <td class="px-4 py-2">{{ grade.exam?.subject }}</td>
-                <td class="px-4 py-2">{{ languageStore.t(grade.exam?.exam_type) }}</td>
-                <td class="px-4 py-2 text-center">{{ grade.score }} / {{ grade.exam?.max_score }}</td>
-                <td class="px-4 py-2 text-center">
-                  <span :class="getGradeColor(grade.percentage)">{{ grade.percentage }}%</span>
-                </td>
-                <td class="px-4 py-2 text-center">
-                  <span class="font-bold" :class="getGradeColor(grade.percentage)">{{ grade.grade }}</span>
-                </td>
-                <td class="px-4 py-2">{{ formatDate(grade.exam?.exam_date) }}</td>
-              </tr>
-              <tr v-if="grades.length === 0">
-                <td colspan="6" class="text-center py-8 text-gray-500">{{ languageStore.t('noGrades') }}</td>
-              </tr>
-            </tbody>
-          </table>
+      <div v-if="activeTab === 'grades'" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-5 sm:p-6">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('subject') }}</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('examType') }}</th>
+                  <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('score') }}</th>
+                  <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('percentage') }}</th>
+                  <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('grade') }}</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('date') }}</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr v-for="grade in grades" :key="grade.id" class="hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-3 text-sm font-medium text-gray-700">{{ grade.exam?.subject }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600">{{ languageStore.t(grade.exam?.exam_type) }}</td>
+                  <td class="px-4 py-3 text-center text-sm text-gray-600">{{ grade.score }} / {{ grade.exam?.max_score }}</td>
+                  <td class="px-4 py-3 text-center">
+                    <span :class="getGradeColor(grade.percentage)" class="font-semibold">{{ grade.percentage }}%</span>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <span :class="getGradeColor(grade.percentage)" class="font-bold">{{ grade.grade }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-sm text-gray-500">{{ formatDate(grade.exam?.exam_date) }}</td>
+                </tr>
+                <tr v-if="grades.length === 0">
+                  <td colspan="6" class="text-center py-8 text-gray-500">{{ languageStore.t('noGrades') }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
       
       <!-- Payments Tab -->
-      <div v-if="activeTab === 'payments'" class="card p-6">
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-4 py-2 text-left">{{ languageStore.t('paymentNumber') }}</th>
-                <th class="px-4 py-2 text-left">{{ languageStore.t('paymentType') }}</th>
-                <th class="px-4 py-2 text-right">{{ languageStore.t('amount') }}</th>
-                <th class="px-4 py-2 text-left">{{ languageStore.t('status') }}</th>
-                <th class="px-4 py-2 text-left">{{ languageStore.t('dueDate') }}</th>
-                <th class="px-4 py-2 text-left">{{ languageStore.t('paymentDate') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="payment in payments" :key="payment.id" class="border-t">
-                <td class="px-4 py-2 font-mono">{{ payment.payment_number }}</td>
-                <td class="px-4 py-2">{{ languageStore.t(payment.payment_type) }}</td>
-                <td class="px-4 py-2 text-right">{{ formatCurrency(payment.amount) }}</td>
-                <td class="px-4 py-2">
-                  <span :class="getPaymentStatusClass(payment.status)">
-                    {{ languageStore.t(payment.status) }}
-                  </span>
-                </td>
-                <td class="px-4 py-2">{{ formatDate(payment.due_date) }}</td>
-                <td class="px-4 py-2">{{ formatDate(payment.payment_date) || '-' }}</td>
-              </tr>
-              <tr v-if="payments.length === 0">
-                <td colspan="6" class="text-center py-8 text-gray-500">{{ languageStore.t('noPayments') }}</td>
-              </tr>
-            </tbody>
-          </table>
+      <div v-if="activeTab === 'payments'" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-5 sm:p-6">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('paymentNumber') }}</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('paymentType') }}</th>
+                  <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('amount') }}</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('status') }}</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('dueDate') }}</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ languageStore.t('paymentDate') }}</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr v-for="payment in payments" :key="payment.id" class="hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ payment.payment_number }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600">{{ languageStore.t(payment.payment_type) }}</td>
+                  <td class="px-4 py-3 text-right font-semibold text-gray-700">{{ formatCurrency(payment.amount) }}</td>
+                  <td class="px-4 py-3">
+                    <span :class="getPaymentStatusClass(payment.status)" class="inline-block text-xs px-2 py-1 rounded-lg font-medium">
+                      {{ languageStore.t(payment.status) }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-sm text-gray-500">{{ formatDate(payment.due_date) }}</td>
+                  <td class="px-4 py-3 text-sm text-gray-500">{{ formatDate(payment.payment_date) || '-' }}</td>
+                </tr>
+                <tr v-if="payments.length === 0">
+                  <td colspan="6" class="text-center py-8 text-gray-500">{{ languageStore.t('noPayments') }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
     
-    <div v-else class="text-center py-12 text-gray-500">
-      {{ languageStore.t('childNotFound') }}
+    <div v-else class="text-center py-12">
+      <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      <p class="text-gray-500">{{ languageStore.t('childNotFound') }}</p>
     </div>
   </div>
 </template>
@@ -242,7 +309,6 @@ import { useRoute } from 'vue-router'
 import { supabase } from '@/services/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -348,22 +414,23 @@ const formatCurrency = (amount) => {
 
 const getStatusClass = (status) => {
   const classes = {
-    active: 'text-green-600',
-    graduated: 'text-blue-600',
-    transferred: 'text-yellow-600',
-    suspended: 'text-red-600'
+    active: 'bg-green-100 text-green-700',
+    pending: 'bg-yellow-100 text-yellow-700',
+    graduated: 'bg-blue-100 text-blue-700',
+    transferred: 'bg-orange-100 text-orange-700',
+    suspended: 'bg-red-100 text-red-700'
   }
-  return classes[status] || ''
+  return classes[status] || 'bg-gray-100 text-gray-700'
 }
 
 const getAttendanceBadgeClass = (status) => {
   const classes = {
-    present: 'text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs',
-    absent: 'text-red-600 bg-red-100 px-2 py-1 rounded-full text-xs',
-    late: 'text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full text-xs',
-    excused: 'text-blue-600 bg-blue-100 px-2 py-1 rounded-full text-xs'
+    present: 'bg-green-100 text-green-700',
+    absent: 'bg-red-100 text-red-700',
+    late: 'bg-yellow-100 text-yellow-700',
+    excused: 'bg-blue-100 text-blue-700'
   }
-  return classes[status] || ''
+  return classes[status] || 'bg-gray-100 text-gray-700'
 }
 
 const getGradeColor = (percentage) => {
@@ -376,11 +443,11 @@ const getGradeColor = (percentage) => {
 
 const getPaymentStatusClass = (status) => {
   const classes = {
-    pending: 'text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full text-xs',
-    approved: 'text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs',
-    rejected: 'text-red-600 bg-red-100 px-2 py-1 rounded-full text-xs'
+    pending: 'bg-yellow-100 text-yellow-700',
+    approved: 'bg-green-100 text-green-700',
+    rejected: 'bg-red-100 text-red-700'
   }
-  return classes[status] || ''
+  return classes[status] || 'bg-gray-100 text-gray-700'
 }
 
 onMounted(async () => {
@@ -393,3 +460,13 @@ onMounted(async () => {
   loading.value = false
 })
 </script>
+
+<style scoped>
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+</style>

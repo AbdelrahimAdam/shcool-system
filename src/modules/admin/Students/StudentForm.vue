@@ -7,24 +7,24 @@
         <div class="space-y-4">
           <!-- Basic Information -->
           <div>
-            <label class="label">{{ languageStore.t('fullName') }} *</label>
-            <input v-model="form.full_name" type="text" required class="input-field" />
+            <label class="form-label">{{ languageStore.t('fullName') }} *</label>
+            <input v-model="form.full_name" type="text" required class="form-input" />
           </div>
           
           <div>
-            <label class="label">{{ languageStore.t('arabicName') }}</label>
-            <input v-model="form.arabic_name" type="text" class="input-field" dir="rtl" />
+            <label class="form-label">{{ languageStore.t('arabicName') }}</label>
+            <input v-model="form.arabic_name" type="text" class="form-input" dir="rtl" />
           </div>
           
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="label">{{ languageStore.t('dateOfBirth') }} *</label>
-              <input v-model="form.date_of_birth" type="date" required class="input-field" />
+              <label class="form-label">{{ languageStore.t('dateOfBirth') }} *</label>
+              <input v-model="form.date_of_birth" type="date" required class="form-input" />
             </div>
             
             <div>
-              <label class="label">{{ languageStore.t('gender') }} *</label>
-              <select v-model="form.gender" required class="input-field">
+              <label class="form-label">{{ languageStore.t('gender') }} *</label>
+              <select v-model="form.gender" required class="form-select">
                 <option value="male">{{ languageStore.t('male') }}</option>
                 <option value="female">{{ languageStore.t('female') }}</option>
               </select>
@@ -32,8 +32,8 @@
           </div>
           
           <div>
-            <label class="label">{{ languageStore.t('class') }} *</label>
-            <select v-model="form.class_id" required class="input-field">
+            <label class="form-label">{{ languageStore.t('class') }} *</label>
+            <select v-model="form.class_id" required class="form-select">
               <option :value="null">{{ languageStore.t('selectClass') }}</option>
               <option v-for="cls in classes" :key="cls.id" :value="cls.id">
                 {{ cls.name }}
@@ -42,8 +42,8 @@
           </div>
           
           <div>
-            <label class="label">{{ languageStore.t('parent') }}</label>
-            <select v-model="form.parent_id" class="input-field">
+            <label class="form-label">{{ languageStore.t('parent') }}</label>
+            <select v-model="form.parent_id" class="form-select">
               <option :value="null">{{ languageStore.t('selectParent') }}</option>
               <option v-for="parent in parents" :key="parent.id" :value="parent.id">
                 {{ parent.full_name }} ({{ parent.phone }})
@@ -59,8 +59,8 @@
             </div>
             
             <div>
-              <label class="label">{{ languageStore.t('createStudentAccount') }}</label>
-              <select v-model="accountOption" class="input-field" @change="handleAccountOptionChange">
+              <label class="form-label">{{ languageStore.t('createStudentAccount') }}</label>
+              <select v-model="accountOption" class="form-select" @change="handleAccountOptionChange">
                 <option value="none">{{ languageStore.t('noAccount') }}</option>
                 <option value="existing">{{ languageStore.t('linkExistingUser') }}</option>
                 <option value="new">{{ languageStore.t('createNewAccount') }}</option>
@@ -69,8 +69,8 @@
             
             <!-- Link Existing User -->
             <div v-if="accountOption === 'existing'" class="mt-3">
-              <label class="label">{{ languageStore.t('selectUser') }}</label>
-              <select v-model="form.user_id" class="input-field">
+              <label class="form-label">{{ languageStore.t('selectUser') }}</label>
+              <select v-model="form.user_id" class="form-select">
                 <option :value="null">{{ languageStore.t('selectUser') }}</option>
                 <option v-for="user in users" :key="user.id" :value="user.id">
                   {{ user.full_name }} ({{ user.email }})
@@ -80,40 +80,44 @@
             
             <!-- Create New Account -->
             <div v-if="accountOption === 'new'" class="mt-3 space-y-3">
-              <div>
-                <label class="label">{{ languageStore.t('email') }} *</label>
-                <input v-model="newAccount.email" type="email" required class="input-field" />
+              <div class="bg-yellow-50 p-3 rounded-lg">
+                <p class="text-sm text-yellow-800">{{ languageStore.t('studentAccountNote') }}</p>
               </div>
               <div>
-                <label class="label">{{ languageStore.t('password') }} *</label>
-                <input v-model="newAccount.password" type="password" required class="input-field" />
+                <label class="form-label">{{ languageStore.t('email') }} *</label>
+                <input v-model="newAccount.email" type="email" required class="form-input" />
               </div>
               <div>
-                <label class="label">{{ languageStore.t('confirmPassword') }} *</label>
-                <input v-model="newAccount.confirm_password" type="password" required class="input-field" />
+                <label class="form-label">{{ languageStore.t('password') }} *</label>
+                <input v-model="newAccount.password" type="password" required class="form-input" />
+                <p class="text-xs text-gray-500 mt-1">{{ languageStore.t('passwordRequirements') }}</p>
+              </div>
+              <div>
+                <label class="form-label">{{ languageStore.t('confirmPassword') }} *</label>
+                <input v-model="newAccount.confirm_password" type="password" required class="form-input" />
               </div>
             </div>
           </div>
           
           <!-- Contact Information -->
           <div>
-            <label class="label">{{ languageStore.t('phone') }}</label>
-            <input v-model="form.phone" type="tel" class="input-field" />
+            <label class="form-label">{{ languageStore.t('phone') }}</label>
+            <input v-model="form.phone" type="tel" class="form-input" />
           </div>
           
           <div>
-            <label class="label">{{ languageStore.t('address') }}</label>
-            <textarea v-model="form.address" rows="3" class="input-field"></textarea>
+            <label class="form-label">{{ languageStore.t('address') }}</label>
+            <textarea v-model="form.address" rows="3" class="form-textarea"></textarea>
           </div>
           
           <div>
-            <label class="label">{{ languageStore.t('medicalInfo') }}</label>
-            <textarea v-model="form.medical_info" rows="2" class="input-field"></textarea>
+            <label class="form-label">{{ languageStore.t('medicalInfo') }}</label>
+            <textarea v-model="form.medical_info" rows="2" class="form-textarea"></textarea>
           </div>
           
           <div>
-            <label class="label">{{ languageStore.t('status') }}</label>
-            <select v-model="form.status" class="input-field">
+            <label class="form-label">{{ languageStore.t('status') }}</label>
+            <select v-model="form.status" class="form-select">
               <option value="active">{{ languageStore.t('active') }}</option>
               <option value="graduated">{{ languageStore.t('graduated') }}</option>
               <option value="transferred">{{ languageStore.t('transferred') }}</option>
@@ -121,7 +125,7 @@
             </select>
           </div>
           
-          <div class="flex justify-end space-x-3" :class="{ 'space-x-reverse': languageStore.isRTL }">
+          <div class="flex justify-end gap-3">
             <button type="button" @click="$router.back()" class="btn-secondary">
               {{ languageStore.t('cancel') }}
             </button>
@@ -138,10 +142,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useStudentStore } from '../../../stores/student'
-import { useLanguageStore } from '../../../stores/language'
-import { useAuthStore } from '../../../stores/auth'
-import { supabase } from '../../../services/supabase'
+import { useStudentStore } from '@/stores/student'
+import { useLanguageStore } from '@/stores/language'
+import { useAuthStore } from '@/stores/auth'
+import { supabase } from '@/services/supabase'
 
 const router = useRouter()
 const route = useRoute()
@@ -177,23 +181,31 @@ const newAccount = ref({
 })
 
 const loadClasses = async () => {
-  const { data } = await supabase.from('classes').select('id, name')
+  const schoolId = authStore.profile?.school_id
+  const { data } = await supabase
+    .from('classes')
+    .select('id, name')
+    .eq('school_id', schoolId)
   classes.value = data || []
 }
 
 const loadParents = async () => {
+  const schoolId = authStore.profile?.school_id
   const { data } = await supabase
     .from('parents')
     .select('id, full_name, phone, email')
+    .eq('school_id', schoolId)
     .order('full_name')
   parents.value = data || []
 }
 
 const loadUsers = async () => {
+  const schoolId = authStore.profile?.school_id
   const { data } = await supabase
     .from('users')
     .select('id, full_name, email, role')
     .in('role', ['parent', 'student'])
+    .eq('school_id', schoolId)
     .order('full_name')
   users.value = data || []
 }
@@ -235,48 +247,98 @@ const handleSubmit = async () => {
   
   // Create student account if requested
   if (accountOption.value === 'new') {
+    // Validate passwords
+    if (!newAccount.value.password || !newAccount.value.confirm_password) {
+      alert(languageStore.t('passwordRequired'))
+      isLoading.value = false
+      return
+    }
+    
     if (newAccount.value.password !== newAccount.value.confirm_password) {
       alert(languageStore.t('passwordsDoNotMatch'))
       isLoading.value = false
       return
     }
     
-    // Create auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: newAccount.value.email,
-      password: newAccount.value.password,
-      options: {
-        data: {
-          full_name: form.value.full_name,
-          role: 'student'
-        }
-      }
-    })
-    
-    if (authError) {
-      alert(authError.message)
+    if (newAccount.value.password.length < 6) {
+      alert(languageStore.t('passwordTooShort'))
       isLoading.value = false
       return
     }
     
-    userId = authData.user.id
+    if (!newAccount.value.email) {
+      alert(languageStore.t('emailRequired'))
+      isLoading.value = false
+      return
+    }
     
-    // Update the users table with school_id
-    const schoolId = authStore.profile?.school_id
-    if (schoolId) {
-      await supabase
-        .from('users')
-        .update({ school_id: schoolId })
-        .eq('id', userId)
+    try {
+      // Create auth user for student
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: newAccount.value.email,
+        password: newAccount.value.password,
+        options: {
+          data: {
+            full_name: form.value.full_name,
+            role: 'student',
+            phone: form.value.phone
+          }
+        }
+      })
+      
+      if (authError) {
+        console.error('Auth error:', authError)
+        
+        if (authError.message.includes('already registered')) {
+          alert(languageStore.t('emailAlreadyRegistered'))
+        } else if (authError.message.includes('password')) {
+          alert(languageStore.t('invalidPassword'))
+        } else {
+          alert(authError.message)
+        }
+        isLoading.value = false
+        return
+      }
+      
+      if (!authData.user) {
+        alert(languageStore.t('userCreationFailed'))
+        isLoading.value = false
+        return
+      }
+      
+      userId = authData.user.id
+      
+      // Update the users table with school_id
+      const schoolId = authStore.profile?.school_id
+      if (schoolId) {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ school_id: schoolId })
+          .eq('id', userId)
+        
+        if (updateError) {
+          console.error('Error updating user school_id:', updateError)
+        }
+      }
+    } catch (error) {
+      console.error('Error creating student account:', error)
+      alert(error.message || languageStore.t('userCreationFailed'))
+      isLoading.value = false
+      return
     }
   } else if (accountOption.value === 'existing') {
     userId = form.value.user_id
   }
   
-  // Prepare student data with created_by
+  // Generate student number if not provided
+  const year = new Date().getFullYear()
+  const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+  const studentNumber = `STU-${year}-${randomNum}`
+  
+  // Prepare student data
   const studentData = {
     school_id: authStore.profile?.school_id,
-    student_number: form.value.student_number || `STU-${Date.now()}`,
+    student_number: studentNumber,
     full_name: form.value.full_name,
     arabic_name: form.value.arabic_name,
     date_of_birth: form.value.date_of_birth,
@@ -288,7 +350,7 @@ const handleSubmit = async () => {
     address: form.value.address,
     medical_info: form.value.medical_info,
     status: form.value.status,
-    created_by: createdBy  // Add the created_by field
+    created_by: createdBy
   }
   
   let result
@@ -303,7 +365,7 @@ const handleSubmit = async () => {
   if (result.success) {
     router.push('/admin/students')
   } else {
-    alert(result.error)
+    alert(result.error || languageStore.t('errorOccurred'))
   }
 }
 

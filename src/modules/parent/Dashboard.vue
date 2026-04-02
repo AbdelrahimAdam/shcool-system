@@ -1,11 +1,13 @@
 <template>
-  <div class="p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">{{ languageStore.t('parentDashboard') }}</h1>
+  <div class="space-y-6 sm:space-y-8">
+    <!-- Page Header -->
+    <div class="mb-6 sm:mb-8">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">{{ languageStore.t('parentDashboard') }}</h1>
+      <p class="text-sm sm:text-base text-gray-500 mt-1">{{ languageStore.t('welcomeBack') }}, {{ authStore.profile?.full_name }}</p>
     </div>
     
     <!-- Pending Approval Message -->
-    <div v-if="!parentApproved" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-lg">
+    <div v-if="!parentApproved" class="bg-yellow-50 border-l-4 border-yellow-400 rounded-xl p-4 shadow-sm">
       <div class="flex">
         <div class="flex-shrink-0">
           <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -13,7 +15,7 @@
           </svg>
         </div>
         <div class="ml-3">
-          <p class="text-sm text-yellow-700">
+          <p class="text-sm font-medium text-yellow-700">
             {{ languageStore.t('pendingApprovalMessage') }}
           </p>
           <p class="text-xs text-yellow-600 mt-1">
@@ -23,44 +25,44 @@
       </div>
     </div>
     
-    <!-- Stats Cards - Only show if approved -->
-    <div v-if="parentApproved" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <div class="card p-6">
-        <div class="flex justify-between items-center">
+    <!-- Stats Cards - 2 columns on mobile, 3 on desktop -->
+    <div v-if="parentApproved" class="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-all duration-200 group">
+        <div class="flex items-center justify-between">
           <div>
-            <p class="text-gray-500 text-sm">{{ languageStore.t('myChildren') }}</p>
-            <p class="text-3xl font-bold">{{ children.length }}</p>
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">{{ languageStore.t('myChildren') }}</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{{ children.length }}</p>
           </div>
-          <div class="bg-primary-100 rounded-full p-3">
-            <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
           </div>
         </div>
       </div>
       
-      <div class="card p-6">
-        <div class="flex justify-between items-center">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-all duration-200 group">
+        <div class="flex items-center justify-between">
           <div>
-            <p class="text-gray-500 text-sm">{{ languageStore.t('pendingPayments') }}</p>
-            <p class="text-3xl font-bold">{{ pendingPayments }}</p>
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">{{ languageStore.t('pendingPayments') }}</p>
+            <p class="text-2xl sm:text-3xl font-bold text-yellow-600 mt-1">{{ pendingPayments }}</p>
           </div>
-          <div class="bg-yellow-100 rounded-full p-3">
-            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
         </div>
       </div>
       
-      <div class="card p-6">
-        <div class="flex justify-between items-center">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-all duration-200 group col-span-2 lg:col-span-1">
+        <div class="flex items-center justify-between">
           <div>
-            <p class="text-gray-500 text-sm">{{ languageStore.t('attendanceRate') }}</p>
-            <p class="text-3xl font-bold">{{ averageAttendance }}%</p>
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">{{ languageStore.t('attendanceRate') }}</p>
+            <p class="text-2xl sm:text-3xl font-bold text-green-600 mt-1">{{ averageAttendance }}%</p>
           </div>
-          <div class="bg-green-100 rounded-full p-3">
-            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -68,90 +70,107 @@
       </div>
     </div>
     
-    <!-- Children List - Only show if approved -->
-    <div v-if="parentApproved" class="card p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold">{{ languageStore.t('myChildren') }}</h2>
-        <button @click="showRegisterChild = true" class="btn-primary text-sm">
+    <!-- Children List Section -->
+    <div v-if="parentApproved" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <h2 class="text-base font-semibold text-gray-800">{{ languageStore.t('myChildren') }}</h2>
+          <p class="text-xs text-gray-500 mt-0.5">{{ languageStore.t('manageYourChildren') }}</p>
+        </div>
+        <button @click="showRegisterChild = true" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md">
           + {{ languageStore.t('registerChild') }}
         </button>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div v-for="child in children" :key="child.id" class="border rounded-lg p-4 hover:shadow-md transition-shadow">
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="font-semibold text-lg">{{ child.full_name }}</h3>
-              <p class="text-sm text-gray-600">{{ languageStore.t('studentNumber') }}: {{ child.student_number }}</p>
-              <p class="text-sm text-gray-600">{{ languageStore.t('class') }}: {{ child.class?.name || '-' }}</p>
+      <!-- Children Cards - 2 columns on mobile, 2 on tablet, 3 on desktop -->
+      <div class="p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-for="child in children" :key="child.id" class="bg-gray-50 rounded-xl border border-gray-100 p-4 hover:shadow-md transition-all duration-200 group">
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex-1">
+                <h3 class="font-semibold text-gray-800 text-base">{{ child.full_name }}</h3>
+                <p class="text-xs text-gray-500 mt-0.5">{{ languageStore.t('studentNumber') }}: {{ child.student_number }}</p>
+                <p class="text-xs text-gray-500">{{ languageStore.t('class') }}: {{ child.class?.name || '-' }}</p>
+              </div>
+              <span :class="getStatusClass(child.status)" class="text-xs px-2 py-1 rounded-lg font-medium whitespace-nowrap ml-2">
+                {{ child.status === 'pending' ? languageStore.t('pending') : languageStore.t(child.status) }}
+              </span>
             </div>
-            <span :class="getStatusClass(child.status)" class="text-xs px-2 py-1 rounded-full">
-              {{ child.status === 'pending' ? languageStore.t('pending') : languageStore.t(child.status) }}
-            </span>
+            <div class="mt-3 pt-3 border-t border-gray-200">
+              <router-link 
+                v-if="child.status === 'active'" 
+                :to="`/parent/children/${child.id}`" 
+                class="inline-flex items-center text-primary-600 text-sm font-medium hover:text-primary-700 transition-colors"
+              >
+                {{ languageStore.t('viewDetails') }}
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </router-link>
+              <span v-else class="text-gray-400 text-sm">
+                {{ languageStore.t('awaitingApproval') }}
+              </span>
+            </div>
           </div>
-          <div class="mt-3">
-            <router-link 
-              v-if="child.status === 'active'" 
-              :to="`/parent/children/${child.id}`" 
-              class="text-primary-600 text-sm hover:underline"
-            >
-              {{ languageStore.t('viewDetails') }}
-            </router-link>
-            <span v-else class="text-gray-400 text-sm">
-              {{ languageStore.t('awaitingApproval') }}
-            </span>
+          
+          <div v-if="children.length === 0" class="col-span-full text-center py-12">
+            <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <p class="text-gray-500">{{ languageStore.t('noChildren') }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ languageStore.t('clickRegisterToAddChild') }}</p>
           </div>
-        </div>
-        <div v-if="children.length === 0" class="col-span-2 text-center py-8 text-gray-500">
-          {{ languageStore.t('noChildren') }}
         </div>
       </div>
     </div>
     
-    <!-- Register Child Modal -->
-    <div v-if="showRegisterChild && parentApproved" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg max-w-md w-full p-6">
-        <h2 class="text-xl font-bold mb-4">{{ languageStore.t('registerChild') }}</h2>
+    <!-- Register Child Modal - Responsive -->
+    <div v-if="showRegisterChild && parentApproved" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="showRegisterChild = false">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-100 px-6 py-4">
+          <h2 class="text-lg font-semibold text-gray-800">{{ languageStore.t('registerChild') }}</h2>
+        </div>
+        
         <form @submit.prevent="registerChild">
-          <div class="space-y-4">
+          <div class="p-6 space-y-4">
             <div>
-              <label class="form-label">{{ languageStore.t('fullName') }} *</label>
-              <input v-model="newChild.full_name" type="text" required class="form-input" />
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 block">{{ languageStore.t('fullName') }} *</label>
+              <input v-model="newChild.full_name" type="text" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all" />
             </div>
             
             <div>
-              <label class="form-label">{{ languageStore.t('arabicName') }}</label>
-              <input v-model="newChild.arabic_name" type="text" class="form-input" dir="rtl" />
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 block">{{ languageStore.t('arabicName') }}</label>
+              <input v-model="newChild.arabic_name" type="text" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all" dir="rtl" />
             </div>
             
             <div>
-              <label class="form-label">{{ languageStore.t('dateOfBirth') }} *</label>
-              <input v-model="newChild.date_of_birth" type="date" required class="form-input" />
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 block">{{ languageStore.t('dateOfBirth') }} *</label>
+              <input v-model="newChild.date_of_birth" type="date" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all" />
             </div>
             
             <div>
-              <label class="form-label">{{ languageStore.t('gender') }} *</label>
-              <select v-model="newChild.gender" required class="form-select">
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 block">{{ languageStore.t('gender') }} *</label>
+              <select v-model="newChild.gender" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all">
                 <option value="male">{{ languageStore.t('male') }}</option>
                 <option value="female">{{ languageStore.t('female') }}</option>
               </select>
             </div>
             
             <div>
-              <label class="form-label">{{ languageStore.t('medicalInfo') }}</label>
-              <textarea v-model="newChild.medical_info" rows="2" class="form-textarea"></textarea>
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 block">{{ languageStore.t('medicalInfo') }}</label>
+              <textarea v-model="newChild.medical_info" rows="2" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all resize-none"></textarea>
             </div>
             
-            <div class="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
-              {{ languageStore.t('childRegistrationNote') }}
+            <div class="bg-blue-50 rounded-xl p-3">
+              <p class="text-xs text-blue-800">{{ languageStore.t('childRegistrationNote') }}</p>
             </div>
           </div>
           
-          <div class="flex justify-end space-x-3 mt-6">
-            <button type="button" @click="showRegisterChild = false" class="btn-secondary">
+          <div class="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 flex justify-end gap-3">
+            <button type="button" @click="showRegisterChild = false" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors">
               {{ languageStore.t('cancel') }}
             </button>
-            <button type="submit" :disabled="isSubmitting" class="btn-primary">
+            <button type="submit" :disabled="isSubmitting" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md">
               {{ isSubmitting ? languageStore.t('submitting') : languageStore.t('submitForApproval') }}
             </button>
           </div>
@@ -190,7 +209,6 @@ const fetchParentAndChildren = async () => {
     const userId = authStore.user?.id
     if (!userId) return
     
-    // Get parent record with school_id and status
     const { data: parent, error: parentError } = await supabase
       .from('parents')
       .select('id, school_id, status')
@@ -207,16 +225,13 @@ const fetchParentAndChildren = async () => {
       return
     }
     
-    // Check if parent is approved (status active AND has school_id)
     parentApproved.value = parent.status === 'active' && parent.school_id !== null
-    console.log('Parent approved:', parentApproved.value, 'School ID:', parent.school_id)
     
     if (!parentApproved.value) {
       console.log('Parent not approved yet')
       return
     }
     
-    // Get children
     const { data: students } = await supabase
       .from('students')
       .select(`
@@ -228,11 +243,9 @@ const fetchParentAndChildren = async () => {
     
     children.value = students || []
     
-    // Calculate stats for active children only
     const activeChildren = children.value.filter(c => c.status === 'active')
     
     if (activeChildren.length > 0) {
-      // Get pending payments
       const { data: payments } = await supabase
         .from('payments')
         .select('id')
@@ -240,7 +253,6 @@ const fetchParentAndChildren = async () => {
         .eq('status', 'pending')
       pendingPayments.value = payments?.length || 0
       
-      // Calculate attendance rate for last 30 days
       let totalAttendance = 0
       let attendanceCount = 0
       const thirtyDaysAgo = new Date()
@@ -271,7 +283,6 @@ const registerChild = async () => {
   isSubmitting.value = true
   
   try {
-    // Get parent record with school_id
     const { data: parent, error: parentError } = await supabase
       .from('parents')
       .select('id, school_id, status')
@@ -296,10 +307,8 @@ const registerChild = async () => {
       return
     }
     
-    // Generate temporary student number
     const tempNumber = `TEMP-${Date.now()}`
     
-    // Create student with pending status
     const { error: insertError } = await supabase
       .from('students')
       .insert([{
@@ -311,7 +320,7 @@ const registerChild = async () => {
         gender: newChild.value.gender,
         parent_id: parent.id,
         medical_info: newChild.value.medical_info || null,
-        status: 'pending'  // 'pending' is now allowed in the database
+        status: 'pending'
       }])
     
     if (insertError) {
@@ -339,13 +348,13 @@ const registerChild = async () => {
 
 const getStatusClass = (status) => {
   const classes = {
-    active: 'text-green-600 bg-green-100',
-    pending: 'text-yellow-600 bg-yellow-100',
-    graduated: 'text-blue-600 bg-blue-100',
-    transferred: 'text-orange-600 bg-orange-100',
-    suspended: 'text-red-600 bg-red-100'
+    active: 'bg-green-100 text-green-700',
+    pending: 'bg-yellow-100 text-yellow-700',
+    graduated: 'bg-blue-100 text-blue-700',
+    transferred: 'bg-orange-100 text-orange-700',
+    suspended: 'bg-red-100 text-red-700'
   }
-  return classes[status] || 'text-gray-600 bg-gray-100'
+  return classes[status] || 'bg-gray-100 text-gray-700'
 }
 
 onMounted(() => {

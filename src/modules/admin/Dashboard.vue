@@ -198,7 +198,7 @@
       </div>
     </div>
     
-    <!-- Approve Student Modal -->
+    <!-- Approve Student Modal with Account Creation Option -->
     <div v-if="showStudentModal" class="modal-overlay" @click.self="closeStudentModal">
       <div class="modal-container">
         <div class="modal-header">
@@ -224,6 +224,27 @@
                 </option>
               </select>
             </div>
+            
+            <!-- Student Account Creation Option -->
+            <div class="border-t pt-3">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" v-model="studentForm.create_account" class="w-4 h-4" />
+                <span class="text-sm font-medium">{{ languageStore.t('createStudentAccount') }}</span>
+              </label>
+            </div>
+            
+            <div v-if="studentForm.create_account" class="space-y-3 pl-6 border-l-2 border-primary-200">
+              <div>
+                <label class="form-label">{{ languageStore.t('email') }} *</label>
+                <input v-model="studentForm.email" type="email" required class="form-input" />
+              </div>
+              <div>
+                <label class="form-label">{{ languageStore.t('password') }} *</label>
+                <input v-model="studentForm.password" type="password" required class="form-input" />
+                <p class="text-xs text-gray-500 mt-1">{{ languageStore.t('passwordRequirements') }}</p>
+              </div>
+            </div>
+            
             <div class="bg-yellow-50 p-3 rounded-lg">
               <p class="text-sm text-yellow-800">{{ languageStore.t('approveStudentNote') }}</p>
             </div>
@@ -261,7 +282,10 @@ const isSubmitting = ref(false)
 
 const studentForm = ref({
   student_number: '',
-  class_id: null
+  class_id: null,
+  create_account: false,
+  email: '',
+  password: ''
 })
 
 const fetchDashboardData = async () => {
@@ -390,6 +414,9 @@ const showApproveStudentModal = (student) => {
   const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
   studentForm.value.student_number = `STU-${year}-${randomNum}`
   studentForm.value.class_id = null
+  studentForm.value.create_account = false
+  studentForm.value.email = ''
+  studentForm.value.password = ''
   showStudentModal.value = true
 }
 
@@ -411,6 +438,53 @@ const confirmApproveStudent = async () => {
     return
   }
   
+  let userId = null
+  
+  // Create student account if requested
+  if (studentForm.value.create_account) {
+    if (!studentForm.value.email || !studentForm.value.password) {
+      alert('Please enter email and password for the student account')
+      isSubmitting.value = false
+      return
+    }
+    
+    if (studentForm.value.password.length < 6) {
+      alert('Password must be at least 6 characters')
+      isSubmitting.value = false
+      return
+    }
+    
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: studentForm.value.email,
+        password: studentForm.value.password,
+        options: {
+          data: {
+            full_name: selectedStudent.value.full_name,
+            role: 'student',
+            phone: selectedStudent.value.phone
+          }
+        }
+      })
+      
+      if (authError) throw authError
+      userId = authData.user.id
+      
+      // Update user record with school_id
+      if (schoolId) {
+        await supabase
+          .from('users')
+          .update({ school_id: schoolId })
+          .eq('id', userId)
+      }
+    } catch (error) {
+      console.error('Error creating student account:', error)
+      alert('Failed to create student account: ' + error.message)
+      isSubmitting.value = false
+      return
+    }
+  }
+  
   try {
     const { error } = await supabase
       .from('students')
@@ -418,13 +492,18 @@ const confirmApproveStudent = async () => {
         school_id: schoolId,
         student_number: studentForm.value.student_number,
         class_id: studentForm.value.class_id,
+        user_id: userId,
         status: 'active'
       })
       .eq('id', selectedStudent.value.id)
     
     if (error) throw error
     
-    alert('Student approved successfully!')
+    const successMessage = studentForm.value.create_account 
+      ? 'Student approved and account created successfully!'
+      : 'Student approved successfully!'
+    
+    alert(successMessage)
     closeStudentModal()
     await fetchDashboardData()
     
@@ -458,7 +537,7 @@ const closeParentModal = () => {
 const closeStudentModal = () => {
   showStudentModal.value = false
   selectedStudent.value = null
-  studentForm.value = { student_number: '', class_id: null }
+  studentForm.value = { student_number: '', class_id: null, create_account: false, email: '', password: '' }
 }
 
 const formatDate = (date) => {
@@ -471,3 +550,121 @@ onMounted(() => {
   fetchClasses()
 })
 </script>
+
+<style scoped>
+.card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal-container {
+  background-color: white;
+  border-radius: 0.5rem;
+  max-width: 28rem;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  ring: 2px solid #3b82f6;
+  border-color: transparent;
+}
+
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: #374151;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid #d1d5db;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #f9fafb;
+}
+
+.badge-warning {
+  background-color: #fef3c7;
+  color: #d97706;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+}
+</style>

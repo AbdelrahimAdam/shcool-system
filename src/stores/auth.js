@@ -12,7 +12,8 @@ export const useAuthStore = defineStore('auth', {
         isLoading: false,
         role: null,
         permissions: [],
-        isInitialized: false
+        isInitialized: false,
+        teacherId: null  // Added teacherId to state
     }),
 
     getters: {
@@ -23,7 +24,8 @@ export const useAuthStore = defineStore('auth', {
         isParent: (state) => state.role === 'parent',
         currentSchool: (state) => state.school,
         userProfile: (state) => state.profile,
-        isReady: (state) => state.isInitialized
+        isReady: (state) => state.isInitialized,
+        getTeacherId: (state) => state.teacherId  // Added getter for teacherId
     },
 
     actions: {
@@ -32,6 +34,35 @@ export const useAuthStore = defineStore('auth', {
             await this.getCurrentUser()
             this.isInitialized = true
             return true
+        },
+
+        // New action to fetch teacher ID
+        async fetchTeacherId() {
+            try {
+                const userId = this.user?.id
+                if (!userId) {
+                    console.log('No user ID available to fetch teacher ID')
+                    return null
+                }
+
+                const { data, error } = await supabase
+                    .from('teachers')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .maybeSingle()
+
+                if (error) {
+                    console.error('Error fetching teacher ID:', error)
+                    return null
+                }
+
+                this.teacherId = data?.id || null
+                console.log('Teacher ID loaded:', this.teacherId)
+                return this.teacherId
+            } catch (error) {
+                console.error('Error in fetchTeacherId:', error)
+                return null
+            }
         },
 
         async login(email, password) {
@@ -108,6 +139,11 @@ export const useAuthStore = defineStore('auth', {
                     
                     cacheService.set(`user_${basicProfile.id}`, basicProfile, 3600000)
                     
+                    // If user is teacher, fetch teacher ID
+                    if (basicProfile.role === 'teacher') {
+                        await this.fetchTeacherId()
+                    }
+                    
                     // Small delay to ensure state is fully updated
                     await new Promise(resolve => setTimeout(resolve, 50))
                     
@@ -139,6 +175,11 @@ export const useAuthStore = defineStore('auth', {
 
                 cacheService.set(`user_${profile.id}`, profile, 3600000)
 
+                // If user is teacher, fetch teacher ID
+                if (profile.role === 'teacher') {
+                    await this.fetchTeacherId()
+                }
+
                 // Small delay to ensure state is fully updated
                 await new Promise(resolve => setTimeout(resolve, 50))
 
@@ -160,6 +201,7 @@ export const useAuthStore = defineStore('auth', {
                 this.isAuthenticated = false
                 this.role = null
                 this.isInitialized = false
+                this.teacherId = null  // Reset teacherId on logout
                 cacheService.clear()
                 return { success: true }
             } catch (error) {
@@ -179,6 +221,7 @@ export const useAuthStore = defineStore('auth', {
                     this.user = null
                     this.profile = null
                     this.role = null
+                    this.teacherId = null
                     return null
                 }
 
@@ -200,6 +243,12 @@ export const useAuthStore = defineStore('auth', {
                     this.school = cachedProfile.schools
                     this.isAuthenticated = true
                     console.log('Using cached profile, role:', this.role)
+                    
+                    // If user is teacher, fetch teacher ID
+                    if (this.role === 'teacher' && !this.teacherId) {
+                        await this.fetchTeacherId()
+                    }
+                    
                     return cachedProfile
                 }
 
@@ -249,6 +298,12 @@ export const useAuthStore = defineStore('auth', {
                     this.role = newProfile.role
                     this.isAuthenticated = true
                     cacheService.set(`user_${user.id}`, newProfile, 3600000)
+                    
+                    // If user is teacher, fetch teacher ID
+                    if (newProfile.role === 'teacher') {
+                        await this.fetchTeacherId()
+                    }
+                    
                     return newProfile
                 }
 
@@ -261,6 +316,12 @@ export const useAuthStore = defineStore('auth', {
                 this.isAuthenticated = true
 
                 cacheService.set(`user_${user.id}`, profile, 3600000)
+
+                // If user is teacher, fetch teacher ID
+                if (profile.role === 'teacher') {
+                    await this.fetchTeacherId()
+                }
+
                 return profile
             } catch (error) {
                 // Handle session missing error gracefully
@@ -272,6 +333,7 @@ export const useAuthStore = defineStore('auth', {
                     this.user = null
                     this.profile = null
                     this.role = null
+                    this.teacherId = null
                     return null
                 }
                 console.error('Get current user error:', error)
@@ -299,6 +361,11 @@ export const useAuthStore = defineStore('auth', {
                     cacheService.set(`user_${this.user.id}`, profile, 3600000)
                 }
                 
+                // Refresh teacher ID if user is teacher
+                if (this.role === 'teacher') {
+                    await this.fetchTeacherId()
+                }
+                
                 return profile
             } catch (error) {
                 console.error('Refresh profile error:', error)
@@ -322,6 +389,11 @@ export const useAuthStore = defineStore('auth', {
                 this.profile = { ...this.profile, ...data }
                 this.role = data?.role || this.role
                 cacheService.set(`user_${this.user.id}`, this.profile, 3600000)
+                
+                // If role changed to teacher, fetch teacher ID
+                if (this.role === 'teacher') {
+                    await this.fetchTeacherId()
+                }
                 
                 return { success: true, data }
             } catch (error) {
