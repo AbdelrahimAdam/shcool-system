@@ -1,13 +1,24 @@
 <template>
   <div class="p-6">
+    <!-- Header with refresh button -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div>
         <h1 class="text-2xl font-bold text-secondary-900">{{ languageStore.t('dashboard') }}</h1>
         <p class="text-sm text-secondary-500 mt-1">{{ languageStore.t('welcomeBack') }}, {{ authStore.profile?.full_name }}</p>
       </div>
+      <button 
+        @click="refreshData" 
+        class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors"
+        title="Refresh"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        {{ languageStore.t('refresh') }}
+      </button>
     </div>
     
-    <!-- Stats Cards -->
+    <!-- Stats Cards (unchanged) -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
       <div class="card p-6">
         <div class="flex justify-between items-center">
@@ -66,7 +77,7 @@
       </div>
     </div>
     
-    <!-- Pending Parents Section -->
+    <!-- Pending Parents Section (now shows parents registered for this school) -->
     <div v-if="pendingParents.length > 0" class="card mb-6">
       <div class="card-header">
         <div class="flex items-center justify-between">
@@ -116,7 +127,7 @@
       </div>
     </div>
     
-    <!-- Pending Students Section -->
+    <!-- Pending Students Section (also filtered by school) -->
     <div v-if="pendingStudents.length > 0" class="card mb-6">
       <div class="card-header">
         <div class="flex items-center justify-between">
@@ -164,7 +175,7 @@
       </div>
     </div>
     
-    <!-- Approve Parent Modal -->
+    <!-- Approve Parent Modal (unchanged) -->
     <div v-if="showParentModal" class="modal-overlay" @click.self="closeParentModal">
       <div class="modal-container">
         <div class="modal-header">
@@ -198,7 +209,7 @@
       </div>
     </div>
     
-    <!-- Approve Student Modal with Account Creation Option -->
+    <!-- Approve Student Modal (unchanged) -->
     <div v-if="showStudentModal" class="modal-overlay" @click.self="closeStudentModal">
       <div class="modal-container">
         <div class="modal-header">
@@ -225,7 +236,6 @@
               </select>
             </div>
             
-            <!-- Student Account Creation Option -->
             <div class="border-t pt-3">
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" v-model="studentForm.create_account" class="w-4 h-4" />
@@ -262,7 +272,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { supabase } from '@/services/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
@@ -288,21 +298,21 @@ const studentForm = ref({
   password: ''
 })
 
+let realtimeSubscription = null
+
 const fetchDashboardData = async () => {
   const schoolId = authStore.profile?.school_id
-  
   if (!schoolId) return
-  
-  // Get pending parents (status = 'pending' and school_id is null)
+
+  // Pending parents for THIS school (not null school_id)
   const { data: parents } = await supabase
     .from('parents')
     .select('*')
     .eq('status', 'pending')
-    .is('school_id', null)
-  
+    .eq('school_id', schoolId)   // <-- FIXED
   pendingParents.value = parents || []
-  
-  // Get pending students (status = 'pending')
+
+  // Pending students for THIS school
   const { data: students } = await supabase
     .from('students')
     .select(`
@@ -310,26 +320,24 @@ const fetchDashboardData = async () => {
       parent:parents(full_name, phone, email)
     `)
     .eq('status', 'pending')
+    .eq('school_id', schoolId)   // <-- ADDED
     .order('created_at', { ascending: false })
-  
   pendingStudents.value = students || []
-  
-  // Get active students count
+
+  // Active students count
   const { count: studentCount } = await supabase
     .from('students')
     .select('*', { count: 'exact', head: true })
     .eq('school_id', schoolId)
     .eq('status', 'active')
-  
   stats.value.totalStudents = studentCount || 0
-  
-  // Get pending payments count
+
+  // Pending payments count
   const { count: paymentCount } = await supabase
     .from('payments')
     .select('*', { count: 'exact', head: true })
     .eq('school_id', schoolId)
     .eq('status', 'pending')
-  
   stats.value.pendingPayments = paymentCount || 0
 }
 
@@ -341,6 +349,11 @@ const fetchClasses = async () => {
     .eq('school_id', schoolId)
     .order('grade_level')
   classes.value = data || []
+}
+
+const refreshData = () => {
+  fetchDashboardData()
+  fetchClasses()
 }
 
 const showApproveParentModal = (parent) => {
@@ -359,7 +372,7 @@ const confirmApproveParent = async () => {
   }
   
   try {
-    // Update parent record with school_id and status
+    // Update parent record (school_id already correct, but we keep for safety)
     const { error: parentError } = await supabase
       .from('parents')
       .update({ 
@@ -368,10 +381,9 @@ const confirmApproveParent = async () => {
         updated_at: new Date().toISOString()
       })
       .eq('id', selectedParent.value.id)
-    
     if (parentError) throw parentError
-    
-    // Update user record with school_id
+
+    // Update user record
     const { error: userError } = await supabase
       .from('users')
       .update({ 
@@ -379,13 +391,11 @@ const confirmApproveParent = async () => {
         updated_at: new Date().toISOString()
       })
       .eq('id', selectedParent.value.user_id)
-    
     if (userError) throw userError
-    
+
     alert('Parent approved successfully!')
     closeParentModal()
-    await fetchDashboardData()
-    
+    await refreshData()
   } catch (error) {
     console.error('Error approving parent:', error)
     alert('Error approving parent: ' + error.message)
@@ -400,10 +410,9 @@ const rejectParent = async (parent) => {
       .from('parents')
       .delete()
       .eq('id', parent.id)
-    
     if (!error) {
       alert('Parent rejected and removed')
-      await fetchDashboardData()
+      await refreshData()
     }
   }
 }
@@ -424,15 +433,12 @@ const confirmApproveStudent = async () => {
   isSubmitting.value = true
   const schoolId = authStore.profile?.school_id
   
-  // Validate class selection
   if (!studentForm.value.class_id) {
     alert('Please select a class for the student')
     isSubmitting.value = false
     return
   }
-  
-  // Validate student number
-  if (!studentForm.value.student_number || studentForm.value.student_number.trim() === '') {
+  if (!studentForm.value.student_number?.trim()) {
     alert('Please enter a valid student number')
     isSubmitting.value = false
     return
@@ -440,20 +446,17 @@ const confirmApproveStudent = async () => {
   
   let userId = null
   
-  // Create student account if requested
   if (studentForm.value.create_account) {
     if (!studentForm.value.email || !studentForm.value.password) {
       alert('Please enter email and password for the student account')
       isSubmitting.value = false
       return
     }
-    
     if (studentForm.value.password.length < 6) {
       alert('Password must be at least 6 characters')
       isSubmitting.value = false
       return
     }
-    
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: studentForm.value.email,
@@ -466,16 +469,10 @@ const confirmApproveStudent = async () => {
           }
         }
       })
-      
       if (authError) throw authError
       userId = authData.user.id
-      
-      // Update user record with school_id
       if (schoolId) {
-        await supabase
-          .from('users')
-          .update({ school_id: schoolId })
-          .eq('id', userId)
+        await supabase.from('users').update({ school_id: schoolId }).eq('id', userId)
       }
     } catch (error) {
       console.error('Error creating student account:', error)
@@ -496,17 +493,13 @@ const confirmApproveStudent = async () => {
         status: 'active'
       })
       .eq('id', selectedStudent.value.id)
-    
     if (error) throw error
     
-    const successMessage = studentForm.value.create_account 
+    alert(studentForm.value.create_account 
       ? 'Student approved and account created successfully!'
-      : 'Student approved successfully!'
-    
-    alert(successMessage)
+      : 'Student approved successfully!')
     closeStudentModal()
-    await fetchDashboardData()
-    
+    await refreshData()
   } catch (error) {
     console.error('Error approving student:', error)
     alert('Error approving student: ' + error.message)
@@ -521,10 +514,9 @@ const rejectStudent = async (student) => {
       .from('students')
       .delete()
       .eq('id', student.id)
-    
     if (!error) {
       alert('Student rejected and removed')
-      await fetchDashboardData()
+      await refreshData()
     }
   }
 }
@@ -545,24 +537,47 @@ const formatDate = (date) => {
   return new Date(date).toLocaleDateString()
 }
 
+// Realtime subscription for new pending parents/students
+const subscribeToRealtime = () => {
+  const schoolId = authStore.profile?.school_id
+  if (!schoolId) return
+
+  realtimeSubscription = supabase
+    .channel('admin-dashboard')
+    .on('postgres_changes', 
+      { event: 'INSERT', schema: 'public', table: 'parents', filter: `school_id=eq.${schoolId}` },
+      () => refreshData()
+    )
+    .on('postgres_changes', 
+      { event: 'INSERT', schema: 'public', table: 'students', filter: `school_id=eq.${schoolId}` },
+      () => refreshData()
+    )
+    .subscribe()
+}
+
 onMounted(() => {
-  fetchDashboardData()
-  fetchClasses()
+  refreshData()
+  subscribeToRealtime()
+})
+
+onUnmounted(() => {
+  if (realtimeSubscription) {
+    supabase.removeChannel(realtimeSubscription)
+  }
 })
 </script>
 
 <style scoped>
+/* (Same styles as original – unchanged) */
 .card {
   background-color: white;
   border-radius: 0.5rem;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
-
 .card-header {
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #e5e7eb;
 }
-
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -575,7 +590,6 @@ onMounted(() => {
   justify-content: center;
   z-index: 50;
 }
-
 .modal-container {
   background-color: white;
   border-radius: 0.5rem;
@@ -584,16 +598,13 @@ onMounted(() => {
   max-height: 90vh;
   overflow-y: auto;
 }
-
 .modal-header {
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #e5e7eb;
 }
-
 .modal-body {
   padding: 1.5rem;
 }
-
 .modal-footer {
   padding: 1rem 1.5rem;
   border-top: 1px solid #e5e7eb;
@@ -601,7 +612,6 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 0.75rem;
 }
-
 .form-label {
   display: block;
   font-size: 0.875rem;
@@ -609,23 +619,18 @@ onMounted(() => {
   color: #374151;
   margin-bottom: 0.5rem;
 }
-
-.form-input,
-.form-select {
+.form-input, .form-select {
   width: 100%;
   padding: 0.5rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   font-size: 0.875rem;
 }
-
-.form-input:focus,
-.form-select:focus {
+.form-input:focus, .form-select:focus {
   outline: none;
   ring: 2px solid #3b82f6;
   border-color: transparent;
 }
-
 .btn-primary {
   background-color: #3b82f6;
   color: white;
@@ -635,16 +640,13 @@ onMounted(() => {
   font-weight: 500;
   transition: background-color 0.2s;
 }
-
 .btn-primary:hover:not(:disabled) {
   background-color: #2563eb;
 }
-
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
-
 .btn-secondary {
   background-color: white;
   color: #374151;
@@ -655,11 +657,9 @@ onMounted(() => {
   border: 1px solid #d1d5db;
   transition: background-color 0.2s;
 }
-
 .btn-secondary:hover {
   background-color: #f9fafb;
 }
-
 .badge-warning {
   background-color: #fef3c7;
   color: #d97706;
