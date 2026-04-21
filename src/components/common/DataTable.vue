@@ -10,19 +10,19 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search..."
+          :placeholder="$t('search') || 'Search...'"
           class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           @input="debouncedSearch"
         />
         
         <select
-          v-model="filters"
           v-for="filter in filterOptions"
           :key="filter.key"
+          v-model="localFilters[filter.key]"
           class="px-4 py-2 border rounded-lg"
           @change="applyFilters"
         >
-          <option value="">All {{ filter.label }}</option>
+          <option value="">{{ $t('all') || 'All' }} {{ filter.label }}</option>
           <option v-for="option in filter.options" :key="option.value" :value="option.value">
             {{ option.label }}
           </option>
@@ -37,35 +37,46 @@
               <th v-for="column in columns" :key="column.key" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {{ column.label }}
               </th>
-              <th v-if="actions" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
+              <th v-if="actions.length" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {{ $t('actions') || 'Actions' }}
               </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200">
             <tr v-for="row in data" :key="row.id" class="hover:bg-gray-50">
               <td v-for="column in columns" :key="column.key" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <!-- Use slot for custom column rendering (e.g., status badges) -->
                 <slot :name="`column-${column.key}`" :row="row">
-                  {{ formatValue(row[column.key], column.type) }}
+                  <span v-if="column.type === 'status'" :class="getStatusClass(row[column.key])">
+                    {{ formatValue(row[column.key], column.type) }}
+                  </span>
+                  <span v-else>
+                    {{ formatValue(row[column.key], column.type) }}
+                  </span>
                 </slot>
               </td>
-              <td v-if="actions" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <td v-if="actions.length" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <slot name="actions" :row="row">
                   <button
                     v-if="actions.includes('edit')"
                     @click="$emit('edit', row)"
                     class="text-primary-600 hover:text-primary-900 mr-3"
                   >
-                    Edit
+                    {{ $t('edit') || 'Edit' }}
                   </button>
                   <button
                     v-if="actions.includes('delete')"
                     @click="$emit('delete', row)"
                     class="text-red-600 hover:text-red-900"
                   >
-                    Delete
+                    {{ $t('delete') || 'Delete' }}
                   </button>
                 </slot>
+              </td>
+            </tr>
+            <tr v-if="data.length === 0">
+              <td :colspan="columns.length + (actions.length ? 1 : 0)" class="px-6 py-8 text-center text-gray-500">
+                {{ $t('noData') || 'No data available' }}
               </td>
             </tr>
           </tbody>
@@ -84,7 +95,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import LoadingSpinner from './LoadingSpinner.vue'
 import Pagination from './Pagination.vue'
 
@@ -123,7 +134,11 @@ const emit = defineEmits(['edit', 'delete', 'search', 'filter', 'page-change'])
 
 const searchQuery = ref('')
 const currentPage = ref(1)
-const filters = ref({})
+// Initialize localFilters object from filterOptions keys
+const localFilters = ref({})
+props.filterOptions.forEach(filter => {
+  localFilters.value[filter.key] = ''
+})
 
 let searchTimeout = null
 
@@ -135,7 +150,14 @@ const debouncedSearch = () => {
 }
 
 const applyFilters = () => {
-  emit('filter', filters.value)
+  // Only send filters that have a value (not empty string)
+  const activeFilters = {}
+  Object.keys(localFilters.value).forEach(key => {
+    if (localFilters.value[key]) {
+      activeFilters[key] = localFilters.value[key]
+    }
+  })
+  emit('filter', activeFilters)
 }
 
 const changePage = (page) => {
@@ -144,23 +166,40 @@ const changePage = (page) => {
 }
 
 const formatValue = (value, type) => {
-  if (!value) return '-'
+  if (value === null || value === undefined) return '-'
   
   switch(type) {
     case 'date':
       return new Date(value).toLocaleDateString()
     case 'currency':
-      return `$${value.toLocaleString()}`
+      return `$${Number(value).toLocaleString()}`
     case 'status':
-      const statusColors = {
-        active: 'text-green-600',
-        pending: 'text-yellow-600',
-        approved: 'text-green-600',
-        rejected: 'text-red-600'
-      }
-      return `<span class="${statusColors[value]}">${value}</span>`
-    default:
+      // Return the raw value; the styling is applied via getStatusClass
       return value
+    default:
+      return String(value)
   }
 }
+
+const getStatusClass = (status) => {
+  const map = {
+    new: 'text-blue-600 bg-blue-100 px-2 py-1 rounded-full text-xs',
+    contacted: 'text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full text-xs',
+    enrolled: 'text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs',
+    lost: 'text-red-600 bg-red-100 px-2 py-1 rounded-full text-xs',
+    active: 'text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs',
+    pending: 'text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full text-xs',
+    approved: 'text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs',
+    rejected: 'text-red-600 bg-red-100 px-2 py-1 rounded-full text-xs'
+  }
+  return map[status] || 'text-gray-600 bg-gray-100 px-2 py-1 rounded-full text-xs'
+}
+
+// Reset page to 1 when filters or search changes
+watch([searchQuery, localFilters], () => {
+  if (currentPage.value !== 1) {
+    currentPage.value = 1
+    emit('page-change', 1)
+  }
+}, { deep: true })
 </script>

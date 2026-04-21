@@ -10,7 +10,23 @@
       </router-link>
     </div>
 
+    <!-- Skeleton loading state -->
+    <div v-if="isLoading && leads.length === 0" class="space-y-4">
+      <div class="flex gap-4 mb-4">
+        <div class="h-10 bg-gray-200 rounded-lg animate-pulse flex-1"></div>
+        <div class="h-10 bg-gray-200 rounded-lg animate-pulse w-32"></div>
+      </div>
+      <div class="space-y-2">
+        <div class="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+        <div class="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+        <div class="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+        <div class="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+      </div>
+    </div>
+
+    <!-- DataTable -->
     <DataTable
+      v-else
       :columns="columns"
       :data="leads"
       :total="totalCount"
@@ -32,8 +48,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { supabase } from '@/services/supabase'
 import { useCRMStore } from '../../../stores/crm'
 import { useLanguageStore } from '../../../stores/language'
 import DataTable from '../../../components/common/DataTable.vue'
@@ -45,6 +62,10 @@ const languageStore = useLanguageStore()
 const leads = computed(() => crmStore.leads)
 const totalCount = computed(() => crmStore.totalCount)
 const isLoading = computed(() => crmStore.isLoading)
+
+// Store current page and filters to preserve them on refresh
+const currentPage = ref(1)
+const currentFilters = ref({})
 
 const columns = [
   { key: 'full_name', label: 'fullName', type: 'text' },
@@ -67,16 +88,38 @@ const filterOptions = [
   }
 ]
 
+let realtimeSubscription = null
+let refreshTimeout = null
+let fetched = false
+
+// Refresh the list preserving current page and filters
+const refreshList = () => {
+  crmStore.fetchLeads(currentPage.value, currentFilters.value)
+}
+
+// Debounced real‑time refresh (prevents excessive calls)
+const debouncedRefresh = () => {
+  if (refreshTimeout) clearTimeout(refreshTimeout)
+  refreshTimeout = setTimeout(() => {
+    refreshList()
+  }, 300)
+}
+
 const handleSearch = async (query) => {
-  await crmStore.fetchLeads(1, { ...crmStore.filters, search: query })
+  currentFilters.value = { ...currentFilters.value, search: query }
+  currentPage.value = 1
+  await crmStore.fetchLeads(1, currentFilters.value)
 }
 
 const handleFilter = async (filters) => {
-  await crmStore.fetchLeads(1, { ...crmStore.filters, ...filters })
+  currentFilters.value = { ...currentFilters.value, ...filters }
+  currentPage.value = 1
+  await crmStore.fetchLeads(1, currentFilters.value)
 }
 
 const handlePageChange = async (page) => {
-  await crmStore.fetchLeads(page, crmStore.filters)
+  currentPage.value = page
+  await crmStore.fetchLeads(page, currentFilters.value)
 }
 
 const handleEdit = (lead) => {
@@ -85,7 +128,13 @@ const handleEdit = (lead) => {
 
 const handleDelete = async (lead) => {
   if (confirm(languageStore.t('confirmDelete'))) {
-    // Implement delete in store if needed
+    const result = await crmStore.deleteLead(lead.id)
+    if (result.success) {
+      // After delete, refresh the list on the same page
+      await refreshList()
+    } else {
+      alert(result.error || languageStore.t('deleteFailed'))
+    }
   }
 }
 
@@ -100,6 +149,21 @@ const getStatusClass = (status) => {
 }
 
 onMounted(() => {
-  crmStore.fetchLeads(1)
+  if (!fetched) {
+    crmStore.fetchLeads(1)
+    fetched = true
+  }
+  realtimeSubscription = crmStore.subscribeToLeadChanges(() => {
+    debouncedRefresh()
+  })
+})
+
+onUnmounted(() => {
+  if (realtimeSubscription) {
+    supabase.removeChannel(realtimeSubscription)
+  }
+  if (refreshTimeout) {
+    clearTimeout(refreshTimeout)
+  }
 })
 </script>

@@ -22,10 +22,16 @@
       @edit="handleEdit"
       @delete="handleDelete"
     >
+      <!-- Custom slot for status column (badge styling) -->
       <template #column-status="{ row }">
         <span :class="getStatusClass(row.status)">
           {{ languageStore.t(row.status) }}
         </span>
+      </template>
+
+      <!-- Custom slot for class column to extract the class name from the object -->
+      <template #column-class="{ row }">
+        {{ row.class?.name || '-' }}
       </template>
     </DataTable>
   </div>

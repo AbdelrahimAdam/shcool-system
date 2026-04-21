@@ -22,20 +22,28 @@
       @edit="handleEdit"
       @delete="handleDelete"
     >
+      <!-- Custom slot for status badge -->
       <template #column-status="{ row }">
         <span :class="getStatusClass(row.status)">
           {{ languageStore.t(row.status) }}
         </span>
       </template>
+
+      <!-- Custom slot for amount formatting -->
       <template #column-amount="{ row }">
         {{ formatCurrency(row.amount) }}
+      </template>
+
+      <!-- Custom slot for student name (extract from object) -->
+      <template #column-student="{ row }">
+        {{ row.student?.full_name || '-' }}
       </template>
     </DataTable>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePaymentStore } from '../../../stores/payment'
 import { useLanguageStore } from '../../../stores/language'

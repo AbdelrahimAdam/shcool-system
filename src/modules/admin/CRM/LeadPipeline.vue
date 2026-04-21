@@ -29,14 +29,17 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { supabase } from '@/services/supabase'
 import { useCRMStore } from '../../../stores/crm'
 import { useLanguageStore } from '../../../stores/language'
 
 const router = useRouter()
 const crmStore = useCRMStore()
 const languageStore = useLanguageStore()
+
+let realtimeSubscription = null
 
 const stages = computed(() => [
   { key: 'new', label: languageStore.t('new'), leads: crmStore.leads.filter(l => l.status === 'new') },
@@ -49,7 +52,20 @@ const editLead = (id) => {
   router.push(`/admin/crm/${id}`)
 }
 
+const refreshPipeline = () => {
+  crmStore.fetchLeads(crmStore.currentPage, crmStore.filters)
+}
+
 onMounted(() => {
   crmStore.fetchLeads(1)
+  realtimeSubscription = crmStore.subscribeToLeadChanges(() => {
+    refreshPipeline()
+  })
+})
+
+onUnmounted(() => {
+  if (realtimeSubscription) {
+    supabase.removeChannel(realtimeSubscription)
+  }
 })
 </script>

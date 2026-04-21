@@ -18,8 +18,9 @@
       </button>
     </div>
     
-    <!-- Stats Cards (unchanged) -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <!-- Stats Cards – now 5 cards on desktop, 2 on tablet, 1 on mobile -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+      <!-- Total Students -->
       <div class="card p-6">
         <div class="flex justify-between items-center">
           <div>
@@ -34,6 +35,7 @@
         </div>
       </div>
       
+      <!-- Pending Parents -->
       <div class="card p-6">
         <div class="flex justify-between items-center">
           <div>
@@ -48,6 +50,7 @@
         </div>
       </div>
       
+      <!-- Pending Students -->
       <div class="card p-6">
         <div class="flex justify-between items-center">
           <div>
@@ -62,6 +65,7 @@
         </div>
       </div>
       
+      <!-- Pending Payments -->
       <div class="card p-6">
         <div class="flex justify-between items-center">
           <div>
@@ -75,9 +79,29 @@
           </div>
         </div>
       </div>
+
+      <!-- New Leads (CRM) -->
+      <div class="card p-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="text-gray-500 text-sm">{{ languageStore.t('newLeads') }}</p>
+            <p class="text-3xl font-bold text-blue-600">{{ newLeadsCount }}</p>
+          </div>
+          <div class="bg-blue-100 rounded-full p-3">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+          </div>
+        </div>
+        <div class="mt-2">
+          <router-link to="/admin/crm" class="text-sm text-primary-600 hover:underline">
+            {{ languageStore.t('viewAllLeads') }} →
+          </router-link>
+        </div>
+      </div>
     </div>
     
-    <!-- Pending Parents Section (now shows parents registered for this school) -->
+    <!-- Pending Parents Section (unchanged) -->
     <div v-if="pendingParents.length > 0" class="card mb-6">
       <div class="card-header">
         <div class="flex items-center justify-between">
@@ -127,7 +151,7 @@
       </div>
     </div>
     
-    <!-- Pending Students Section (also filtered by school) -->
+    <!-- Pending Students Section (unchanged) -->
     <div v-if="pendingStudents.length > 0" class="card mb-6">
       <div class="card-header">
         <div class="flex items-center justify-between">
@@ -289,6 +313,7 @@ const selectedStudent = ref(null)
 const showParentModal = ref(false)
 const showStudentModal = ref(false)
 const isSubmitting = ref(false)
+const newLeadsCount = ref(0)
 
 const studentForm = ref({
   student_number: '',
@@ -304,12 +329,12 @@ const fetchDashboardData = async () => {
   const schoolId = authStore.profile?.school_id
   if (!schoolId) return
 
-  // Pending parents for THIS school (not null school_id)
+  // Pending parents for THIS school
   const { data: parents } = await supabase
     .from('parents')
     .select('*')
     .eq('status', 'pending')
-    .eq('school_id', schoolId)   // <-- FIXED
+    .eq('school_id', schoolId)
   pendingParents.value = parents || []
 
   // Pending students for THIS school
@@ -320,7 +345,7 @@ const fetchDashboardData = async () => {
       parent:parents(full_name, phone, email)
     `)
     .eq('status', 'pending')
-    .eq('school_id', schoolId)   // <-- ADDED
+    .eq('school_id', schoolId)
     .order('created_at', { ascending: false })
   pendingStudents.value = students || []
 
@@ -339,6 +364,14 @@ const fetchDashboardData = async () => {
     .eq('school_id', schoolId)
     .eq('status', 'pending')
   stats.value.pendingPayments = paymentCount || 0
+
+  // New leads count (status = 'new')
+  const { count: leadCount } = await supabase
+    .from('leads')
+    .select('*', { count: 'exact', head: true })
+    .eq('school_id', schoolId)
+    .eq('status', 'new')
+  newLeadsCount.value = leadCount || 0
 }
 
 const fetchClasses = async () => {
@@ -372,7 +405,6 @@ const confirmApproveParent = async () => {
   }
   
   try {
-    // Update parent record (school_id already correct, but we keep for safety)
     const { error: parentError } = await supabase
       .from('parents')
       .update({ 
@@ -383,7 +415,6 @@ const confirmApproveParent = async () => {
       .eq('id', selectedParent.value.id)
     if (parentError) throw parentError
 
-    // Update user record
     const { error: userError } = await supabase
       .from('users')
       .update({ 
@@ -537,7 +568,6 @@ const formatDate = (date) => {
   return new Date(date).toLocaleDateString()
 }
 
-// Realtime subscription for new pending parents/students
 const subscribeToRealtime = () => {
   const schoolId = authStore.profile?.school_id
   if (!schoolId) return
@@ -550,6 +580,10 @@ const subscribeToRealtime = () => {
     )
     .on('postgres_changes', 
       { event: 'INSERT', schema: 'public', table: 'students', filter: `school_id=eq.${schoolId}` },
+      () => refreshData()
+    )
+    .on('postgres_changes', 
+      { event: 'INSERT', schema: 'public', table: 'leads', filter: `school_id=eq.${schoolId}` },
       () => refreshData()
     )
     .subscribe()
@@ -568,7 +602,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* (Same styles as original – unchanged) */
+/* (All styles remain exactly as originally provided) */
 .card {
   background-color: white;
   border-radius: 0.5rem;

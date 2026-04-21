@@ -90,11 +90,13 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/services/supabase'
+import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
 import PublicHeader from '@/components/public/PublicHeader.vue'
 import PublicFooter from '@/components/public/PublicFooter.vue'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const languageStore = useLanguageStore()
 const schools = ref([])
 
@@ -156,13 +158,19 @@ const handleRegister = async () => {
       }
     })
     
-    if (authError) throw authError
+    // Handle case where user already exists
+    if (authError) {
+      if (authError.message?.includes('User already registered') || authError.status === 400) {
+        alert('An account with this email already exists. Please login instead.')
+        router.push('/login')
+        return
+      }
+      throw authError
+    }
     
     if (!authData.user) {
       throw new Error('User creation failed')
     }
-    
-    console.log('Auth user created:', authData.user.id)
     
     // Step 2: Create parent record with selected school and pending status
     const parentData = {
@@ -173,23 +181,16 @@ const handleRegister = async () => {
       email: form.value.email,
       address: form.value.address || null,
       relationship: form.value.relationship,
-      status: 'pending'  // Pending approval from admin
+      status: 'pending'
     }
-    
-    console.log('Creating parent record:', parentData)
     
     const { error: parentError } = await supabase
       .from('parents')
       .insert([parentData])
     
-    if (parentError) {
-      console.error('Parent creation error:', parentError)
-      throw parentError
-    }
+    if (parentError) throw parentError
     
-    console.log('Parent record created')
-    
-    // Step 3: Create user record in public.users
+    // Step 3: Upsert user record in public.users (to avoid duplicate key errors)
     const userData = {
       id: authData.user.id,
       email: form.value.email,
@@ -197,27 +198,24 @@ const handleRegister = async () => {
       phone: form.value.phone,
       role: 'parent',
       school_id: form.value.school_id,
-      is_active: true
+      is_active: true,
+      updated_at: new Date().toISOString()
     }
-    
-    console.log('Creating user record:', userData)
     
     const { error: userError } = await supabase
       .from('users')
-      .insert([userData])
+      .upsert([userData], { onConflict: 'id' })
     
-    if (userError) {
-      console.error('User creation error:', userError)
-      throw userError
-    }
+    if (userError) throw userError
     
-    console.log('User record created')
+    // Step 4: Wait for auth session to be established (Supabase signs in automatically)
+    await new Promise(resolve => setTimeout(resolve, 500))
     
-    // Show success message
-    alert(languageStore.t('registrationSuccess') + ' ' + languageStore.t('pendingAdminApproval'))
+    // Refresh auth store to get the current user
+    await authStore.getCurrentUser()
     
-    // Redirect to login page
-    router.push('/login')
+    // Redirect to parent dashboard (will show pending approval message)
+    router.push('/parent')
     
   } catch (error) {
     console.error('Registration error details:', error)
@@ -237,3 +235,105 @@ onMounted(() => {
   loadSchools()
 })
 </script>
+
+<style scoped>
+/* (All styles remain exactly as originally provided) */
+.card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.card-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.modal-container {
+  background-color: white;
+  border-radius: 0.5rem;
+  max-width: 28rem;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+.modal-body {
+  padding: 1.5rem;
+}
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+.form-input, .form-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+.form-input:focus, .form-select:focus {
+  outline: none;
+  ring: 2px solid #3b82f6;
+  border-color: transparent;
+}
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-secondary {
+  background-color: white;
+  color: #374151;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid #d1d5db;
+  transition: background-color 0.2s;
+}
+.btn-secondary:hover {
+  background-color: #f9fafb;
+}
+.badge-warning {
+  background-color: #fef3c7;
+  color: #d97706;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+}
+</style>

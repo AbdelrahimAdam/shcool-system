@@ -72,6 +72,11 @@ const routes = [
                 component: () => import('../modules/admin/Students/StudentForm.vue')
             },
             {
+                path: 'students/:id/edit',
+                name: 'EditStudent',
+                component: () => import('../modules/admin/Students/StudentForm.vue')
+            },
+            {
                 path: 'students/:id',
                 name: 'StudentDetails',
                 component: () => import('../modules/admin/Students/StudentDetails.vue')
@@ -132,6 +137,11 @@ const routes = [
                 component: () => import('../modules/admin/CRM/LeadForm.vue')
             },
             {
+                path: 'crm/:id',
+                name: 'EditLead',
+                component: () => import('../modules/admin/CRM/LeadForm.vue')
+            },
+            {
                 path: 'crm/pipeline',
                 name: 'LeadPipeline',
                 component: () => import('../modules/admin/CRM/LeadPipeline.vue')
@@ -140,6 +150,22 @@ const routes = [
                 path: 'reports',
                 name: 'Reports',
                 component: () => import('../modules/admin/Reports/ReportViewer.vue')
+            },
+            // Parents routes – admin can manage all parents
+            {
+                path: 'parents',
+                name: 'Parents',
+                component: () => import('../modules/admin/Parents/ParentList.vue')
+            },
+            {
+                path: 'parents/create',
+                name: 'CreateParent',
+                component: () => import('../modules/admin/Parents/ParentForm.vue')
+            },
+            {
+                path: 'parents/:id',
+                name: 'EditParent',
+                component: () => import('../modules/admin/Parents/ParentForm.vue')
             },
             // Exams routes
             {
@@ -350,14 +376,11 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore()
     
-    // Get current user if not authenticated
     if (!authStore.isAuthenticated) {
         await authStore.getCurrentUser()
     }
     
-    // If trying to access login page but already authenticated
     if (to.path === '/login' && authStore.isAuthenticated) {
-        // Redirect based on role
         if (authStore.role === 'super_admin') {
             next('/super-admin')
         } else if (authStore.role === 'admin') {
@@ -376,16 +399,13 @@ router.beforeEach(async (to, from, next) => {
         return
     }
     
-    // Check if route requires authentication
     if (to.meta.requiresAuth) {
         if (!authStore.isAuthenticated) {
             next('/login')
             return
         }
         
-        // Check role permissions
         if (to.meta.roles && !to.meta.roles.includes(authStore.role)) {
-            // Redirect to appropriate dashboard based on role
             if (authStore.role === 'super_admin') {
                 next('/super-admin')
             } else if (authStore.role === 'admin') {

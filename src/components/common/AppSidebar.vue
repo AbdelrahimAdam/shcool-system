@@ -88,6 +88,11 @@
           <svg v-else-if="item.icon === 'ReportsIcon'" class="w-5 h-5 mr-3 flex-shrink-0 transition-all duration-200" :class="$route.path === item.path ? 'text-yellow-400' : 'text-gray-500 group-hover:text-gray-300'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
+
+          <!-- Parents Icon (always visible) -->
+          <svg v-else-if="item.icon === 'ParentsIcon'" class="w-5 h-5 mr-3 flex-shrink-0 transition-all duration-200" :class="$route.path === item.path ? 'text-yellow-400' : 'text-gray-500 group-hover:text-gray-300'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
           
           <span class="flex-1">{{ languageStore.t(item.label) }}</span>
           
@@ -113,7 +118,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useLanguageStore } from '../../stores/language'
@@ -158,8 +163,17 @@ const menuItems = computed(() => {
     baseItems.push({ path: '/admin/reports', label: 'reports', icon: 'ReportsIcon' })
   }
   
+  // Always show Parents link for admin sidebar
+  baseItems.push({ path: '/admin/parents', label: 'parents', icon: 'ParentsIcon' })
+  
   return baseItems
 })
+
+// Force re‑render when role changes (optional but safe)
+watch(() => authStore.role, () => {
+  // The computed property will automatically recalculate
+  console.log('Role changed, menu items will update')
+}, { immediate: true })
 
 // Toggle sidebar on mobile
 const toggleSidebar = () => {
@@ -191,7 +205,6 @@ const handleResize = () => {
 defineExpose({ toggleSidebar })
 
 onMounted(() => {
-  // Set initial state based on screen size
   handleResize()
   window.addEventListener('resize', handleResize)
 })

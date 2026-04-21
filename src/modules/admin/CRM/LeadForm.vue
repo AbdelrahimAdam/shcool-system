@@ -109,6 +109,8 @@ const handleSubmit = async () => {
   isLoading.value = false
   if (result.success) {
     router.push('/admin/crm')
+  } else {
+    alert(result.error || languageStore.t('saveFailed'))
   }
 }
 
@@ -116,3 +118,41 @@ onMounted(() => {
   loadLead()
 })
 </script>
+
+<style scoped>
+/* Reuse existing modal styles from your admin dashboard if needed */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.modal-container {
+  background-color: white;
+  border-radius: 0.5rem;
+  max-width: 28rem;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+.modal-body {
+  padding: 1.5rem;
+}
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+</style>
