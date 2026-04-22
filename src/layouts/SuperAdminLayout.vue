@@ -61,6 +61,17 @@
                   <p class="text-sm font-semibold text-gray-800">{{ userFullName }}</p>
                   <p class="text-xs text-gray-500">Super Admin</p>
                 </div>
+                <router-link 
+                  to="/super-admin/profile"
+                  class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  @click="showUserMenu = false"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  {{ languageStore.t('myProfile') }}
+                </router-link>
+                <div class="border-t border-gray-100 my-1"></div>
                 <button 
                   @click="handleLogout" 
                   class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -155,6 +166,23 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             <span class="flex-1">{{ languageStore.t('analytics') }}</span>
+          </router-link>
+
+          <!-- Profile Link -->
+          <router-link
+            to="/super-admin/profile"
+            @click="closeMobileMenu"
+            class="flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group"
+            :class="[
+              isActiveRoute('/super-admin/profile')
+                ? 'bg-yellow-500/15 text-yellow-400 shadow-sm'
+                : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-200'
+            ]"
+          >
+            <svg class="w-5 h-5 mr-3 flex-shrink-0" :class="isActiveRoute('/super-admin/profile') ? 'text-yellow-400' : 'text-gray-500 group-hover:text-gray-300'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span class="flex-1">{{ languageStore.t('myProfile') }}</span>
           </router-link>
         </div>
       </nav>

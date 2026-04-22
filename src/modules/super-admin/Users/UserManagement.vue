@@ -21,6 +21,7 @@
         />
         <select v-model="roleFilter" class="input-field w-40" @change="applyFilters">
           <option value="">{{ languageStore.t('allRoles') }}</option>
+          <option value="super_admin">{{ languageStore.t('superAdmin') }}</option>
           <option value="admin">{{ languageStore.t('admin') }}</option>
           <option value="teacher">{{ languageStore.t('teacher') }}</option>
           <option value="accountant">{{ languageStore.t('accountant') }}</option>
@@ -84,6 +85,12 @@
     <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div class="bg-white rounded-lg max-w-md w-full p-6">
         <h2 class="text-xl font-bold mb-4">{{ editingUser ? languageStore.t('editUser') : languageStore.t('addUser') }}</h2>
+        
+        <!-- Warning for super admin creation -->
+        <div v-if="userForm.role === 'super_admin'" class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-sm text-red-700">
+          ⚠️ {{ languageStore.t('superAdminWarning') }}
+        </div>
+
         <form @submit.prevent="saveUser">
           <div class="space-y-4">
             <div>
@@ -101,6 +108,7 @@
             <div>
               <label class="label">{{ languageStore.t('role') }} *</label>
               <select v-model="userForm.role" required class="input-field">
+                <option value="super_admin">{{ languageStore.t('superAdmin') }}</option>
                 <option value="admin">{{ languageStore.t('admin') }}</option>
                 <option value="teacher">{{ languageStore.t('teacher') }}</option>
                 <option value="accountant">{{ languageStore.t('accountant') }}</option>
@@ -109,12 +117,15 @@
             </div>
             <div>
               <label class="label">{{ languageStore.t('school') }}</label>
-              <select v-model="userForm.school_id" class="input-field">
+              <select v-model="userForm.school_id" class="input-field" :disabled="userForm.role === 'super_admin'">
                 <option :value="null">{{ languageStore.t('selectSchool') }}</option>
                 <option v-for="school in schools" :key="school.id" :value="school.id">
                   {{ school.name }}
                 </option>
               </select>
+              <p v-if="userForm.role === 'super_admin'" class="text-xs text-gray-400 mt-1">
+                {{ languageStore.t('superAdminNoSchool') }}
+              </p>
             </div>
             <div v-if="!editingUser">
               <label class="label">{{ languageStore.t('password') }} *</label>
@@ -135,7 +146,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { supabase } from '@/services/supabase'
 import { useLanguageStore } from '@/stores/language'
 import Pagination from '@/components/common/Pagination.vue'
@@ -160,6 +171,13 @@ const userForm = ref({
   role: 'teacher',
   school_id: null,
   password: ''
+})
+
+// When role changes to super_admin, clear school_id
+watch(() => userForm.value.role, (newRole) => {
+  if (newRole === 'super_admin') {
+    userForm.value.school_id = null
+  }
 })
 
 const fetchUsers = async () => {
@@ -203,7 +221,7 @@ const saveUser = async () => {
           full_name: userForm.value.full_name,
           phone: userForm.value.phone,
           role: userForm.value.role,
-          school_id: userForm.value.school_id
+          school_id: userForm.value.role === 'super_admin' ? null : userForm.value.school_id
         })
         .eq('id', editingUser.value.id)
       
@@ -218,7 +236,8 @@ const saveUser = async () => {
           data: {
             full_name: userForm.value.full_name,
             role: userForm.value.role,
-            phone: userForm.value.phone
+            phone: userForm.value.phone,
+            school_id: userForm.value.role === 'super_admin' ? null : userForm.value.school_id
           }
         }
       })
@@ -230,7 +249,7 @@ const saveUser = async () => {
         .from('users')
         .update({
           role: userForm.value.role,
-          school_id: userForm.value.school_id,
+          school_id: userForm.value.role === 'super_admin' ? null : userForm.value.school_id,
           is_active: true
         })
         .eq('id', authData.user.id)
@@ -318,11 +337,11 @@ const handlePageChange = (page) => {
 
 const getRoleBadgeClass = (role) => {
   const classes = {
+    super_admin: 'bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs',
     admin: 'bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs',
     teacher: 'bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs',
     accountant: 'bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs',
-    parent: 'bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs',
-    super_admin: 'bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs'
+    parent: 'bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs'
   }
   return classes[role] || 'bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs'
 }

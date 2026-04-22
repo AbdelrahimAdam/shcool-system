@@ -22,7 +22,6 @@ export const useTeacherStore = defineStore('teacher', {
     }),
 
     getters: {
-        // Dashboard getters
         getMyClasses: (state) => state.myClasses,
         getMyStudents: (state) => state.myStudents,
         getTeacherStats: (state) => state.teacherStats
@@ -49,12 +48,10 @@ export const useTeacherStore = defineStore('teacher', {
                 }
 
                 const { data, error, count } = await query
-
                 if (error) throw error
 
                 this.teachers = data
                 this.totalCount = count || 0
-                
                 return { data, count }
             } catch (error) {
                 console.error('Fetch teachers error:', error)
@@ -69,7 +66,6 @@ export const useTeacherStore = defineStore('teacher', {
             this.isLoading = true
             try {
                 const authStore = useAuthStore()
-                
                 const teacherToInsert = {
                     school_id: authStore.profile.school_id,
                     full_name: teacherData.full_name,
@@ -84,15 +80,12 @@ export const useTeacherStore = defineStore('teacher', {
                     user_id: teacherData.user_id || null,
                     teacher_code: teacherData.teacher_code || `TCH-${Date.now()}-${Math.floor(Math.random() * 1000)}`
                 }
-                
                 const { data, error } = await supabase
                     .from('teachers')
                     .insert([teacherToInsert])
                     .select()
                     .single()
-
                 if (error) throw error
-
                 cacheService.clear()
                 return { success: true, data }
             } catch (error) {
@@ -118,16 +111,13 @@ export const useTeacherStore = defineStore('teacher', {
                     status: updates.status,
                     subjects: updates.subjects || []
                 }
-                
                 const { data, error } = await supabase
                     .from('teachers')
                     .update(updateData)
                     .eq('id', id)
                     .select()
                     .single()
-
                 if (error) throw error
-
                 cacheService.clear()
                 return { success: true, data }
             } catch (error) {
@@ -145,9 +135,7 @@ export const useTeacherStore = defineStore('teacher', {
                     .from('teachers')
                     .delete()
                     .eq('id', id)
-
                 if (error) throw error
-
                 cacheService.clear()
                 return { success: true }
             } catch (error) {
@@ -166,15 +154,12 @@ export const useTeacherStore = defineStore('teacher', {
                     this.currentTeacher = cached
                     return cached
                 }
-
                 const { data, error } = await supabase
                     .from('teachers')
                     .select('*, user:users(*)')
                     .eq('id', id)
                     .single()
-
                 if (error) throw error
-
                 this.currentTeacher = data
                 cacheService.set(`teacher_${id}`, data)
                 return data
@@ -186,9 +171,8 @@ export const useTeacherStore = defineStore('teacher', {
             }
         },
 
-        // ============= NEW TEACHER DASHBOARD METHODS =============
+        // ============= TEACHER DASHBOARD METHODS =============
 
-        // Get teacher's own record using user_id
         async getTeacherByUserId(userId) {
             this.isLoading = true
             try {
@@ -197,7 +181,6 @@ export const useTeacherStore = defineStore('teacher', {
                     .select('id, school_id, full_name, teacher_code')
                     .eq('user_id', userId)
                     .maybeSingle()
-
                 if (error) throw error
                 return data
             } catch (error) {
@@ -208,36 +191,26 @@ export const useTeacherStore = defineStore('teacher', {
             }
         },
 
-        // Get classes assigned to this teacher
         async fetchMyClasses() {
             this.isLoading = true
             const authStore = useAuthStore()
-            
             try {
                 const teacherId = authStore.teacherId
-                if (!teacherId) {
-                    console.log('No teacher ID found')
-                    return []
-                }
-
+                if (!teacherId) return []
+                // Removed 'status' because the classes table does not have this column
                 const { data, error } = await supabase
                     .from('classes')
                     .select('id, name, grade_level, section, capacity, current_enrollment')
                     .eq('teacher_id', teacherId)
                     .order('grade_level', { ascending: true })
-
                 if (error) throw error
-
                 this.myClasses = data || []
                 this.teacherStats.classesCount = this.myClasses.length
-                
-                // Calculate total students across all classes
                 let totalStudents = 0
                 for (const cls of this.myClasses) {
                     totalStudents += cls.current_enrollment || 0
                 }
                 this.teacherStats.studentsCount = totalStudents
-                
                 return this.myClasses
             } catch (error) {
                 console.error('Fetch my classes error:', error)
@@ -247,28 +220,27 @@ export const useTeacherStore = defineStore('teacher', {
             }
         },
 
-        // Get students from teacher's classes
-        async fetchMyStudents() {
+        async fetchMyStudents(classId = null) {
             this.isLoading = true
             const authStore = useAuthStore()
-            
             try {
                 const teacherId = authStore.teacherId
-                if (!teacherId || this.myClasses.length === 0) {
-                    return []
+                if (!teacherId) return []
+                let classIds = []
+                if (classId) {
+                    classIds = [classId]
+                } else {
+                    classIds = this.myClasses.map(c => c.id)
                 }
-
-                const classIds = this.myClasses.map(c => c.id)
-                
-                const { data, error } = await supabase
+                if (classIds.length === 0) return []
+                let query = supabase
                     .from('students')
-                    .select('id, full_name, student_number, class_id, status')
+                    .select('id, full_name, student_number, class_id, status, date_of_birth')
                     .in('class_id', classIds)
                     .eq('status', 'active')
                     .order('full_name')
-
+                const { data, error } = await query
                 if (error) throw error
-
                 this.myStudents = data || []
                 return this.myStudents
             } catch (error) {
@@ -279,46 +251,28 @@ export const useTeacherStore = defineStore('teacher', {
             }
         },
 
-        // Get today's attendance rate for teacher's classes
         async fetchTodayAttendanceRate() {
             const authStore = useAuthStore()
             const today = new Date().toISOString().split('T')[0]
-            
             try {
                 const teacherId = authStore.teacherId
-                if (!teacherId || this.myClasses.length === 0) {
-                    return 0
-                }
-
+                if (!teacherId || this.myClasses.length === 0) return 0
                 const classIds = this.myClasses.map(c => c.id)
-                
-                // Get students in these classes
                 const { data: students } = await supabase
                     .from('students')
                     .select('id')
                     .in('class_id', classIds)
                     .eq('status', 'active')
-
-                if (!students || students.length === 0) {
-                    return 0
-                }
-
+                if (!students?.length) return 0
                 const studentIds = students.map(s => s.id)
-                
-                // Get today's attendance
                 const { data: attendance } = await supabase
                     .from('attendance')
                     .select('student_id, status')
                     .in('student_id', studentIds)
                     .eq('date', today)
-
-                if (!attendance || attendance.length === 0) {
-                    return 0
-                }
-
+                if (!attendance?.length) return 0
                 const presentCount = attendance.filter(a => a.status === 'present' || a.status === 'late').length
                 const rate = Math.round((presentCount / attendance.length) * 100)
-                
                 this.teacherStats.todayAttendance = rate
                 return rate
             } catch (error) {
@@ -327,27 +281,19 @@ export const useTeacherStore = defineStore('teacher', {
             }
         },
 
-        // Get upcoming exams for teacher's classes
         async fetchUpcomingExams() {
             const authStore = useAuthStore()
             const today = new Date().toISOString().split('T')[0]
-            
             try {
                 const teacherId = authStore.teacherId
-                if (!teacherId || this.myClasses.length === 0) {
-                    return 0
-                }
-
+                if (!teacherId || this.myClasses.length === 0) return 0
                 const classIds = this.myClasses.map(c => c.id)
-                
                 const { data, error } = await supabase
                     .from('exams')
                     .select('id')
                     .in('class_id', classIds)
                     .gte('exam_date', today)
-
                 if (error) throw error
-
                 const count = data?.length || 0
                 this.teacherStats.upcomingExams = count
                 return count
@@ -357,16 +303,13 @@ export const useTeacherStore = defineStore('teacher', {
             }
         },
 
-        // Load all dashboard data at once
         async loadTeacherDashboard() {
             this.isLoading = true
-            
             try {
                 await this.fetchMyClasses()
                 await this.fetchMyStudents()
                 await this.fetchTodayAttendanceRate()
                 await this.fetchUpcomingExams()
-                
                 return {
                     myClasses: this.myClasses,
                     myStudents: this.myStudents,

@@ -157,7 +157,7 @@
             <span class="flex-1">{{ languageStore.t('reports') }}</span>
           </router-link>
 
-          <!-- Parents Link (new) -->
+          <!-- Parents Link -->
           <router-link
             to="/admin/parents"
             @click="closeMobileMenu"
@@ -172,6 +172,23 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <span class="flex-1">{{ languageStore.t('parents') }}</span>
+          </router-link>
+
+          <!-- Profile Link -->
+          <router-link
+            to="/admin/profile"
+            @click="closeMobileMenu"
+            class="flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group"
+            :class="[
+              isActiveRoute('/admin/profile')
+                ? 'bg-yellow-500/15 text-yellow-400 shadow-sm'
+                : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-200'
+            ]"
+          >
+            <svg class="w-5 h-5 mr-3 flex-shrink-0 transition-colors" :class="isActiveRoute('/admin/profile') ? 'text-yellow-400' : 'text-gray-500 group-hover:text-gray-300'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span class="flex-1">{{ languageStore.t('myProfile') }}</span>
           </router-link>
         </div>
       </nav>

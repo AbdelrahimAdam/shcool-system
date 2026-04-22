@@ -102,6 +102,11 @@ const routes = [
                 component: () => import('../modules/admin/Classes/ClassForm.vue')
             },
             {
+                path: 'classes/:id',
+                name: 'EditClass',
+                component: () => import('../modules/admin/Classes/ClassForm.vue')
+            },
+            {
                 path: 'attendance',
                 name: 'Attendance',
                 component: () => import('../modules/admin/Attendance/AttendanceMarking.vue')
@@ -151,7 +156,6 @@ const routes = [
                 name: 'Reports',
                 component: () => import('../modules/admin/Reports/ReportViewer.vue')
             },
-            // Parents routes – admin can manage all parents
             {
                 path: 'parents',
                 name: 'Parents',
@@ -167,7 +171,6 @@ const routes = [
                 name: 'EditParent',
                 component: () => import('../modules/admin/Parents/ParentForm.vue')
             },
-            // Exams routes
             {
                 path: 'exams',
                 name: 'Exams',
@@ -182,6 +185,11 @@ const routes = [
                 path: 'exams/:id/edit',
                 name: 'EditExam',
                 component: () => import('../modules/admin/Exams/ExamForm.vue')
+            },
+            {
+                path: 'profile',
+                name: 'AdminProfile',
+                component: () => import('../modules/admin/Profile.vue')
             }
         ]
     },
@@ -219,10 +227,14 @@ const routes = [
                 path: 'analytics',
                 name: 'GlobalStats',
                 component: () => import('../modules/super-admin/Analytics/GlobalStats.vue')
+            },
+            {
+                path: 'profile',
+                name: 'SuperAdminProfile',
+                component: () => import('../modules/super-admin/Profile.vue')
             }
         ]
     },
-    // Teacher dashboard route
     {
         path: '/teacher',
         component: () => import('../layouts/TeacherLayout.vue'),
@@ -232,6 +244,21 @@ const routes = [
                 path: '',
                 name: 'TeacherDashboard',
                 component: () => import('../modules/teacher/Dashboard.vue')
+            },
+            {
+                path: 'classes',
+                name: 'TeacherClasses',
+                component: () => import('../modules/teacher/Classes.vue')
+            },
+            {
+                path: 'students',
+                name: 'TeacherStudents',
+                component: () => import('../modules/teacher/Students.vue')
+            },
+            {
+                path: 'students/:id',
+                name: 'TeacherStudentDetail',
+                component: () => import('../modules/teacher/StudentDetail.vue')
             },
             {
                 path: 'attendance',
@@ -249,6 +276,11 @@ const routes = [
                 component: () => import('../modules/teacher/Exams.vue')
             },
             {
+                path: 'exams/create',
+                name: 'TeacherCreateExam',
+                component: () => import('../modules/teacher/ExamForm.vue')
+            },
+            {
                 path: 'exams/:id/edit',
                 name: 'TeacherEditExam',
                 component: () => import('../modules/teacher/ExamForm.vue')
@@ -257,10 +289,14 @@ const routes = [
                 path: 'grade-entry',
                 name: 'GradeEntry',
                 component: () => import('../modules/teacher/GradeEntry.vue')
+            },
+            {
+                path: 'profile',
+                name: 'TeacherProfile',
+                component: () => import('../modules/admin/Profile.vue')
             }
         ]
     },
-    // Accountant dashboard route
     {
         path: '/accountant',
         component: () => import('../layouts/AccountantLayout.vue'),
@@ -280,10 +316,14 @@ const routes = [
                 path: 'reports',
                 name: 'AccountantReports',
                 component: () => import('../modules/accountant/Reports.vue')
+            },
+            {
+                path: 'profile',
+                name: 'AccountantProfile',
+                component: () => import('../modules/admin/Profile.vue')
             }
         ]
     },
-    // Parent dashboard route
     {
         path: '/parent',
         component: () => import('../layouts/ParentLayout.vue'),
@@ -318,10 +358,14 @@ const routes = [
                 path: 'grades',
                 name: 'ParentGrades',
                 component: () => import('../modules/parent/Grades.vue')
+            },
+            {
+                path: 'profile',
+                name: 'ParentProfile',
+                component: () => import('../modules/admin/Profile.vue')
             }
         ]
     },
-    // Student dashboard route
     {
         path: '/student',
         component: () => import('../layouts/StudentLayout.vue'),

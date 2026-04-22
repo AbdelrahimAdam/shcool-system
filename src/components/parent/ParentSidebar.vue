@@ -131,6 +131,24 @@
           <span class="flex-1">{{ languageStore.t('payments') }}</span>
           <div v-if="isActiveRoute('/parent/payments')" class="w-1 h-8 bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-full"></div>
         </router-link>
+
+        <!-- Profile Link -->
+        <router-link
+          to="/parent/profile"
+          @click="$emit('close-mobile-menu')"
+          class="flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group"
+          :class="[
+            isActiveRoute('/parent/profile')
+              ? 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 text-yellow-400 shadow-sm'
+              : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-200'
+          ]"
+        >
+          <svg class="w-5 h-5 mr-3 flex-shrink-0 transition-all duration-200" :class="isActiveRoute('/parent/profile') ? 'text-yellow-400' : 'text-gray-500 group-hover:text-gray-300'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          <span class="flex-1">{{ languageStore.t('myProfile') }}</span>
+          <div v-if="isActiveRoute('/parent/profile')" class="w-1 h-8 bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-full"></div>
+        </router-link>
       </div>
     </nav>
     
@@ -196,9 +214,7 @@ const userInitials = computed(() => {
 
 // Check if route is active
 const isActiveRoute = (path) => {
-  if (path === '/parent') {
-    return route.path === '/parent'
-  }
+  if (path === '/parent') return route.path === '/parent'
   return route.path.startsWith(path)
 }
 
@@ -214,32 +230,24 @@ const handleLogout = async () => {
 nav::-webkit-scrollbar {
   width: 4px;
 }
-
 nav::-webkit-scrollbar-track {
   background: #1f2937;
 }
-
 nav::-webkit-scrollbar-thumb {
   background: #4b5563;
   border-radius: 4px;
 }
-
 nav::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }
-
-/* Smooth transitions */
 .transition-all {
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 200ms;
 }
-
-/* Active route indicator animation */
 .router-link-active .w-1 {
   animation: slideIn 0.3s ease-out;
 }
-
 @keyframes slideIn {
   from {
     opacity: 0;

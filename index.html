@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" />
@@ -8,17 +8,67 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- SEO Meta Tags -->
+    <title>Zack International Schools | زاك انترناشونال - International School in Sudan</title>
+    <meta name="description" content="Zack International Schools offers quality education from primary to high school in Gedaref, Sudan. مدرسة زاك العالمية – تعليم متميز من المرحلة الابتدائية إلى الثانوية في ولاية القضارف، السودان." />
+    <meta name="keywords" content="Zack International School, زاك انترناشونال, زاك, مدارس زاك, international school Sudan, مدرسة دولية في السودان, ولاية القضارف, Gedaref, education, kindergarten, primary school, middle school, high school" />
+    <meta name="author" content="Zack International Schools" />
+    
     <!-- Google Search Console verification -->
     <meta name="google-site-verification" content="RYMySMEY9LcxntSaxrwgwwfj5wHkOdXHMSqBRUJlsYE" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Zack International Schools | زاك انترناشونال - Sudan" />
+    <meta property="og:description" content="Leading international school in Gedaref, Sudan offering comprehensive education from primary to high school." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://zack-international.vercel.app/" />
+    <meta property="og:image" content="https://zack-international.vercel.app/og-image.jpg" />
+    <meta property="og:image:alt" content="Zack International Schools Campus" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Zack International Schools | زاك انترناشونال" />
+    <meta name="twitter:description" content="Quality international education in Gedaref, Sudan. تعليم دولي متميز في ولاية القضارف، السودان." />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://zack-international.vercel.app/" />
+    
+    <!-- PWA & Icons -->
+    <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-    <title>Zack International Schools</title>
+    
+    <!-- Structured Data (Schema.org) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "Zack International Schools",
+      "alternateName": "مدارس زاك العالمية",
+      "url": "https://zack-international.vercel.app/",
+      "logo": "https://zack-international.vercel.app/icons/512.png",
+      "description": "Zack International Schools offers quality education from primary to high school in Gedaref, Sudan. مدرسة زاك العالمية – تعليم متميز من المرحلة الابتدائية إلى الثانوية في ولاية القضارف، السودان.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Gedaref",
+        "addressRegion": "Gedaref State",
+        "addressCountry": "SD"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "admissions",
+        "telephone": "+249123456789",
+        "email": "info@zackschool.com"
+      },
+      "sameAs": [
+        "https://www.facebook.com/zackschool",
+        "https://www.instagram.com/zackschool"
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
     <script>
-      // Optional: log PWA installability for debugging
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(reg => {
           console.log('Service Worker registered:', reg);

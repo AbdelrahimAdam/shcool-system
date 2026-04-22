@@ -17,6 +17,7 @@
         <div>
           <label class="form-label">{{ languageStore.t('date') }}</label>
           <input v-model="attendanceDate" type="date" class="form-input" />
+          <p v-if="dateError" class="text-red-500 text-xs mt-1">{{ dateError }}</p>
         </div>
       </div>
 
@@ -48,7 +49,7 @@
           </thead>
           <tbody>
             <tr v-for="student in students" :key="student.id" class="border-t">
-              <td class="px-3 py-2">{{ student.full_name }}</td>
+              <td class="px-3 py-2 font-medium">{{ student.full_name }}</td>
               <td class="px-3 py-2 text-center">
                 <input 
                   type="radio" 
@@ -94,7 +95,7 @@
                   :value="getAttendanceNotes(student.id)"
                   @input="updateAttendanceNotes(student.id, $event.target.value)"
                   type="text" 
-                  class="form-input text-sm"
+                  class="form-input text-sm w-full"
                   :placeholder="languageStore.t('notes')"
                 />
               </td>
@@ -102,7 +103,10 @@
           </tbody>
         </table>
 
-        <div class="mt-6 flex justify-end">
+        <div class="mt-6 flex justify-end gap-3">
+          <button @click="resetForm" class="btn-secondary">
+            {{ languageStore.t('cancel') }}
+          </button>
           <button @click="saveAttendance" :disabled="isSaving" class="btn-primary">
             {{ isSaving ? languageStore.t('saving') : languageStore.t('saveAttendance') }}
           </button>
@@ -112,6 +116,11 @@
       <div v-else-if="selectedClass && !students.length && !isLoading" class="text-center py-8 text-gray-500">
         {{ languageStore.t('noStudentsInClass') }}
       </div>
+    </div>
+
+    <!-- Success Toast (temporary message) -->
+    <div v-if="showSuccess" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300">
+      {{ languageStore.t('attendanceSaved') }}
     </div>
   </div>
 </template>
@@ -134,75 +143,70 @@ const attendanceDate = ref(new Date().toISOString().split('T')[0])
 const attendanceData = ref({})
 const isLoading = ref(false)
 const isSaving = ref(false)
+const showSuccess = ref(false)
+const dateError = ref('')
 
-// Helper function to safely get attendance status
+// Validate date (cannot be in the future)
+const validateDate = () => {
+  const today = new Date().toISOString().split('T')[0]
+  if (attendanceDate.value > today) {
+    dateError.value = languageStore.t('cannotMarkFutureAttendance')
+    return false
+  }
+  dateError.value = ''
+  return true
+}
+
+watch(attendanceDate, () => {
+  validateDate()
+  if (selectedClass.value) {
+    loadStudents()
+  }
+})
+
 const getAttendanceStatus = (studentId) => {
   if (!attendanceData.value[studentId]) {
-    attendanceData.value[studentId] = {
-      status: 'present',
-      notes: ''
-    }
+    attendanceData.value[studentId] = { status: 'present', notes: '' }
   }
   return attendanceData.value[studentId].status
 }
 
-// Helper function to safely get attendance notes
 const getAttendanceNotes = (studentId) => {
   if (!attendanceData.value[studentId]) {
-    attendanceData.value[studentId] = {
-      status: 'present',
-      notes: ''
-    }
+    attendanceData.value[studentId] = { status: 'present', notes: '' }
   }
   return attendanceData.value[studentId].notes
 }
 
-// Update attendance status
 const updateAttendanceStatus = (studentId, status) => {
   if (!attendanceData.value[studentId]) {
-    attendanceData.value[studentId] = {
-      status: 'present',
-      notes: ''
-    }
+    attendanceData.value[studentId] = { status: 'present', notes: '' }
   }
   attendanceData.value[studentId].status = status
 }
 
-// Update attendance notes
 const updateAttendanceNotes = (studentId, notes) => {
   if (!attendanceData.value[studentId]) {
-    attendanceData.value[studentId] = {
-      status: 'present',
-      notes: ''
-    }
+    attendanceData.value[studentId] = { status: 'present', notes: '' }
   }
   attendanceData.value[studentId].notes = notes
 }
 
-// Load classes for the teacher (only their assigned classes)
 const loadClasses = async () => {
   isLoading.value = true
-  
   try {
     const teacherId = authStore.teacherId
-    
     if (!teacherId) {
-      console.log('No teacher ID found')
       classes.value = []
-      isLoading.value = false
       return
     }
-
     const { data, error } = await supabase
       .from('classes')
       .select('id, name, grade_level')
       .eq('teacher_id', teacherId)
       .order('grade_level', { ascending: true })
-
     if (error) throw error
-
     classes.value = data || []
-    console.log('Classes loaded:', classes.value.length)
   } catch (error) {
     console.error('Error loading classes:', error)
   } finally {
@@ -210,12 +214,11 @@ const loadClasses = async () => {
   }
 }
 
-// Load students of selected class
 const loadStudents = async () => {
   if (!selectedClass.value) return
-  
+  if (!validateDate()) return
+
   isLoading.value = true
-  
   try {
     const { data: studentList, error: studentError } = await supabase
       .from('students')
@@ -223,21 +226,16 @@ const loadStudents = async () => {
       .eq('class_id', selectedClass.value)
       .eq('status', 'active')
       .order('full_name')
-
     if (studentError) throw studentError
-    
     students.value = studentList || []
 
-    // Fetch existing attendance for this class and date
     const { data: existing, error: attendanceError } = await supabase
       .from('attendance')
       .select('student_id, status, notes')
       .eq('class_id', selectedClass.value)
       .eq('date', attendanceDate.value)
-
     if (attendanceError) throw attendanceError
 
-    // Initialize attendance data
     attendanceData.value = {}
     students.value.forEach(student => {
       const existingRec = existing?.find(e => e.student_id === student.id)
@@ -253,10 +251,13 @@ const loadStudents = async () => {
   }
 }
 
-// Save attendance
 const saveAttendance = async () => {
   if (!selectedClass.value || students.value.length === 0) return
-  
+  if (!validateDate()) {
+    alert(dateError.value)
+    return
+  }
+
   isSaving.value = true
   const schoolId = authStore.profile?.school_id
   const userId = authStore.user?.id
@@ -278,17 +279,20 @@ const saveAttendance = async () => {
       .delete()
       .eq('class_id', selectedClass.value)
       .eq('date', attendanceDate.value)
-
     if (deleteError) throw deleteError
 
     // Insert new records
     const { error: insertError } = await supabase
       .from('attendance')
       .insert(records)
-
     if (insertError) throw insertError
-    
-    alert(languageStore.t('attendanceSaved'))
+
+    // Show success message
+    showSuccess.value = true
+    setTimeout(() => { showSuccess.value = false }, 3000)
+
+    // Reset form: clear class selection and reload classes (optional)
+    resetForm()
   } catch (error) {
     console.error('Error saving attendance:', error)
     alert(languageStore.t('errorSavingAttendance'))
@@ -297,14 +301,30 @@ const saveAttendance = async () => {
   }
 }
 
-// Watch for date changes to reload attendance
-watch(attendanceDate, () => {
-  if (selectedClass.value) {
-    loadStudents()
-  }
-})
+const resetForm = () => {
+  selectedClass.value = null
+  students.value = []
+  attendanceData.value = {}
+  attendanceDate.value = new Date().toISOString().split('T')[0]
+  dateError.value = ''
+}
 
 onMounted(() => {
   loadClasses()
 })
 </script>
+
+<style scoped>
+.spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>

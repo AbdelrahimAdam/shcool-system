@@ -1,8 +1,8 @@
 <template>
   <div class="space-y-6">
-    <h1 class="text-2xl font-bold text-gray-900">{{ languageStore.t('enterGrades') }}</h1>
+    <div class="card p-4 md:p-6">
+      <h1 class="text-xl md:text-2xl font-bold mb-6">{{ languageStore.t('enterGrades') }}</h1>
 
-    <div class="card p-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div>
           <label class="form-label">{{ languageStore.t('exam') }}</label>
@@ -35,21 +35,26 @@
               <td class="px-4 py-2 font-medium">{{ student.full_name }}</td>
               <td class="px-4 py-2 text-center">
                 <input
-                  v-model.number="grades[student.id].score"
+                  :value="getGradeScore(student.id)"
+                  @input="updateScore(student.id, $event.target.value)"
                   type="number"
                   :max="selectedExam.max_score"
                   min="0"
                   step="0.5"
                   class="form-input w-24 text-center"
-                  @input="calculateGrade(student.id)"
                 />
               </td>
-              <td class="px-4 py-2 text-center font-medium">{{ grades[student.id].percentage?.toFixed(1) || '-' }}%</td>
-              <td class="px-4 py-2 text-center font-bold" :class="getGradeColor(grades[student.id].percentage)">
-                {{ grades[student.id].grade || '-' }}
+              <td class="px-4 py-2 text-center font-medium">{{ getGradePercentage(student.id) || '-' }}%</td>
+              <td class="px-4 py-2 text-center font-bold" :class="getGradeColor(getGradePercentage(student.id))">
+                {{ getGradeLetter(student.id) || '-' }}
               </td>
               <td class="px-4 py-2">
-                <input v-model="grades[student.id].remarks" type="text" class="form-input text-sm" />
+                <input
+                  :value="getGradeRemarks(student.id)"
+                  @input="updateRemarks(student.id, $event.target.value)"
+                  type="text"
+                  class="form-input text-sm"
+                />
               </td>
             </tr>
           </tbody>
@@ -82,13 +87,13 @@ const exams = ref([])
 const selectedExamId = ref(null)
 const selectedExam = ref(null)
 const students = ref([])
-const grades = ref({})
+const gradesData = ref({})
 const isLoading = ref(false)
 const isSaving = ref(false)
 
 const loadExams = async () => {
   const schoolId = authStore.profile?.school_id
-  const teacherId = authStore.profile?.teacher_id
+  const teacherId = authStore.teacherId
   if (!schoolId) return
 
   let query = supabase
@@ -109,11 +114,14 @@ const loadStudents = async () => {
   if (!selectedExamId.value) return
   isLoading.value = true
 
-  // Get exam details
   const exam = exams.value.find(e => e.id === selectedExamId.value)
   selectedExam.value = exam
 
-  // Get students in the class
+  if (!exam) {
+    isLoading.value = false
+    return
+  }
+
   const { data: studentList } = await supabase
     .from('students')
     .select('id, full_name')
@@ -122,41 +130,60 @@ const loadStudents = async () => {
     .order('full_name')
   students.value = studentList || []
 
-  // Fetch existing grades
   const { data: existingGrades } = await supabase
     .from('grades')
     .select('*')
     .eq('exam_id', selectedExamId.value)
 
-  grades.value = {}
+  gradesData.value = {}
   students.value.forEach(student => {
     const existing = existingGrades?.find(g => g.student_id === student.id)
-    grades.value[student.id] = {
-      score: existing?.score || '',
-      percentage: existing?.percentage || null,
-      grade: existing?.grade || '',
-      remarks: existing?.remarks || ''
+    gradesData.value[student.id] = {
+      score: existing?.score ?? '',
+      percentage: existing?.percentage ?? null,
+      grade: existing?.grade ?? '',
+      remarks: existing?.remarks ?? ''
     }
-    if (existing?.score) calculateGrade(student.id)
   })
 
   isLoading.value = false
 }
 
+const getGradeScore = (studentId) => gradesData.value[studentId]?.score ?? ''
+const getGradePercentage = (studentId) => gradesData.value[studentId]?.percentage
+const getGradeRemarks = (studentId) => gradesData.value[studentId]?.remarks ?? ''
+const getGradeLetter = (studentId) => gradesData.value[studentId]?.grade ?? ''
+
+const updateScore = (studentId, value) => {
+  const score = value === '' ? null : parseFloat(value)
+  if (!gradesData.value[studentId]) {
+    gradesData.value[studentId] = {}
+  }
+  gradesData.value[studentId].score = score
+  calculateGrade(studentId)
+}
+
+const updateRemarks = (studentId, value) => {
+  if (!gradesData.value[studentId]) {
+    gradesData.value[studentId] = {}
+  }
+  gradesData.value[studentId].remarks = value
+}
+
 const calculateGrade = (studentId) => {
-  const score = grades.value[studentId].score
-  const maxScore = selectedExam.value.max_score
-  if (score && maxScore && maxScore > 0) {
+  const score = gradesData.value[studentId].score
+  const maxScore = selectedExam.value?.max_score
+  if (score != null && maxScore && maxScore > 0 && score >= 0) {
     const percentage = (score / maxScore) * 100
-    grades.value[studentId].percentage = percentage
-    if (percentage >= 90) grades.value[studentId].grade = 'A'
-    else if (percentage >= 80) grades.value[studentId].grade = 'B'
-    else if (percentage >= 70) grades.value[studentId].grade = 'C'
-    else if (percentage >= 60) grades.value[studentId].grade = 'D'
-    else grades.value[studentId].grade = 'F'
+    gradesData.value[studentId].percentage = percentage
+    if (percentage >= 90) gradesData.value[studentId].grade = 'A'
+    else if (percentage >= 80) gradesData.value[studentId].grade = 'B'
+    else if (percentage >= 70) gradesData.value[studentId].grade = 'C'
+    else if (percentage >= 60) gradesData.value[studentId].grade = 'D'
+    else gradesData.value[studentId].grade = 'F'
   } else {
-    grades.value[studentId].percentage = null
-    grades.value[studentId].grade = ''
+    gradesData.value[studentId].percentage = null
+    gradesData.value[studentId].grade = ''
   }
 }
 
@@ -173,26 +200,42 @@ const saveGrades = async () => {
   isSaving.value = true
   const schoolId = authStore.profile?.school_id
 
-  const records = students.value.map(student => ({
-    school_id: schoolId,
-    student_id: student.id,
-    exam_id: selectedExamId.value,
-    score: grades.value[student.id].score,
-    percentage: grades.value[student.id].percentage,
-    grade: grades.value[student.id].grade,
-    remarks: grades.value[student.id].remarks || null
-  })).filter(r => r.score !== '' && r.score !== null)
+  const records = students.value
+    .map(student => {
+      const data = gradesData.value[student.id]
+      if (!data || data.score === '' || data.score === null) return null
+      return {
+        school_id: schoolId,
+        student_id: student.id,
+        exam_id: selectedExamId.value,
+        score: data.score,
+        percentage: data.percentage,
+        grade: data.grade,
+        remarks: data.remarks || null
+      }
+    })
+    .filter(r => r !== null)
 
-  // Upsert: delete existing then insert
   const { error: deleteError } = await supabase
     .from('grades')
     .delete()
     .eq('exam_id', selectedExamId.value)
 
-  if (!deleteError && records.length) {
+  if (deleteError) {
+    alert(languageStore.t('operationFailed'))
+    isSaving.value = false
+    return
+  }
+
+  if (records.length) {
     const { error } = await supabase.from('grades').insert(records)
-    if (error) alert(error.message)
-    else alert(languageStore.t('gradesSaved'))
+    if (error) {
+      alert(error.message)
+    } else {
+      alert(languageStore.t('gradesSaved'))
+    }
+  } else {
+    alert(languageStore.t('noGradesToSave'))
   }
   isSaving.value = false
 }
@@ -201,3 +244,18 @@ onMounted(() => {
   loadExams()
 })
 </script>
+
+<style scoped>
+.spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
