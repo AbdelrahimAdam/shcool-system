@@ -9,6 +9,7 @@
         <component :is="Component" />
       </transition>
     </router-view>
+    <InstallPrompt />
   </div>
 </template>
 
@@ -16,6 +17,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useLanguageStore } from './stores/language'
 import OfflineIndicator from './components/common/OfflineIndicator.vue'
+import InstallPrompt from './components/common/InstallPrompt.vue'
 
 const languageStore = useLanguageStore()
 const isOnline = ref(navigator.onLine)
