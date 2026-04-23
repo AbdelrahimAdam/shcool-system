@@ -20,6 +20,7 @@ export default defineConfig({
         start_url: '/',
         orientation: 'portrait',
         icons: [
+          { src: '/icons/maskable_icon_x48.png', sizes: '48x48', type: 'image/png', purpose: 'any maskable' },
           { src: '/icons/maskable_icon_x72.png', sizes: '72x72', type: 'image/png', purpose: 'any maskable' },
           { src: '/icons/maskable_icon_x96.png', sizes: '96x96', type: 'image/png', purpose: 'any maskable' },
           { src: '/icons/maskable_icon_x128.png', sizes: '128x128', type: 'image/png', purpose: 'any maskable' },
@@ -38,7 +39,7 @@ export default defineConfig({
               cacheName: 'supabase-api-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60
+                maxAgeSeconds: 60 * 60 // 1 hour
               }
             }
           }
