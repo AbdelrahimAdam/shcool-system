@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://zack-international.vercel.app/sitemap.xml
