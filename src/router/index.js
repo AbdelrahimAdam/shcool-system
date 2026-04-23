@@ -92,6 +92,11 @@ const routes = [
                 component: () => import('../modules/admin/Teachers/TeacherForm.vue')
             },
             {
+                path: 'teachers/:id/edit',
+                name: 'EditTeacher',
+                component: () => import('../modules/admin/Teachers/TeacherForm.vue')
+            },
+            {
                 path: 'classes',
                 name: 'Classes',
                 component: () => import('../modules/admin/Classes/ClassList.vue')
@@ -130,6 +135,17 @@ const routes = [
                 path: 'payments/approval',
                 name: 'PaymentApproval',
                 component: () => import('../modules/admin/Payments/PaymentApproval.vue')
+            },
+            // ✅ Added missing payment edit routes
+            {
+                path: 'payments/:id',
+                name: 'PaymentDetails',
+                component: () => import('../modules/admin/Payments/PaymentForm.vue')
+            },
+            {
+                path: 'payments/:id/edit',
+                name: 'EditPayment',
+                component: () => import('../modules/admin/Payments/PaymentForm.vue')
             },
             {
                 path: 'crm',

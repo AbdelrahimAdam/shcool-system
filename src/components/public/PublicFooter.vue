@@ -1,11 +1,12 @@
 <template>
-  <footer class="bg-gray-900 text-white">
+  <footer class="bg-gray-900 dark:bg-gray-950 text-white transition-colors duration-200">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <!-- Two columns on mobile/tablet, four on desktop -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
         <!-- About Section -->
         <div>
           <h3 class="text-lg font-semibold mb-4">{{ languageStore.t('aboutUs') }}</h3>
-          <p class="text-sm text-gray-400 leading-relaxed">
+          <p class="text-sm text-gray-400 dark:text-gray-300 leading-relaxed">
             {{ languageStore.t('footerAboutText') }}
           </p>
         </div>
@@ -15,27 +16,27 @@
           <h3 class="text-lg font-semibold mb-4">{{ languageStore.t('quickLinks') }}</h3>
           <ul class="space-y-2 text-sm">
             <li>
-              <router-link to="/" class="text-gray-400 hover:text-white transition-colors">
+              <router-link to="/" class="text-gray-400 dark:text-gray-300 hover:text-white transition-colors">
                 {{ languageStore.t('home') }}
               </router-link>
             </li>
             <li>
-              <router-link to="/about" class="text-gray-400 hover:text-white transition-colors">
+              <router-link to="/about" class="text-gray-400 dark:text-gray-300 hover:text-white transition-colors">
                 {{ languageStore.t('about') }}
               </router-link>
             </li>
             <li>
-              <router-link to="/programs" class="text-gray-400 hover:text-white transition-colors">
+              <router-link to="/programs" class="text-gray-400 dark:text-gray-300 hover:text-white transition-colors">
                 {{ languageStore.t('programs') }}
               </router-link>
             </li>
             <li>
-              <router-link to="/admissions" class="text-gray-400 hover:text-white transition-colors">
+              <router-link to="/admissions" class="text-gray-400 dark:text-gray-300 hover:text-white transition-colors">
                 {{ languageStore.t('admissions') }}
               </router-link>
             </li>
             <li>
-              <router-link to="/contact" class="text-gray-400 hover:text-white transition-colors">
+              <router-link to="/contact" class="text-gray-400 dark:text-gray-300 hover:text-white transition-colors">
                 {{ languageStore.t('contact') }}
               </router-link>
             </li>
@@ -45,7 +46,7 @@
         <!-- Contact Info -->
         <div>
           <h3 class="text-lg font-semibold mb-4">{{ languageStore.t('contactUs') }}</h3>
-          <ul class="space-y-2 text-sm text-gray-400">
+          <ul class="space-y-2 text-sm text-gray-400 dark:text-gray-300">
             <li class="flex items-start gap-2" :class="{ 'flex-row-reverse': languageStore.isRTL }">
               <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -56,14 +57,28 @@
               <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
-              <span>+249 123 456 789</span>
+              <span>0997644442</span>
             </li>
             <li class="flex items-start gap-2" :class="{ 'flex-row-reverse': languageStore.isRTL }">
               <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span>Khartoum, Sudan</span>
+              <span>Gedaref, Sudan (ولاية القضارف)</span>
+            </li>
+            <!-- WhatsApp Button -->
+            <li class="mt-3">
+              <a 
+                href="https://wa.me/249997644442" 
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                {{ languageStore.t('whatsapp') }}
+              </a>
             </li>
           </ul>
         </div>
@@ -71,7 +86,7 @@
         <!-- Working Hours -->
         <div>
           <h3 class="text-lg font-semibold mb-4">{{ languageStore.t('workingHours') }}</h3>
-          <ul class="space-y-2 text-sm text-gray-400">
+          <ul class="space-y-2 text-sm text-gray-400 dark:text-gray-300">
             <li>{{ languageStore.t('sundayToThursday') }}: 8:00 AM - 2:00 PM</li>
             <li>{{ languageStore.t('friday') }}: {{ languageStore.t('closed') }}</li>
             <li>{{ languageStore.t('saturday') }}: 9:00 AM - 12:00 PM</li>
@@ -79,8 +94,9 @@
         </div>
       </div>
 
-      <div class="border-t border-gray-800 mt-8 pt-8 text-center">
-        <p class="text-sm text-gray-400">
+      <!-- Copyright -->
+      <div class="border-t border-gray-800 dark:border-gray-700 mt-8 pt-8 text-center">
+        <p class="text-sm text-gray-400 dark:text-gray-500">
           &copy; {{ new Date().getFullYear() }} {{ languageStore.t('schoolName') }}. 
           {{ languageStore.t('allRightsReserved') }}
         </p>

@@ -72,10 +72,12 @@
         </table>
       </div>
 
+      <!-- ✅ FIX: Added :total="total" prop to Pagination -->
       <Pagination
         v-if="total > pageSize"
         :current-page="currentPage"
         :total-pages="Math.ceil(total / pageSize)"
+        :total="total"
         @page-change="handlePageChange"
         class="mt-4"
       />

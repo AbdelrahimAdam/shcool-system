@@ -1,123 +1,115 @@
 <template>
-  <div class="max-w-2xl mx-auto">
-    <div class="card p-6">
-      <h1 class="text-2xl font-bold mb-6">{{ isEdit ? languageStore.t('edit') : languageStore.t('add') }} {{ languageStore.t('students') }}</h1>
+  <div class="max-w-2xl mx-auto px-4 sm:px-6">
+    <div class="card bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow">
+      <h1 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+        {{ isEdit ? languageStore.t('edit') : languageStore.t('add') }} {{ languageStore.t('students') }}
+      </h1>
       
       <form @submit.prevent="handleSubmit">
         <div class="space-y-4">
           <!-- Basic Information -->
           <div>
-            <label class="form-label">{{ languageStore.t('fullName') }} *</label>
-            <input v-model="form.full_name" type="text" required class="form-input" />
+            <label class="form-label dark:text-gray-300">{{ languageStore.t('fullName') }} *</label>
+            <input v-model="form.full_name" type="text" required class="form-input dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
           </div>
           
           <div>
-            <label class="form-label">{{ languageStore.t('arabicName') }}</label>
-            <input v-model="form.arabic_name" type="text" class="form-input" dir="rtl" />
+            <label class="form-label dark:text-gray-300">{{ languageStore.t('arabicName') }}</label>
+            <input v-model="form.arabic_name" type="text" class="form-input dark:bg-gray-700 dark:border-gray-600 dark:text-white" dir="rtl" />
           </div>
           
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="form-label">{{ languageStore.t('dateOfBirth') }} *</label>
-              <input v-model="form.date_of_birth" type="date" required class="form-input" />
+              <label class="form-label dark:text-gray-300">{{ languageStore.t('dateOfBirth') }} *</label>
+              <input v-model="form.date_of_birth" type="date" required class="form-input dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
             </div>
             
             <div>
-              <label class="form-label">{{ languageStore.t('gender') }} *</label>
-              <select v-model="form.gender" required class="form-select">
+              <label class="form-label dark:text-gray-300">{{ languageStore.t('gender') }} *</label>
+              <select v-model="form.gender" required class="form-select dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 <option value="male">{{ languageStore.t('male') }}</option>
                 <option value="female">{{ languageStore.t('female') }}</option>
               </select>
             </div>
           </div>
           
-          <div>
-            <label class="form-label">{{ languageStore.t('class') }} *</label>
-            <select v-model="form.class_id" required class="form-select">
-              <option :value="null">{{ languageStore.t('selectClass') }}</option>
-              <option v-for="cls in classes" :key="cls.id" :value="cls.id">
+          <!-- Class with autocomplete search -->
+          <div class="relative">
+            <label class="form-label dark:text-gray-300">{{ languageStore.t('class') }} *</label>
+            <input
+              type="text"
+              v-model="classSearchQuery"
+              @input="filterClasses"
+              @focus="showClassDropdown = true"
+              @blur="closeClassDropdown"
+              :placeholder="languageStore.t('searchClassByName')"
+              class="form-input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+            <!-- Dropdown for classes -->
+            <div v-if="showClassDropdown && filteredClassesList.length" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto">
+              <div
+                v-for="cls in filteredClassesList"
+                :key="cls.id"
+                @click="selectClass(cls)"
+                class="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
+              >
                 {{ cls.name }}
-              </option>
-            </select>
+              </div>
+            </div>
+            <!-- Hidden select to store selected class name display -->
+            <input type="hidden" v-model="form.class_id" />
+            <div v-if="selectedClassName" class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              {{ languageStore.t('selected') }}: {{ selectedClassName }}
+            </div>
           </div>
           
-          <div>
-            <label class="form-label">{{ languageStore.t('parent') }}</label>
-            <select v-model="form.parent_id" class="form-select">
-              <option :value="null">{{ languageStore.t('selectParent') }}</option>
-              <option v-for="parent in parents" :key="parent.id" :value="parent.id">
-                {{ parent.full_name }} ({{ parent.phone }})
-              </option>
-            </select>
-          </div>
-          
-          <!-- Student Account Section -->
-          <div class="border-t pt-4 mt-4">
-            <h3 class="text-lg font-semibold mb-3">{{ languageStore.t('studentAccount') }}</h3>
-            <div class="bg-blue-50 p-3 rounded-lg mb-3">
-              <p class="text-sm text-blue-800">{{ languageStore.t('studentAccountHelp') }}</p>
+          <!-- Parent with autocomplete search -->
+          <div class="relative">
+            <label class="form-label dark:text-gray-300">{{ languageStore.t('parent') }}</label>
+            <input
+              type="text"
+              v-model="parentSearchQuery"
+              @input="filterParents"
+              @focus="showParentDropdown = true"
+              @blur="closeParentDropdown"
+              :placeholder="languageStore.t('searchParentByNameOrPhone')"
+              class="form-input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+            <!-- Dropdown for parents -->
+            <div v-if="showParentDropdown && filteredParentsList.length" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto">
+              <div
+                v-for="parent in filteredParentsList"
+                :key="parent.id"
+                @click="selectParent(parent)"
+                class="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
+              >
+                {{ parent.full_name }} <span class="text-xs text-gray-500 dark:text-gray-400">({{ parent.phone || parent.email }})</span>
+              </div>
             </div>
-            
-            <div>
-              <label class="form-label">{{ languageStore.t('createStudentAccount') }}</label>
-              <select v-model="accountOption" class="form-select" @change="handleAccountOptionChange">
-                <option value="none">{{ languageStore.t('noAccount') }}</option>
-                <option value="existing">{{ languageStore.t('linkExistingUser') }}</option>
-                <option value="new">{{ languageStore.t('createNewAccount') }}</option>
-              </select>
-            </div>
-            
-            <!-- Link Existing User -->
-            <div v-if="accountOption === 'existing'" class="mt-3">
-              <label class="form-label">{{ languageStore.t('selectUser') }}</label>
-              <select v-model="form.user_id" class="form-select">
-                <option :value="null">{{ languageStore.t('selectUser') }}</option>
-                <option v-for="user in users" :key="user.id" :value="user.id">
-                  {{ user.full_name }} ({{ user.email }})
-                </option>
-              </select>
-            </div>
-            
-            <!-- Create New Account -->
-            <div v-if="accountOption === 'new'" class="mt-3 space-y-3">
-              <div class="bg-yellow-50 p-3 rounded-lg">
-                <p class="text-sm text-yellow-800">{{ languageStore.t('studentAccountNote') }}</p>
-              </div>
-              <div>
-                <label class="form-label">{{ languageStore.t('email') }} *</label>
-                <input v-model="newAccount.email" type="email" required class="form-input" />
-              </div>
-              <div>
-                <label class="form-label">{{ languageStore.t('password') }} *</label>
-                <input v-model="newAccount.password" type="password" required class="form-input" />
-                <p class="text-xs text-gray-500 mt-1">{{ languageStore.t('passwordRequirements') }}</p>
-              </div>
-              <div>
-                <label class="form-label">{{ languageStore.t('confirmPassword') }} *</label>
-                <input v-model="newAccount.confirm_password" type="password" required class="form-input" />
-              </div>
+            <div v-if="selectedParentName" class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              {{ languageStore.t('selected') }}: {{ selectedParentName }}
             </div>
           </div>
           
           <!-- Contact Information -->
           <div>
-            <label class="form-label">{{ languageStore.t('phone') }}</label>
-            <input v-model="form.phone" type="tel" class="form-input" />
+            <label class="form-label dark:text-gray-300">{{ languageStore.t('phone') }}</label>
+            <input v-model="form.phone" type="tel" class="form-input dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
           </div>
           
           <div>
-            <label class="form-label">{{ languageStore.t('address') }}</label>
-            <textarea v-model="form.address" rows="3" class="form-textarea"></textarea>
+            <label class="form-label dark:text-gray-300">{{ languageStore.t('address') }}</label>
+            <textarea v-model="form.address" rows="3" class="form-textarea dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
           </div>
           
           <div>
-            <label class="form-label">{{ languageStore.t('medicalInfo') }}</label>
-            <textarea v-model="form.medical_info" rows="2" class="form-textarea"></textarea>
+            <label class="form-label dark:text-gray-300">{{ languageStore.t('medicalInfo') }}</label>
+            <textarea v-model="form.medical_info" rows="2" class="form-textarea dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
           </div>
           
           <div>
-            <label class="form-label">{{ languageStore.t('status') }}</label>
-            <select v-model="form.status" class="form-select">
+            <label class="form-label dark:text-gray-300">{{ languageStore.t('status') }}</label>
+            <select v-model="form.status" class="form-select dark:bg-gray-700 dark:border-gray-600 dark:text-white">
               <option value="active">{{ languageStore.t('active') }}</option>
               <option value="graduated">{{ languageStore.t('graduated') }}</option>
               <option value="transferred">{{ languageStore.t('transferred') }}</option>
@@ -125,11 +117,11 @@
             </select>
           </div>
           
-          <div class="flex justify-end gap-3">
-            <button type="button" @click="$router.back()" class="btn-secondary">
+          <div class="flex justify-end gap-3 pt-4">
+            <button type="button" @click="$router.back()" class="btn-secondary dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
               {{ languageStore.t('cancel') }}
             </button>
-            <button type="submit" :disabled="isLoading" class="btn-primary">
+            <button type="submit" :disabled="isLoading" class="btn-primary dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50">
               {{ isLoading ? languageStore.t('loading') : languageStore.t('save') }}
             </button>
           </div>
@@ -157,8 +149,18 @@ const isEdit = ref(!!route.params.id)
 const isLoading = ref(false)
 const classes = ref([])
 const parents = ref([])
-const users = ref([])
-const accountOption = ref('none')
+
+// Autocomplete state for class
+const classSearchQuery = ref('')
+const showClassDropdown = ref(false)
+const filteredClassesList = ref([])
+const selectedClassName = ref('')
+
+// Autocomplete state for parent
+const parentSearchQuery = ref('')
+const showParentDropdown = ref(false)
+const filteredParentsList = ref([])
+const selectedParentName = ref('')
 
 const form = ref({
   full_name: '',
@@ -167,175 +169,145 @@ const form = ref({
   gender: 'male',
   class_id: null,
   parent_id: null,
-  user_id: null,
   phone: '',
   address: '',
   medical_info: '',
   status: 'active'
 })
 
-const newAccount = ref({
-  email: '',
-  password: '',
-  confirm_password: ''
-})
+// Filter classes based on query
+const filterClasses = () => {
+  const query = classSearchQuery.value.toLowerCase()
+  if (!query) {
+    filteredClassesList.value = classes.value
+  } else {
+    filteredClassesList.value = classes.value.filter(cls => 
+      cls.name.toLowerCase().includes(query)
+    )
+  }
+}
+
+// Select class
+const selectClass = (cls) => {
+  form.value.class_id = cls.id
+  selectedClassName.value = cls.name
+  classSearchQuery.value = cls.name
+  showClassDropdown.value = false
+}
+
+// Close class dropdown with delay to allow click
+let classTimeout
+const closeClassDropdown = () => {
+  classTimeout = setTimeout(() => {
+    showClassDropdown.value = false
+  }, 200)
+}
+// Filter parents
+const filterParents = () => {
+  const query = parentSearchQuery.value.toLowerCase()
+  if (!query) {
+    filteredParentsList.value = parents.value
+  } else {
+    filteredParentsList.value = parents.value.filter(parent => 
+      parent.full_name.toLowerCase().includes(query) ||
+      (parent.phone && parent.phone.includes(query))
+    )
+  }
+}
+
+// Select parent
+const selectParent = (parent) => {
+  form.value.parent_id = parent.id
+  selectedParentName.value = `${parent.full_name} (${parent.phone || parent.email})`
+  parentSearchQuery.value = selectedParentName.value
+  showParentDropdown.value = false
+}
+
+const closeParentDropdown = () => {
+  setTimeout(() => {
+    showParentDropdown.value = false
+  }, 200)
+}
 
 const loadClasses = async () => {
   const schoolId = authStore.profile?.school_id
-  const { data } = await supabase
+  if (!schoolId) return
+  const { data, error } = await supabase
     .from('classes')
     .select('id, name')
     .eq('school_id', schoolId)
-  classes.value = data || []
+    .order('name')
+  if (!error) {
+    classes.value = data || []
+    filteredClassesList.value = classes.value
+  }
 }
 
 const loadParents = async () => {
   const schoolId = authStore.profile?.school_id
-  const { data } = await supabase
+  if (!schoolId) return
+  const { data, error } = await supabase
     .from('parents')
     .select('id, full_name, phone, email')
     .eq('school_id', schoolId)
     .order('full_name')
-  parents.value = data || []
-}
-
-const loadUsers = async () => {
-  const schoolId = authStore.profile?.school_id
-  const { data } = await supabase
-    .from('users')
-    .select('id, full_name, email, role')
-    .in('role', ['parent', 'student'])
-    .eq('school_id', schoolId)
-    .order('full_name')
-  users.value = data || []
+  if (!error) {
+    parents.value = data || []
+    filteredParentsList.value = parents.value
+  }
 }
 
 const loadStudent = async () => {
   if (isEdit.value) {
     const student = await studentStore.getStudentById(route.params.id)
     if (student) {
-      form.value = { ...student }
-      if (student.user_id) {
-        accountOption.value = 'existing'
+      form.value = {
+        full_name: student.full_name || '',
+        arabic_name: student.arabic_name || '',
+        date_of_birth: student.date_of_birth || '',
+        gender: student.gender || 'male',
+        class_id: student.class_id || null,
+        parent_id: student.parent_id || null,
+        phone: student.phone || '',
+        address: student.address || '',
+        medical_info: student.medical_info || '',
+        status: student.status || 'active'
+      }
+      // Set class name for display
+      if (form.value.class_id) {
+        const cls = classes.value.find(c => c.id === form.value.class_id)
+        if (cls) {
+          selectedClassName.value = cls.name
+          classSearchQuery.value = cls.name
+        }
+      }
+      // Set parent name for display
+      if (form.value.parent_id) {
+        const parent = parents.value.find(p => p.id === form.value.parent_id)
+        if (parent) {
+          selectedParentName.value = `${parent.full_name} (${parent.phone || parent.email})`
+          parentSearchQuery.value = selectedParentName.value
+        }
       }
     }
-  }
-}
-
-const handleAccountOptionChange = () => {
-  if (accountOption.value !== 'existing') {
-    form.value.user_id = null
-  }
-  if (accountOption.value !== 'new') {
-    newAccount.value = { email: '', password: '', confirm_password: '' }
   }
 }
 
 const handleSubmit = async () => {
   isLoading.value = true
   
-  let userId = null
-  
-  // Get the current admin user ID
   const createdBy = authStore.user?.id
-  
   if (!createdBy) {
-    alert('You must be logged in to create a student')
+    alert(languageStore.t('loginRequired'))
     isLoading.value = false
     return
   }
   
-  // Create student account if requested
-  if (accountOption.value === 'new') {
-    // Validate passwords
-    if (!newAccount.value.password || !newAccount.value.confirm_password) {
-      alert(languageStore.t('passwordRequired'))
-      isLoading.value = false
-      return
-    }
-    
-    if (newAccount.value.password !== newAccount.value.confirm_password) {
-      alert(languageStore.t('passwordsDoNotMatch'))
-      isLoading.value = false
-      return
-    }
-    
-    if (newAccount.value.password.length < 6) {
-      alert(languageStore.t('passwordTooShort'))
-      isLoading.value = false
-      return
-    }
-    
-    if (!newAccount.value.email) {
-      alert(languageStore.t('emailRequired'))
-      isLoading.value = false
-      return
-    }
-    
-    try {
-      // Create auth user for student
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newAccount.value.email,
-        password: newAccount.value.password,
-        options: {
-          data: {
-            full_name: form.value.full_name,
-            role: 'student',
-            phone: form.value.phone
-          }
-        }
-      })
-      
-      if (authError) {
-        console.error('Auth error:', authError)
-        
-        if (authError.message.includes('already registered')) {
-          alert(languageStore.t('emailAlreadyRegistered'))
-        } else if (authError.message.includes('password')) {
-          alert(languageStore.t('invalidPassword'))
-        } else {
-          alert(authError.message)
-        }
-        isLoading.value = false
-        return
-      }
-      
-      if (!authData.user) {
-        alert(languageStore.t('userCreationFailed'))
-        isLoading.value = false
-        return
-      }
-      
-      userId = authData.user.id
-      
-      // Update the users table with school_id
-      const schoolId = authStore.profile?.school_id
-      if (schoolId) {
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({ school_id: schoolId })
-          .eq('id', userId)
-        
-        if (updateError) {
-          console.error('Error updating user school_id:', updateError)
-        }
-      }
-    } catch (error) {
-      console.error('Error creating student account:', error)
-      alert(error.message || languageStore.t('userCreationFailed'))
-      isLoading.value = false
-      return
-    }
-  } else if (accountOption.value === 'existing') {
-    userId = form.value.user_id
-  }
-  
-  // Generate student number if not provided
+  // Generate student number
   const year = new Date().getFullYear()
   const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
   const studentNumber = `STU-${year}-${randomNum}`
   
-  // Prepare student data
   const studentData = {
     school_id: authStore.profile?.school_id,
     student_number: studentNumber,
@@ -345,7 +317,6 @@ const handleSubmit = async () => {
     gender: form.value.gender,
     class_id: form.value.class_id,
     parent_id: form.value.parent_id,
-    user_id: userId,
     phone: form.value.phone,
     address: form.value.address,
     medical_info: form.value.medical_info,
@@ -370,9 +341,30 @@ const handleSubmit = async () => {
 }
 
 onMounted(() => {
-  loadClasses()
-  loadParents()
-  loadUsers()
-  loadStudent()
+  Promise.all([loadClasses(), loadParents()]).then(() => {
+    loadStudent()
+  })
 })
 </script>
+
+<style scoped>
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+</style>

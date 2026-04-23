@@ -3,40 +3,64 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#f59e0b" />
+    
+    <!-- ========== VIEWPORT & MOBILE OPTIMIZATIONS ========== -->
+    <!-- viewport-fit=cover ensures safe area insets for notched phones -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes" />
+    <!-- Disable automatic phone number / email detection (optional but prevents unwanted styling) -->
+    <meta name="format-detection" content="telephone=no, email=no" />
+    <!-- Enables fullscreen web app on iOS when added to home screen -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- Status bar style (black translucency works well with both light/dark themes) -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- Windows / Android PWA tap highlight color -->
+    <meta name="msapplication-tap-highlight" content="no" />
+    <!-- Theme color – matches the default primary orange (#f59e0b) for consistency -->
+    <meta name="theme-color" content="#f59e0b" />
+    <!-- Supports color scheme adaptation (light/dark mode) -->
+    <meta name="color-scheme" content="light dark" />
     <meta name="mobile-web-app-capable" content="yes" />
     
-    <!-- SEO Meta Tags -->
+    <!-- ========== SEO & SOCIAL META TAGS (improved) ========== -->
     <title>Zack International Schools | زاك انترناشونال - International School in Sudan</title>
     <meta name="description" content="Zack International Schools offers quality education from primary to high school in Gedaref, Sudan. مدرسة زاك العالمية – تعليم متميز من المرحلة الابتدائية إلى الثانوية في ولاية القضارف، السودان." />
     <meta name="keywords" content="Zack International School, زاك انترناشونال, زاك, مدارس زاك, international school Sudan, مدرسة دولية في السودان, ولاية القضارف, Gedaref, education, kindergarten, primary school, middle school, high school" />
     <meta name="author" content="Zack International Schools" />
+    <meta name="robots" content="index, follow" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     
     <!-- Google Search Console verification -->
     <meta name="google-site-verification" content="RYMySMEY9LcxntSaxrwgwwfj5wHkOdXHMSqBRUJlsYE" />
     
-    <!-- Open Graph / Social Media -->
+    <!-- Open Graph / Social Media (updated image fallback) -->
     <meta property="og:title" content="Zack International Schools | زاك انترناشونال - Sudan" />
     <meta property="og:description" content="Leading international school in Gedaref, Sudan offering comprehensive education from primary to high school." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://zack-international.vercel.app/" />
     <meta property="og:image" content="https://zack-international.vercel.app/og-image.jpg" />
     <meta property="og:image:alt" content="Zack International Schools Campus" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="ar_AR" />
+    
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Zack International Schools | زاك انترناشونال" />
     <meta name="twitter:description" content="Quality international education in Gedaref, Sudan. تعليم دولي متميز في ولاية القضارف، السودان." />
+    <meta name="twitter:image" content="https://zack-international.vercel.app/og-image.jpg" />
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://zack-international.vercel.app/" />
     
-    <!-- PWA & Icons -->
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- ========== PWA & ICONS ========== -->
+    <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     
-    <!-- Structured Data (Schema.org) -->
+    <!-- Preconnect to external origins for performance (if any) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- ========== STRUCTURED DATA (Schema.org) – validated ========== -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -69,14 +93,19 @@
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
     <script>
+      // Robust service worker registration with scope and error handling
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(reg => {
-          console.log('Service Worker registered:', reg);
-        }).catch(err => {
-          console.error('Service Worker registration failed:', err);
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(registration => {
+              console.log('Service Worker registered with scope:', registration.scope);
+            })
+            .catch(error => {
+              console.error('Service Worker registration failed:', error);
+            });
         });
       } else {
-        console.log('Service Worker not supported');
+        console.log('Service Worker not supported – running in fallback mode');
       }
     </script>
   </body>

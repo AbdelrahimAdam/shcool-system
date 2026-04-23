@@ -1,8 +1,13 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-6 px-4 sm:px-0">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      <h1 class="text-2xl font-bold">{{ languageStore.t('payments') }}</h1>
-      <router-link to="/admin/payments/create" class="btn-primary inline-flex items-center">
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+        {{ languageStore.t('payments') }}
+      </h1>
+      <router-link 
+        to="/admin/payments/create" 
+        class="btn-primary inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 text-sm font-medium"
+      >
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
@@ -10,35 +15,41 @@
       </router-link>
     </div>
 
-    <DataTable
-      :columns="columns"
-      :data="payments"
-      :total="totalCount"
-      :loading="isLoading"
-      :filter-options="filterOptions"
-      @search="handleSearch"
-      @filter="handleFilter"
-      @page-change="handlePageChange"
-      @edit="handleEdit"
-      @delete="handleDelete"
-    >
-      <!-- Custom slot for status badge -->
-      <template #column-status="{ row }">
-        <span :class="getStatusClass(row.status)">
-          {{ languageStore.t(row.status) }}
-        </span>
-      </template>
+    <div class="overflow-x-auto rounded-lg shadow dark:shadow-gray-800">
+      <DataTable
+        :columns="columns"
+        :data="payments"
+        :total="totalCount"
+        :loading="isLoading"
+        :filter-options="filterOptions"
+        table-class="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
+        header-class="bg-gray-50 dark:bg-gray-800"
+        row-class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        cell-class="px-4 py-3 text-sm text-gray-900 dark:text-gray-200"
+        @search="handleSearch"
+        @filter="handleFilter"
+        @page-change="handlePageChange"
+        @edit="handleEdit"
+        @delete="handleDelete"
+      >
+        <!-- Custom slot for status badge (dark mode compatible) -->
+        <template #column-status="{ row }">
+          <span :class="getStatusClass(row.status)">
+            {{ languageStore.t(row.status) }}
+          </span>
+        </template>
 
-      <!-- Custom slot for amount formatting -->
-      <template #column-amount="{ row }">
-        {{ formatCurrency(row.amount) }}
-      </template>
+        <!-- Custom slot for amount formatting -->
+        <template #column-amount="{ row }">
+          {{ formatCurrency(row.amount) }}
+        </template>
 
-      <!-- Custom slot for student name (extract from object) -->
-      <template #column-student="{ row }">
-        {{ row.student?.full_name || '-' }}
-      </template>
-    </DataTable>
+        <!-- Custom slot for student name (extract from object) -->
+        <template #column-student="{ row }">
+          {{ row.student?.full_name || '-' }}
+        </template>
+      </DataTable>
+    </div>
   </div>
 </template>
 
@@ -105,17 +116,23 @@ const handleEdit = (payment) => {
 const handleDelete = async (payment) => {
   if (confirm(languageStore.t('confirmDelete'))) {
     // Implement delete in store if needed
+    const result = await paymentStore.deletePayment(payment.id)
+    if (result.success) {
+      await paymentStore.fetchPayments(1, paymentStore.filters)
+    } else {
+      alert(result.error)
+    }
   }
 }
 
 const getStatusClass = (status) => {
   const map = {
-    pending: 'text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full text-xs',
-    approved: 'text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs',
-    rejected: 'text-red-600 bg-red-100 px-2 py-1 rounded-full text-xs',
-    cancelled: 'text-gray-600 bg-gray-100 px-2 py-1 rounded-full text-xs'
+    pending: 'text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded-full text-xs font-medium',
+    approved: 'text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full text-xs font-medium',
+    rejected: 'text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-full text-xs font-medium',
+    cancelled: 'text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full text-xs font-medium'
   }
-  return map[status] || ''
+  return map[status] || 'text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full text-xs font-medium'
 }
 
 const formatCurrency = (value) => {

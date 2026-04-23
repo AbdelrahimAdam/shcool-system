@@ -1,45 +1,45 @@
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-gray-800">{{ languageStore.t('myClasses') }}</h1>
-      <p class="text-sm text-gray-500 mt-1">{{ languageStore.t('classesYouTeach') }}</p>
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-white">{{ languageStore.t('myClasses') }}</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ languageStore.t('classesYouTeach') }}</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="cls in myClasses" :key="cls.id" class="card p-5 hover:shadow-lg transition-shadow">
+      <div v-for="cls in myClasses" :key="cls.id" class="card bg-white dark:bg-gray-800 p-5 hover:shadow-lg transition-shadow duration-200">
         <div class="flex justify-between items-start mb-3">
-          <h3 class="text-lg font-semibold text-primary-600">{{ cls.name }}</h3>
-          <span class="badge-success text-xs px-2 py-1 rounded-full">{{ languageStore.t('active') }}</span>
+          <h3 class="text-lg font-semibold text-primary-600 dark:text-primary-400">{{ cls.name }}</h3>
+          <span class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs px-2 py-1 rounded-full">{{ languageStore.t('active') }}</span>
         </div>
         <div class="space-y-2 text-sm">
           <div class="flex justify-between">
-            <span class="text-gray-500">{{ languageStore.t('gradeLevel') }}:</span>
-            <span class="font-medium">{{ languageStore.t('grade') }} {{ cls.grade_level }}</span>
+            <span class="text-gray-500 dark:text-gray-400">{{ languageStore.t('gradeLevel') }}:</span>
+            <span class="font-medium text-gray-800 dark:text-gray-200">{{ languageStore.t('grade') }} {{ cls.grade_level }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-gray-500">{{ languageStore.t('students') }}:</span>
-            <span class="font-medium">{{ cls.current_enrollment }}/{{ cls.capacity }}</span>
+            <span class="text-gray-500 dark:text-gray-400">{{ languageStore.t('students') }}:</span>
+            <span class="font-medium text-gray-800 dark:text-gray-200">{{ cls.current_enrollment }}/{{ cls.capacity }}</span>
           </div>
-          <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-            <div class="bg-primary-600 rounded-full h-2" :style="{ width: `${(cls.current_enrollment / cls.capacity) * 100}%` }"></div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
+            <div class="bg-primary-600 dark:bg-primary-500 rounded-full h-2 transition-all duration-300" :style="{ width: `${(cls.current_enrollment / cls.capacity) * 100}%` }"></div>
           </div>
         </div>
-        <div class="flex gap-2 mt-4 pt-3 border-t">
-          <router-link :to="`/teacher/attendance?class=${cls.id}`" class="btn-secondary text-sm flex-1 text-center">
+        <div class="flex flex-col sm:flex-row gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+          <router-link :to="`/teacher/attendance?class=${cls.id}`" class="btn-secondary text-sm flex-1 text-center py-2 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
             {{ languageStore.t('markAttendance') }}
           </router-link>
-          <router-link :to="`/teacher/students?class=${cls.id}`" class="btn-outline text-sm flex-1 text-center">
+          <router-link :to="`/teacher/students?class=${cls.id}`" class="btn-outline text-sm flex-1 text-center py-2 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
             {{ languageStore.t('viewStudents') }}
           </router-link>
         </div>
       </div>
     </div>
 
-    <div v-if="myClasses.length === 0 && !isLoading" class="card p-12 text-center text-gray-500">
+    <div v-if="myClasses.length === 0 && !isLoading" class="card bg-white dark:bg-gray-800 p-12 text-center text-gray-500 dark:text-gray-400">
       {{ languageStore.t('noClassesAssigned') }}
     </div>
     <div v-if="isLoading" class="flex justify-center py-12">
-      <div class="spinner"></div>
+      <div class="spinner dark:border-gray-600 dark:border-t-primary-400"></div>
     </div>
   </div>
 </template>
@@ -68,3 +68,24 @@ onMounted(() => {
   loadClasses()
 })
 </script>
+
+<style scoped>
+.spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@media (prefers-color-scheme: dark) {
+  .spinner {
+    border-color: #4b5563;
+    border-top-color: #60a5fa;
+  }
+}
+</style>

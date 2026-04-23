@@ -4,11 +4,13 @@
     :class="['app', { 'rtl': languageStore.isRTL }]"
   >
     <OfflineIndicator v-if="!isOnline" />
-    <router-view v-slot="{ Component }">
-      <transition name="fade" mode="out-in">
-        <component :is="Component" />
-      </transition>
-    </router-view>
+    <div class="app-content">
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
+    </div>
     <InstallPrompt />
   </div>
 </template>
@@ -38,10 +40,72 @@ onUnmounted(() => {
 </script>
 
 <style>
-/* Base styles */
-.app {
-  min-height: 100vh;
+/* ----- RESET & FULL HEIGHT WITH MOBILE FIRST ----- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent; /* Removes tap highlight on mobile */
+}
+
+html, body, #app {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Use 100dvh for dynamic viewport height (modern browsers) */
+/* Fallback to 100vh for older browsers */
+@supports (height: 100dvh) {
+  html, body, #app {
+    height: 100dvh;
+  }
+}
+
+body {
+  overflow: hidden;           /* Prevents double scrollbars */
+  position: fixed;            /* Eliminates pull-to-refresh / overscroll on some mobile browsers */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: #f9fafb;
+}
+
+/* Main app container – flex column with safe area support */
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #f9fafb;
+  /* Safe area insets for notched devices (iOS) */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Scrollable content area – smooth and optimised for touch */
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scroll-behavior: smooth;
+  position: relative;
+}
+
+/* Improve touch targets for interactive elements (optional, but global) */
+button, 
+a, 
+[role="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="button"] {
+  touch-action: manipulation;
+  min-height: 44px;          /* Apple's recommended minimum touch target size */
+  min-width: 44px;
 }
 
 /* RTL Support */
@@ -50,146 +114,44 @@ onUnmounted(() => {
   text-align: right;
 }
 
-/* RTL spacing utilities */
-.rtl .ml-1 {
-  margin-left: 0;
-  margin-right: 0.25rem;
-}
-
-.rtl .ml-2 {
-  margin-left: 0;
-  margin-right: 0.5rem;
-}
-
-.rtl .ml-3 {
-  margin-left: 0;
-  margin-right: 0.75rem;
-}
-
-.rtl .ml-4 {
-  margin-left: 0;
-  margin-right: 1rem;
-}
-
-.rtl .ml-5 {
-  margin-left: 0;
-  margin-right: 1.25rem;
-}
-
-.rtl .mr-1 {
-  margin-right: 0;
-  margin-left: 0.25rem;
-}
-
-.rtl .mr-2 {
-  margin-right: 0;
-  margin-left: 0.5rem;
-}
-
-.rtl .mr-3 {
-  margin-right: 0;
-  margin-left: 0.75rem;
-}
-
-.rtl .mr-4 {
-  margin-right: 0;
-  margin-left: 1rem;
-}
-
-.rtl .mr-5 {
-  margin-right: 0;
-  margin-left: 1.25rem;
-}
-
-.rtl .pl-1 {
-  padding-left: 0;
-  padding-right: 0.25rem;
-}
-
-.rtl .pl-2 {
-  padding-left: 0;
-  padding-right: 0.5rem;
-}
-
-.rtl .pl-3 {
-  padding-left: 0;
-  padding-right: 0.75rem;
-}
-
-.rtl .pl-4 {
-  padding-left: 0;
-  padding-right: 1rem;
-}
-
-.rtl .pl-5 {
-  padding-left: 0;
-  padding-right: 1.25rem;
-}
-
-.rtl .pr-1 {
-  padding-right: 0;
-  padding-left: 0.25rem;
-}
-
-.rtl .pr-2 {
-  padding-right: 0;
-  padding-left: 0.5rem;
-}
-
-.rtl .pr-3 {
-  padding-right: 0;
-  padding-left: 0.75rem;
-}
-
-.rtl .pr-4 {
-  padding-right: 0;
-  padding-left: 1rem;
-}
-
-.rtl .pr-5 {
-  padding-right: 0;
-  padding-left: 1.25rem;
-}
-
-.rtl .space-x-1 > :not([hidden]) ~ :not([hidden]) {
-  --tw-space-x-reverse: 1;
-}
-
-.rtl .space-x-2 > :not([hidden]) ~ :not([hidden]) {
-  --tw-space-x-reverse: 1;
-}
-
-.rtl .space-x-3 > :not([hidden]) ~ :not([hidden]) {
-  --tw-space-x-reverse: 1;
-}
-
-.rtl .space-x-4 > :not([hidden]) ~ :not([hidden]) {
-  --tw-space-x-reverse: 1;
-}
-
-.rtl .space-x-5 > :not([hidden]) ~ :not([hidden]) {
-  --tw-space-x-reverse: 1;
-}
-
-.rtl .text-left {
-  text-align: right;
-}
-
-.rtl .text-right {
-  text-align: left;
-}
+/* RTL spacing utilities (keep concise) */
+.rtl .ml-1 { margin-left: 0; margin-right: 0.25rem; }
+.rtl .ml-2 { margin-left: 0; margin-right: 0.5rem; }
+.rtl .ml-3 { margin-left: 0; margin-right: 0.75rem; }
+.rtl .ml-4 { margin-left: 0; margin-right: 1rem; }
+.rtl .ml-5 { margin-left: 0; margin-right: 1.25rem; }
+.rtl .mr-1 { margin-right: 0; margin-left: 0.25rem; }
+.rtl .mr-2 { margin-right: 0; margin-left: 0.5rem; }
+.rtl .mr-3 { margin-right: 0; margin-left: 0.75rem; }
+.rtl .mr-4 { margin-right: 0; margin-left: 1rem; }
+.rtl .mr-5 { margin-right: 0; margin-left: 1.25rem; }
+.rtl .pl-1 { padding-left: 0; padding-right: 0.25rem; }
+.rtl .pl-2 { padding-left: 0; padding-right: 0.5rem; }
+.rtl .pl-3 { padding-left: 0; padding-right: 0.75rem; }
+.rtl .pl-4 { padding-left: 0; padding-right: 1rem; }
+.rtl .pl-5 { padding-left: 0; padding-right: 1.25rem; }
+.rtl .pr-1 { padding-right: 0; padding-left: 0.25rem; }
+.rtl .pr-2 { padding-right: 0; padding-left: 0.5rem; }
+.rtl .pr-3 { padding-right: 0; padding-left: 0.75rem; }
+.rtl .pr-4 { padding-right: 0; padding-left: 1rem; }
+.rtl .pr-5 { padding-right: 0; padding-left: 1.25rem; }
+.rtl .space-x-1 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 1; }
+.rtl .space-x-2 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 1; }
+.rtl .space-x-3 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 1; }
+.rtl .space-x-4 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 1; }
+.rtl .space-x-5 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 1; }
+.rtl .text-left { text-align: right; }
+.rtl .text-right { text-align: left; }
 
 /* Fade transition for route changes */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
-
 .fade-enter-from {
   opacity: 0;
   transform: translateY(10px);
 }
-
 .fade-leave-to {
   opacity: 0;
   transform: translateY(-10px);
@@ -197,28 +159,25 @@ onUnmounted(() => {
 
 /* Loading spinner animation */
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
-
 .animate-spin {
   animation: spin 1s linear infinite;
 }
 
-/* Smooth scrolling for the whole app */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Focus styles for accessibility */
+/* Focus styles for accessibility – visible only on keyboard navigation */
 *:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
-
-/* Disable outline for mouse users, keep for keyboard */
 *:focus:not(:focus-visible) {
   outline: none;
+}
+
+/* Dark mode support for base backgrounds (if not already covered by component styles) */
+@media (prefers-color-scheme: dark) {
+  body, .app {
+    background-color: #111827;
+  }
 }
 </style>
