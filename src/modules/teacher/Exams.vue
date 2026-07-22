@@ -53,12 +53,12 @@
         <table class="min-w-full text-sm dark:text-gray-200">
           <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th class="px-3 py-3 md:px-4 text-left dark:text-gray-300">{{ languageStore.t('subject') }}</th>
-              <th class="px-3 py-3 md:px-4 text-left dark:text-gray-300">{{ languageStore.t('class') }}</th>
-              <th class="px-3 py-3 md:px-4 text-left dark:text-gray-300">{{ languageStore.t('examType') }}</th>
-              <th class="px-3 py-3 md:px-4 text-right dark:text-gray-300">{{ languageStore.t('maxScore') }}</th>
-              <th class="px-3 py-3 md:px-4 text-left dark:text-gray-300">{{ languageStore.t('examDate') }}</th>
-              <th class="px-3 py-3 md:px-4 text-center dark:text-gray-300">{{ languageStore.t('actions') }}</th>
+              <th class="px-3 py-3 md:px-4 text-left dark:text-gray-300 min-w-[100px]">{{ languageStore.t('subject') }}</th>
+              <th class="px-3 py-3 md:px-4 text-left dark:text-gray-300 min-w-[100px]">{{ languageStore.t('class') }}</th>
+              <th class="px-3 py-3 md:px-4 text-left dark:text-gray-300 min-w-[80px]">{{ languageStore.t('examType') }}</th>
+              <th class="px-3 py-3 md:px-4 text-right dark:text-gray-300 min-w-[80px]">{{ languageStore.t('maxScore') }}</th>
+              <th class="px-3 py-3 md:px-4 text-left dark:text-gray-300 min-w-[100px]">{{ languageStore.t('examDate') }}</th>
+              <th class="px-3 py-3 md:px-4 text-center dark:text-gray-300 min-w-[200px]">{{ languageStore.t('actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -66,19 +66,19 @@
               <td class="px-3 py-2 md:px-4 font-medium">{{ exam.subject }}</td>
               <td class="px-3 py-2 md:px-4">{{ exam.class?.name }}</td>
               <td class="px-3 py-2 md:px-4">
-                <span class="badge-neutral dark:bg-gray-600 dark:text-gray-200">{{ languageStore.t(exam.exam_type) }}</span>
+                <span class="badge-neutral dark:bg-gray-600 dark:text-gray-200 text-xs sm:text-sm">{{ languageStore.t(exam.exam_type) }}</span>
               </td>
               <td class="px-3 py-2 md:px-4 text-right">{{ exam.max_score }}</td>
               <td class="px-3 py-2 md:px-4">{{ formatDate(exam.exam_date) }}</td>
               <td class="px-3 py-2 md:px-4 text-center">
-                <div class="flex flex-wrap justify-center gap-2">
-                  <router-link :to="`/teacher/exams/${exam.id}/edit`" class="text-primary-600 hover:text-primary-800 dark:text-blue-400 dark:hover:text-blue-300">
+                <div class="flex flex-wrap justify-center gap-1 sm:gap-2">
+                  <router-link :to="`/teacher/exams/${exam.id}/edit`" class="text-primary-600 hover:text-primary-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs sm:text-sm whitespace-nowrap">
                     {{ languageStore.t('edit') }}
                   </router-link>
-                  <router-link :to="`/teacher/grade-entry?exam=${exam.id}`" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
+                  <router-link :to="`/teacher/grade-entry?exam=${exam.id}`" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-xs sm:text-sm whitespace-nowrap">
                     {{ languageStore.t('enterGrades') }}
                   </router-link>
-                  <button @click="deleteExam(exam.id)" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                  <button @click="deleteExam(exam.id)" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-xs sm:text-sm whitespace-nowrap">
                     {{ languageStore.t('delete') }}
                   </button>
                 </div>
@@ -99,86 +99,99 @@
 
     <!-- Create Exam Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl transition-colors">
-        <h2 class="text-xl font-bold mb-4 dark:text-white">{{ languageStore.t('createExam') }}</h2>
-        <form @submit.prevent="createExam">
-          <div class="space-y-4">
-            <div>
-              <label class="form-label dark:text-gray-300">{{ languageStore.t('class') }} *</label>
+      <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full max-h-[90vh] flex flex-col shadow-xl transition-colors">
+        <!-- Modal Header -->
+        <div class="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <h2 class="text-xl font-bold dark:text-white">{{ languageStore.t('createExam') }}</h2>
+        </div>
 
-              <!-- Search Input for Classes -->
-              <div class="relative mb-2">
-                <input 
-                  v-model="classSearch" 
-                  type="text" 
-                  :placeholder="languageStore.t('searchClasses')"
-                  class="form-input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-
-              <select v-model="newExam.class_id" required class="form-select dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                <option :value="null">{{ languageStore.t('selectClass') }}</option>
-                <option 
-                  v-for="cls in filteredClasses" 
-                  :key="cls.id" 
-                  :value="cls.id"
-                >
-                  {{ cls.name }} ({{ languageStore.t('grade') }} {{ cls.grade_level }}) - {{ cls.section || 'A' }}
-                </option>
-              </select>
-
-              <p v-if="myClasses.length === 0 && !isLoadingClasses" class="text-sm text-yellow-600 dark:text-yellow-400 mt-2">
-                {{ languageStore.t('noClassesAssigned') }}
-              </p>
-            </div>
-
-            <div>
-              <label class="form-label dark:text-gray-300">{{ languageStore.t('subject') }} *</label>
-              <input v-model="newExam.subject" type="text" required class="form-input dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Modal Body - Scrollable -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+          <form @submit.prevent="createExam" id="createExamForm">
+            <div class="space-y-4">
               <div>
-                <label class="form-label dark:text-gray-300">{{ languageStore.t('examType') }} *</label>
-                <select v-model="newExam.exam_type" required class="form-select dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <option value="quiz">{{ languageStore.t('quiz') }}</option>
-                  <option value="midterm">{{ languageStore.t('midterm') }}</option>
-                  <option value="assignment">{{ languageStore.t('assignment') }}</option>
-                  <option value="final">{{ languageStore.t('final') }}</option>
+                <label class="form-label dark:text-gray-300">{{ languageStore.t('class') }} *</label>
+
+                <!-- Search Input for Classes -->
+                <div class="relative mb-2">
+                  <input 
+                    v-model="classSearch" 
+                    type="text" 
+                    :placeholder="languageStore.t('searchClasses')"
+                    class="form-input pl-10 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                  <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+
+                <select v-model="newExam.class_id" required class="form-select w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white" size="4">
+                  <option :value="null">{{ languageStore.t('selectClass') }}</option>
+                  <option 
+                    v-for="cls in filteredClasses" 
+                    :key="cls.id" 
+                    :value="cls.id"
+                  >
+                    {{ cls.name }} ({{ languageStore.t('grade') }} {{ cls.grade_level }}) - {{ cls.section || 'A' }}
+                  </option>
                 </select>
-              </div>
-              <div>
-                <label class="form-label dark:text-gray-300">{{ languageStore.t('maxScore') }} *</label>
-                <input v-model.number="newExam.max_score" type="number" step="0.5" min="0" required class="form-input dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-              </div>
-            </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label class="form-label dark:text-gray-300">{{ languageStore.t('examDate') }} *</label>
-                <input v-model="newExam.exam_date" type="date" required class="form-input dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                <p v-if="myClasses.length === 0 && !isLoadingClasses" class="text-sm text-yellow-600 dark:text-yellow-400 mt-2">
+                  {{ languageStore.t('noClassesAssigned') }}
+                </p>
               </div>
-              <div>
-                <label class="form-label dark:text-gray-300">{{ languageStore.t('term') }}</label>
-                <input v-model="newExam.term" type="text" class="form-input dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="e.g., Term 1" />
-              </div>
-            </div>
 
-            <div>
-              <label class="form-label dark:text-gray-300">{{ languageStore.t('description') }}</label>
-              <textarea v-model="newExam.description" rows="2" class="form-textarea dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+              <div>
+                <label class="form-label dark:text-gray-300">{{ languageStore.t('subject') }} *</label>
+                <input v-model="newExam.subject" type="text" required class="form-input w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="form-label dark:text-gray-300">{{ languageStore.t('examType') }} *</label>
+                  <select v-model="newExam.exam_type" required class="form-select w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="quiz">{{ languageStore.t('quiz') }}</option>
+                    <option value="midterm">{{ languageStore.t('midterm') }}</option>
+                    <option value="assignment">{{ languageStore.t('assignment') }}</option>
+                    <option value="final">{{ languageStore.t('final') }}</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label dark:text-gray-300">{{ languageStore.t('maxScore') }} *</label>
+                  <input v-model.number="newExam.max_score" type="number" step="0.5" min="0" required class="form-input w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="form-label dark:text-gray-300">{{ languageStore.t('examDate') }} *</label>
+                  <input v-model="newExam.exam_date" type="date" required class="form-input w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                </div>
+                <div>
+                  <label class="form-label dark:text-gray-300">{{ languageStore.t('term') }}</label>
+                  <input v-model="newExam.term" type="text" class="form-input w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="e.g., Term 1" />
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label dark:text-gray-300">{{ languageStore.t('description') }}</label>
+                <textarea v-model="newExam.description" rows="2" class="form-textarea w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+              </div>
             </div>
-          </div>
-          <div class="flex justify-end gap-3 mt-6">
-            <button type="button" @click="closeModal" class="btn-secondary dark:bg-gray-600 dark:hover:bg-gray-700 dark:text-white">{{ languageStore.t('cancel') }}</button>
-            <button type="submit" :disabled="isSubmitting" class="btn-primary dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50">
+          </form>
+        </div>
+
+        <!-- Modal Footer - Fixed at bottom -->
+        <div class="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div class="flex flex-col sm:flex-row justify-end gap-3">
+            <button type="button" @click="closeModal" class="btn-secondary dark:bg-gray-600 dark:hover:bg-gray-700 dark:text-white w-full sm:w-auto order-2 sm:order-1">
+              {{ languageStore.t('cancel') }}
+            </button>
+            <button type="submit" form="createExamForm" :disabled="isSubmitting" class="btn-primary dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50 w-full sm:w-auto order-1 sm:order-2">
               {{ isSubmitting ? languageStore.t('creating') : languageStore.t('create') }}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   </div>
@@ -323,7 +336,7 @@ const fetchExams = async () => {
       .from('exams')
       .select('*, class:classes(name, grade_level)')
       .eq('school_id', schoolId)
-      .in('class_id', classIds)  // CRITICAL: Only exams from teacher's classes
+      .in('class_id', classIds)
       .order('exam_date', { ascending: false })
 
     if (error) {
@@ -361,7 +374,7 @@ const createExam = async () => {
     ...newExam.value,
     school_id: schoolId,
     academic_year: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1),
-    created_by: authStore.teacherId // Track who created it
+    created_by: authStore.teacherId
   }
 
   const { error } = await supabase
@@ -381,14 +394,12 @@ const createExam = async () => {
 
 // Delete exam (with security check)
 const deleteExam = async (id) => {
-  // First, verify the exam belongs to one of the teacher's classes
   const examToDelete = exams.value.find(e => e.id === id)
   if (!examToDelete) {
     showNotification('Exam not found', 'error')
     return
   }
 
-  // SECURITY CHECK: Verify the exam's class belongs to this teacher
   const isTeacherClass = myClasses.value.some(c => c.id === examToDelete.class_id)
   if (!isTeacherClass) {
     showNotification('You do not have permission to delete this exam', 'error')
@@ -431,12 +442,10 @@ const formatDate = (date) => {
 }
 
 onMounted(async () => {
-  // Ensure teacher_id is loaded from auth store
   if (authStore.role === 'teacher' && !authStore.teacherId) {
     await authStore.fetchTeacherId()
   }
 
-  // CRITICAL FIX: Load classes first, then fetch exams
   await fetchMyClasses()
   await fetchExams()
 })
@@ -462,8 +471,87 @@ onMounted(async () => {
     font-size: 14px;
   }
   .card {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Ensure table cells have proper padding on mobile */
+  td, th {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  
+  /* Make action buttons more touchable */
+  .whitespace-nowrap {
+    padding: 4px 6px;
+  }
+}
+
+/* Modal scroll styles */
+.max-h-\[90vh\] {
+  max-height: 90vh;
+}
+
+/* Custom scrollbar for modal */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+@media (prefers-color-scheme: dark) {
+  .overflow-y-auto::-webkit-scrollbar-track {
+    background: #1f2937;
+  }
+  .overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #4b5563;
+  }
+  .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+}
+
+/* Button order fix for mobile */
+@media (max-width: 640px) {
+  .order-1 {
+    order: 1;
+  }
+  .order-2 {
+    order: 2;
+  }
+}
+
+/* Select size for modal */
+select[size] {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+select option {
+  padding: 8px 12px;
+  margin: 2px 0;
+  border-radius: 6px;
+}
+
+select option:hover {
+  background-color: #f3f4f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  select option:hover {
+    background-color: #374151;
   }
 }
 </style>
