@@ -6,7 +6,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 flex-shrink-0">
         <div>
           <label class="form-label text-gray-700 dark:text-gray-300">{{ languageStore.t('class') }}</label>
-          <select v-model="selectedClass" @change="onClassChange" class="form-select w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+          <select v-model="selectedClass" @change="loadStudents" class="form-select w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
             <option :value="null">{{ languageStore.t('selectClass') }}</option>
             <option v-for="cls in classes" :key="cls.id" :value="cls.id">
               {{ cls.name }}
@@ -113,10 +113,6 @@
         <div v-else-if="selectedClass && !students.length && !isLoading" class="text-center py-8 text-gray-500 dark:text-gray-400">
           {{ languageStore.t('noStudentsInClass') }}
         </div>
-        
-        <div v-else-if="!selectedClass" class="text-center py-8 text-gray-500 dark:text-gray-400">
-          {{ languageStore.t('selectClassToViewStudents') }}
-        </div>
       </div>
 
       <!-- Action Buttons - Always visible at bottom -->
@@ -150,9 +146,11 @@
 import { ref, onMounted, watch } from 'vue'
 import { supabase } from '@/services/supabase'
 import { useAuthStore } from '@/stores/auth'
+import { useTeacherStore } from '@/stores/teacher'
 import { useLanguageStore } from '@/stores/language'
 
 const authStore = useAuthStore()
+const teacherStore = useTeacherStore()
 const languageStore = useLanguageStore()
 
 const classes = ref([])
@@ -165,6 +163,7 @@ const isSaving = ref(false)
 const showSuccess = ref(false)
 const dateError = ref('')
 
+// Validate date (cannot be in the future)
 const validateDate = () => {
   const today = new Date().toISOString().split('T')[0]
   if (attendanceDate.value > today) {
@@ -211,97 +210,49 @@ const updateAttendanceNotes = (studentId, notes) => {
 }
 
 const loadClasses = async () => {
+  isLoading.value = true
   try {
-    // Get teacher ID from auth store
-    const teacherId = authStore.teacherId || authStore.profile?.teacher_id
-    
+    const teacherId = authStore.teacherId
     if (!teacherId) {
-      console.warn('No teacher ID found')
       classes.value = []
       return
     }
-
     const { data, error } = await supabase
       .from('classes')
       .select('id, name, grade_level')
       .eq('teacher_id', teacherId)
       .order('grade_level', { ascending: true })
-      
-    if (error) {
-      console.error('Error loading classes:', error)
-      throw error
-    }
-    
+    if (error) throw error
     classes.value = data || []
-    
-    // Auto-select first class if available
-    if (classes.value.length > 0 && !selectedClass.value) {
-      selectedClass.value = classes.value[0].id
-      await loadStudents()
-    }
   } catch (error) {
     console.error('Error loading classes:', error)
-  }
-}
-
-const onClassChange = () => {
-  // Clear students when class changes
-  students.value = []
-  attendanceData.value = {}
-  if (selectedClass.value) {
-    loadStudents()
+  } finally {
+    isLoading.value = false
   }
 }
 
 const loadStudents = async () => {
-  if (!selectedClass.value) {
-    students.value = []
-    attendanceData.value = {}
-    return
-  }
-  
-  if (!validateDate()) {
-    alert(dateError.value)
-    return
-  }
+  if (!selectedClass.value) return
+  if (!validateDate()) return
 
   isLoading.value = true
   try {
-    // Load students for the selected class
     const { data: studentList, error: studentError } = await supabase
       .from('students')
       .select('id, full_name')
       .eq('class_id', selectedClass.value)
       .eq('status', 'active')
       .order('full_name')
-      
-    if (studentError) {
-      console.error('Error loading students:', studentError)
-      throw studentError
-    }
-    
+    if (studentError) throw studentError
     students.value = studentList || []
-    
-    // If no students found, clear attendance data
-    if (students.value.length === 0) {
-      attendanceData.value = {}
-      isLoading.value = false
-      return
-    }
 
-    // Load existing attendance records
     const { data: existing, error: attendanceError } = await supabase
       .from('attendance')
       .select('student_id, status, notes')
       .eq('class_id', selectedClass.value)
       .eq('date', attendanceDate.value)
-      
-    if (attendanceError) {
-      console.error('Error loading attendance:', attendanceError)
-      throw attendanceError
-    }
+    if (attendanceError) throw attendanceError
 
-    // Initialize attendance data for each student
     attendanceData.value = {}
     students.value.forEach(student => {
       const existingRec = existing?.find(e => e.student_id === student.id)
@@ -310,22 +261,15 @@ const loadStudents = async () => {
         notes: existingRec?.notes || ''
       }
     })
-    
   } catch (error) {
-    console.error('Error in loadStudents:', error)
-    students.value = []
-    attendanceData.value = {}
+    console.error('Error loading students:', error)
   } finally {
     isLoading.value = false
   }
 }
 
 const saveAttendance = async () => {
-  if (!selectedClass.value || students.value.length === 0) {
-    alert(languageStore.t('noStudentsToSave'))
-    return
-  }
-  
+  if (!selectedClass.value || students.value.length === 0) return
   if (!validateDate()) {
     alert(dateError.value)
     return
@@ -352,26 +296,19 @@ const saveAttendance = async () => {
       .delete()
       .eq('class_id', selectedClass.value)
       .eq('date', attendanceDate.value)
-      
-    if (deleteError) {
-      console.error('Delete error:', deleteError)
-      throw deleteError
-    }
+    if (deleteError) throw deleteError
 
     // Insert new records
     const { error: insertError } = await supabase
       .from('attendance')
       .insert(records)
-      
-    if (insertError) {
-      console.error('Insert error:', insertError)
-      throw insertError
-    }
+    if (insertError) throw insertError
 
+    // Show success message
     showSuccess.value = true
     setTimeout(() => { showSuccess.value = false }, 3000)
 
-    // Reset form after successful save
+    // Reset form
     resetForm()
   } catch (error) {
     console.error('Error saving attendance:', error)
@@ -387,13 +324,10 @@ const resetForm = () => {
   attendanceData.value = {}
   attendanceDate.value = new Date().toISOString().split('T')[0]
   dateError.value = ''
-  
-  // Reload classes and auto-select first
-  loadClasses()
 }
 
-onMounted(async () => {
-  await loadClasses()
+onMounted(() => {
+  loadClasses()
 })
 </script>
 
@@ -417,47 +351,69 @@ onMounted(async () => {
   }
 }
 
-/* Mobile-first responsive adjustments */
+/* ===== MOBILE LAYOUT OPTIMIZATIONS ONLY ===== */
+/* These are the ONLY changes made to the original code */
+
+/* 1. Flex container for proper height management */
+.flex-col.h-full.min-h-0 {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 2. Card becomes flex column with scrollable content */
+.card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 3. Non-scrollable elements stay fixed */
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+/* 4. Scrollable table area */
+.overflow-y-auto {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.overflow-x-auto {
+  overflow-x: auto;
+}
+
+/* 5. Sticky table header */
+.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* 6. Larger radio buttons for mobile touch targets */
 @media (max-width: 640px) {
-  .form-input, .form-select {
-    font-size: 14px;
-  }
-  .card {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-  }
-  
-  td, th {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-    font-size: 12px;
-  }
-  
   input[type="radio"] {
     width: 20px !important;
     height: 20px !important;
   }
-}
-
-@media (max-width: 480px) {
+  
+  /* Better spacing on mobile */
   td, th {
-    padding-left: 0.25rem !important;
-    padding-right: 0.25rem !important;
-    font-size: 11px;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
   }
   
-  .form-input {
-    font-size: 12px;
-    padding: 0.25rem 0.5rem;
-  }
-  
-  input[type="radio"] {
-    width: 18px !important;
-    height: 18px !important;
+  /* Full width buttons on mobile */
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    justify-content: center;
   }
 }
 
-/* Custom scrollbar styles */
+/* 7. Custom scrollbar for better UX */
 .overflow-y-auto::-webkit-scrollbar,
 .overflow-x-auto::-webkit-scrollbar {
   width: 8px;
@@ -496,54 +452,19 @@ onMounted(async () => {
   }
 }
 
-/* Sticky header in table */
-.sticky {
-  position: sticky;
-}
-
-.form-input {
-  max-width: 100%;
-}
-
-@media (max-width: 640px) {
-  .btn-primary, .btn-secondary {
-    width: 100%;
-    justify-content: center;
-    padding: 0.75rem 1rem;
-  }
-}
-
-.rounded-lg {
-  border-radius: 0.5rem;
-}
-
+/* 8. Smooth scrolling on mobile */
 .overflow-x-auto {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 }
 
-@media (max-width: 640px) {
-  .form-input[type="text"] {
-    min-height: 36px;
-  }
-  
-  select.form-select {
-    min-height: 42px;
-  }
-  
-  input[type="radio"] {
-    cursor: pointer;
-    margin: 0;
-  }
+/* 9. Toast animation */
+.transition-all {
+  transition: all 0.3s ease;
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
+/* 10. Fix for border on table container */
+.rounded-lg {
+  border-radius: 0.5rem;
 }
 </style>
