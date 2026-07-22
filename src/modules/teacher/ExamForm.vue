@@ -1,104 +1,109 @@
 <template>
-  <div class="max-w-2xl mx-auto">
-    <div class="card p-6">
-      <h1 class="text-2xl font-bold mb-6">{{ isEdit ? languageStore.t('editExam') : languageStore.t('createExam') }}</h1>
+  <div class="max-w-2xl mx-auto h-full flex flex-col min-h-0">
+    <div class="card p-4 sm:p-6 flex flex-col flex-1 min-h-0 overflow-hidden">
+      <h1 class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex-shrink-0">{{ isEdit ? languageStore.t('editExam') : languageStore.t('createExam') }}</h1>
 
-      <form @submit.prevent="handleSubmit">
-        <div class="space-y-4">
-          <!-- Class Selection with Search -->
-          <div>
-            <label class="form-label">{{ languageStore.t('class') }} *</label>
-
-            <!-- Search Input -->
-            <div class="relative mb-2">
-              <input 
-                v-model="classSearch" 
-                type="text" 
-                :placeholder="languageStore.t('searchClasses')"
-                class="form-input pl-10"
-                @input="filterClasses"
-              />
-              <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-
-            <!-- Class Dropdown -->
-            <select v-model="form.class_id" required class="form-select" size="5">
-              <option :value="null">{{ languageStore.t('selectClass') }}</option>
-              <option 
-                v-for="cls in filteredClasses" 
-                :key="cls.id" 
-                :value="cls.id"
-                :class="{ 'bg-primary-50': form.class_id === cls.id }"
-              >
-                {{ cls.name }} ({{ languageStore.t('grade') }} {{ cls.grade_level }}) - {{ cls.section || 'A' }}
-              </option>
-            </select>
-
-            <!-- Loading State -->
-            <div v-if="isLoadingClasses" class="text-center py-4">
-              <div class="spinner"></div>
-            </div>
-
-            <!-- No results message -->
-            <p v-if="!isLoadingClasses && filteredClasses.length === 0 && classSearch" class="text-sm text-gray-500 mt-2">
-              {{ languageStore.t('noClassesFound') }}
-            </p>
-
-            <p v-if="!isLoadingClasses && filteredClasses.length === 0 && !classSearch && !isLoadingClasses" class="text-sm text-yellow-600 mt-2">
-              {{ languageStore.t('noClassesAssigned') }}
-            </p>
-          </div>
-
-          <div>
-            <label class="form-label">{{ languageStore.t('subject') }} *</label>
-            <input v-model="form.subject" type="text" required class="form-input" />
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <form @submit.prevent="handleSubmit" class="flex flex-col flex-1 min-h-0">
+        <div class="flex-1 overflow-y-auto px-1 -mx-1">
+          <div class="space-y-4 pb-4">
+            <!-- Class Selection with Search -->
             <div>
-              <label class="form-label">{{ languageStore.t('examType') }} *</label>
-              <select v-model="form.exam_type" required class="form-select">
-                <option value="quiz">{{ languageStore.t('quiz') }}</option>
-                <option value="midterm">{{ languageStore.t('midterm') }}</option>
-                <option value="assignment">{{ languageStore.t('assignment') }}</option>
-                <option value="final">{{ languageStore.t('final') }}</option>
+              <label class="form-label">{{ languageStore.t('class') }} *</label>
+
+              <!-- Search Input -->
+              <div class="relative mb-2">
+                <input 
+                  v-model="classSearch" 
+                  type="text" 
+                  :placeholder="languageStore.t('searchClasses')"
+                  class="form-input pl-10 w-full"
+                  @input="filterClasses"
+                />
+                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+
+              <!-- Class Dropdown -->
+              <select v-model="form.class_id" required class="form-select w-full" size="4">
+                <option :value="null">{{ languageStore.t('selectClass') }}</option>
+                <option 
+                  v-for="cls in filteredClasses" 
+                  :key="cls.id" 
+                  :value="cls.id"
+                  :class="{ 'bg-primary-50': form.class_id === cls.id }"
+                >
+                  {{ cls.name }} ({{ languageStore.t('grade') }} {{ cls.grade_level }}) - {{ cls.section || 'A' }}
+                </option>
               </select>
+
+              <!-- Loading State -->
+              <div v-if="isLoadingClasses" class="text-center py-4">
+                <div class="spinner"></div>
+              </div>
+
+              <!-- No results message -->
+              <p v-if="!isLoadingClasses && filteredClasses.length === 0 && classSearch" class="text-sm text-gray-500 mt-2">
+                {{ languageStore.t('noClassesFound') }}
+              </p>
+
+              <p v-if="!isLoadingClasses && filteredClasses.length === 0 && !classSearch && !isLoadingClasses" class="text-sm text-yellow-600 mt-2">
+                {{ languageStore.t('noClassesAssigned') }}
+              </p>
             </div>
+
             <div>
-              <label class="form-label">{{ languageStore.t('maxScore') }} *</label>
-              <input v-model.number="form.max_score" type="number" step="0.5" min="0" required class="form-input" />
+              <label class="form-label">{{ languageStore.t('subject') }} *</label>
+              <input v-model="form.subject" type="text" required class="form-input w-full" />
             </div>
-          </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="form-label">{{ languageStore.t('examType') }} *</label>
+                <select v-model="form.exam_type" required class="form-select w-full">
+                  <option value="quiz">{{ languageStore.t('quiz') }}</option>
+                  <option value="midterm">{{ languageStore.t('midterm') }}</option>
+                  <option value="assignment">{{ languageStore.t('assignment') }}</option>
+                  <option value="final">{{ languageStore.t('final') }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">{{ languageStore.t('maxScore') }} *</label>
+                <input v-model.number="form.max_score" type="number" step="0.5" min="0" required class="form-input w-full" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="form-label">{{ languageStore.t('examDate') }} *</label>
+                <input v-model="form.exam_date" type="date" required class="form-input w-full" />
+              </div>
+              <div>
+                <label class="form-label">{{ languageStore.t('term') }}</label>
+                <input v-model="form.term" type="text" class="form-input w-full" placeholder="e.g., Term 1" />
+              </div>
+            </div>
+
             <div>
-              <label class="form-label">{{ languageStore.t('examDate') }} *</label>
-              <input v-model="form.exam_date" type="date" required class="form-input" />
+              <label class="form-label">{{ languageStore.t('academicYear') }} *</label>
+              <input v-model="form.academic_year" type="text" required class="form-input w-full" placeholder="2024-2025" />
             </div>
+
             <div>
-              <label class="form-label">{{ languageStore.t('term') }}</label>
-              <input v-model="form.term" type="text" class="form-input" placeholder="e.g., Term 1" />
+              <label class="form-label">{{ languageStore.t('description') }}</label>
+              <textarea v-model="form.description" rows="3" class="form-textarea w-full"></textarea>
             </div>
           </div>
+        </div>
 
-          <div>
-            <label class="form-label">{{ languageStore.t('academicYear') }} *</label>
-            <input v-model="form.academic_year" type="text" required class="form-input" placeholder="2024-2025" />
-          </div>
-
-          <div>
-            <label class="form-label">{{ languageStore.t('description') }}</label>
-            <textarea v-model="form.description" rows="3" class="form-textarea"></textarea>
-          </div>
-
-          <div class="flex justify-end gap-3">
-            <button type="button" @click="$router.back()" class="btn-secondary">{{ languageStore.t('cancel') }}</button>
-            <button type="submit" :disabled="isLoading" class="btn-primary">
-              {{ isLoading ? languageStore.t('saving') : languageStore.t('save') }}
-            </button>
-          </div>
+        <!-- Fixed bottom buttons -->
+        <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 mt-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <button type="button" @click="$router.back()" class="btn-secondary w-full sm:w-auto order-2 sm:order-1">
+            {{ languageStore.t('cancel') }}
+          </button>
+          <button type="submit" :disabled="isLoading" class="btn-primary w-full sm:w-auto order-1 sm:order-2">
+            {{ isLoading ? languageStore.t('saving') : languageStore.t('save') }}
+          </button>
         </div>
       </form>
     </div>
@@ -122,7 +127,7 @@ const isLoading = ref(false)
 const isLoadingClasses = ref(false)
 const myClasses = ref([])
 const classSearch = ref('')
-const originalExamClassId = ref(null) // Store original class ID for security check
+const originalExamClassId = ref(null)
 
 const form = ref({
   class_id: null,
@@ -226,6 +231,7 @@ const loadExam = async () => {
 const handleSubmit = async () => {
   isLoading.value = true
   const schoolId = authStore.profile?.school_id
+  const teacherId = authStore.teacherId
   
   if (!schoolId) {
     alert('No school found. Please contact administrator.')
@@ -261,7 +267,7 @@ const handleSubmit = async () => {
     ...form.value, 
     school_id: schoolId,
     academic_year: form.value.academic_year || new Date().getFullYear() + '-' + (new Date().getFullYear() + 1),
-    created_by: authStore.teacherId // Track who created/updated it
+    created_by: teacherId
   }
 
   let error
@@ -271,7 +277,7 @@ const handleSubmit = async () => {
       .from('exams')
       .update(examData)
       .eq('id', route.params.id)
-      .in('class_id', myClasses.value.map(c => c.id)) // Only update if class belongs to teacher
+      .in('class_id', myClasses.value.map(c => c.id))
     error = updateError
   } else {
     const { error: insertError } = await supabase
@@ -303,7 +309,7 @@ onMounted(async () => {
 
 <style scoped>
 select[size] {
-  max-height: 200px;
+  max-height: 150px;
   overflow-y: auto;
 }
 
@@ -330,5 +336,69 @@ select option:hover {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Mobile-first responsive adjustments */
+@media (max-width: 640px) {
+  .card {
+    padding: 1rem;
+    border-radius: 0.5rem;
+  }
+  
+  .form-input, .form-select, .form-textarea {
+    font-size: 14px;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  select[size] {
+    max-height: 120px;
+  }
+}
+
+/* Scrollable form container */
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+@media (prefers-color-scheme: dark) {
+  .overflow-y-auto::-webkit-scrollbar-track {
+    background: #1f2937;
+  }
+  .overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #4b5563;
+  }
+  .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+}
+
+/* Button order fix for mobile */
+@media (max-width: 640px) {
+  .order-1 {
+    order: 1;
+  }
+  .order-2 {
+    order: 2;
+  }
 }
 </style>
