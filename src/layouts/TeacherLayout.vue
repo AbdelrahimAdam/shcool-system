@@ -12,19 +12,19 @@
       ></div>
     </transition>
 
-    <div class="flex">
+    <div class="flex h-[calc(100vh-64px)]">
       <!-- Sidebar -->
       <TeacherSidebar 
         :is-open="mobileMenuOpen"
         @close="closeMobileMenu"
       />
-      
-      <!-- Main Content – adds bottom padding for mobile to avoid bottom nav -->
-      <main class="flex-1 p-4 sm:p-6 lg:p-8 mt-16 lg:ml-72 pb-16 lg:pb-0">
-        <div class="max-w-7xl mx-auto">
+
+      <!-- Main Content -->
+      <main class="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 mt-16 lg:ml-72 overflow-hidden">
+        <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col min-h-0">
           <router-view v-slot="{ Component }">
-            <transition name="fade" mode="out-in">
-              <component :is="Component" />
+            <transition name="fade" mode="out-in" class="flex-1 flex flex-col min-h-0">
+              <component :is="Component" class="flex-1 flex flex-col min-h-0" />
             </transition>
           </router-view>
         </div>
@@ -79,5 +79,61 @@ onUnmounted(() => {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(-10px);
+}
+
+/* Ensure all child components can scroll properly */
+main :deep(.router-view-wrapper),
+main :deep(.fade-enter-active),
+main :deep(.fade-leave-active),
+main :deep(.fade-enter-from),
+main :deep(.fade-leave-to) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Fix for any nested scroll containers */
+main :deep(.overflow-auto),
+main :deep(.overflow-y-auto) {
+  max-height: 100%;
+}
+
+/* Ensure table containers work properly */
+main :deep(.table-container) {
+  overflow: auto;
+  max-height: 100%;
+}
+
+/* Fix for transition wrapper */
+main :deep(.fade-enter-active),
+main :deep(.fade-leave-active) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Ensure router-view content takes full height */
+main :deep(.router-view-wrapper) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Fix for any direct child of main that isn't the wrapper */
+main > * {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Mobile bottom nav spacing */
+@media (max-width: 1023px) {
+  main {
+    padding-bottom: 5rem;
+  }
 }
 </style>
