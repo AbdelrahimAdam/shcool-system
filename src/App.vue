@@ -45,7 +45,7 @@ onUnmounted(() => {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent; /* Removes tap highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
 }
 
 html, body, #app {
@@ -60,43 +60,83 @@ html, body, #app {
 @supports (height: 100dvh) {
   html, body, #app {
     height: 100dvh;
+    min-height: 100dvh;
   }
 }
 
 body {
-  overflow: hidden;           /* Prevents double scrollbars */
-  position: fixed;            /* Eliminates pull-to-refresh / overscroll on some mobile browsers */
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   background-color: #f9fafb;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Main app container – flex column with safe area support */
 .app {
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   background-color: #f9fafb;
-  /* Safe area insets for notched devices (iOS) */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
 }
 
-/* Scrollable content area – smooth and optimised for touch */
+/* Scrollable content area – allows natural scrolling */
 .app-content {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-  scroll-behavior: smooth;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   position: relative;
 }
 
-/* Improve touch targets for interactive elements (optional, but global) */
+/* Ensure router-view and its children can grow and scroll properly */
+.app-content > * {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Allow nested components to control their own overflow */
+.app-content .fade-enter-active,
+.app-content .fade-leave-active {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Fix for transition wrapper */
+.app-content .fade-enter-active > *,
+.app-content .fade-leave-active > * {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Allow tables and their containers to scroll horizontally */
+.app-content :deep(.overflow-x-auto),
+.app-content :deep(.table-scroll-wrapper) {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure card components don't clip overflow content */
+.app-content :deep(.card) {
+  overflow: visible !important;
+}
+
+/* Allow attendance table container to display properly */
+.app-content :deep(.attendance-table-container) {
+  overflow: visible !important;
+}
+
+/* Improve touch targets for interactive elements */
 button, 
 a, 
 [role="button"],
@@ -104,7 +144,7 @@ input[type="submit"],
 input[type="reset"],
 input[type="button"] {
   touch-action: manipulation;
-  min-height: 44px;          /* Apple's recommended minimum touch target size */
+  min-height: 44px;
   min-width: 44px;
 }
 
@@ -114,7 +154,7 @@ input[type="button"] {
   text-align: right;
 }
 
-/* RTL spacing utilities (keep concise) */
+/* RTL spacing utilities */
 .rtl .ml-1 { margin-left: 0; margin-right: 0.25rem; }
 .rtl .ml-2 { margin-left: 0; margin-right: 0.5rem; }
 .rtl .ml-3 { margin-left: 0; margin-right: 0.75rem; }
@@ -174,10 +214,24 @@ input[type="button"] {
   outline: none;
 }
 
-/* Dark mode support for base backgrounds (if not already covered by component styles) */
+/* Dark mode support for base backgrounds */
 @media (prefers-color-scheme: dark) {
   body, .app {
     background-color: #111827;
+  }
+}
+
+/* Ensure tables and scrollable containers work on mobile */
+@media (max-width: 640px) {
+  .app-content :deep(.overflow-x-auto) {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Ensure touch targets remain accessible */
+  .app-content :deep(input[type="radio"]) {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 </style>
