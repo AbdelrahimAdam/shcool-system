@@ -31,12 +31,22 @@ export const useTeacherStore = defineStore('teacher', {
         async fetchTeachers(page = 1, filters = {}) {
             this.isLoading = true
             const authStore = useAuthStore()
-            
+
             try {
+                let schoolId = authStore.schoolId
+                
+                if (!schoolId) {
+                    schoolId = authStore.profile?.school_id
+                }
+                
+                if (!schoolId) {
+                    schoolId = localStorage.getItem('schoolId')
+                }
+
                 let query = supabase
                     .from('teachers')
                     .select('id, teacher_code, full_name, arabic_name, email, phone, qualification, specialization, hire_date, status, subjects, created_at, user:users(full_name, email)', { count: 'exact' })
-                    .eq('school_id', authStore.profile?.school_id)
+                    .eq('school_id', schoolId)
                     .range((page - 1) * 20, page * 20 - 1)
                     .order('created_at', { ascending: false })
 
@@ -66,8 +76,19 @@ export const useTeacherStore = defineStore('teacher', {
             this.isLoading = true
             try {
                 const authStore = useAuthStore()
+                
+                let schoolId = authStore.schoolId
+                
+                if (!schoolId) {
+                    schoolId = authStore.profile?.school_id
+                }
+                
+                if (!schoolId) {
+                    schoolId = localStorage.getItem('schoolId')
+                }
+
                 const teacherToInsert = {
-                    school_id: authStore.profile.school_id,
+                    school_id: schoolId,
                     full_name: teacherData.full_name,
                     arabic_name: teacherData.arabic_name || null,
                     email: teacherData.email || null,
@@ -197,20 +218,41 @@ export const useTeacherStore = defineStore('teacher', {
             try {
                 const teacherId = authStore.teacherId
                 if (!teacherId) return []
-                // Removed 'status' because the classes table does not have this column
+                
+                let schoolId = authStore.schoolId
+                
+                if (!schoolId) {
+                    schoolId = authStore.profile?.school_id
+                }
+                
+                if (!schoolId) {
+                    schoolId = localStorage.getItem('schoolId')
+                }
+
+                if (!schoolId) {
+                    console.log('No school ID found')
+                    return []
+                }
+
                 const { data, error } = await supabase
                     .from('classes')
                     .select('id, name, grade_level, section, capacity, current_enrollment')
                     .eq('teacher_id', teacherId)
+                    .eq('school_id', schoolId)
                     .order('grade_level', { ascending: true })
+                    
                 if (error) throw error
+                
                 this.myClasses = data || []
                 this.teacherStats.classesCount = this.myClasses.length
+                
+                // Calculate total students from current_enrollment
                 let totalStudents = 0
                 for (const cls of this.myClasses) {
                     totalStudents += cls.current_enrollment || 0
                 }
                 this.teacherStats.studentsCount = totalStudents
+                
                 return this.myClasses
             } catch (error) {
                 console.error('Fetch my classes error:', error)
@@ -226,21 +268,37 @@ export const useTeacherStore = defineStore('teacher', {
             try {
                 const teacherId = authStore.teacherId
                 if (!teacherId) return []
+                
+                let schoolId = authStore.schoolId
+                
+                if (!schoolId) {
+                    schoolId = authStore.profile?.school_id
+                }
+                
+                if (!schoolId) {
+                    schoolId = localStorage.getItem('schoolId')
+                }
+
                 let classIds = []
                 if (classId) {
                     classIds = [classId]
                 } else {
                     classIds = this.myClasses.map(c => c.id)
                 }
+                
                 if (classIds.length === 0) return []
+                
                 let query = supabase
                     .from('students')
                     .select('id, full_name, student_number, class_id, status, date_of_birth')
                     .in('class_id', classIds)
                     .eq('status', 'active')
+                    .eq('school_id', schoolId)
                     .order('full_name')
+                    
                 const { data, error } = await query
                 if (error) throw error
+                
                 this.myStudents = data || []
                 return this.myStudents
             } catch (error) {
@@ -257,20 +315,39 @@ export const useTeacherStore = defineStore('teacher', {
             try {
                 const teacherId = authStore.teacherId
                 if (!teacherId || this.myClasses.length === 0) return 0
+                
+                let schoolId = authStore.schoolId
+                
+                if (!schoolId) {
+                    schoolId = authStore.profile?.school_id
+                }
+                
+                if (!schoolId) {
+                    schoolId = localStorage.getItem('schoolId')
+                }
+
                 const classIds = this.myClasses.map(c => c.id)
+                
                 const { data: students } = await supabase
                     .from('students')
                     .select('id')
                     .in('class_id', classIds)
                     .eq('status', 'active')
+                    .eq('school_id', schoolId)
+                    
                 if (!students?.length) return 0
+                
                 const studentIds = students.map(s => s.id)
+                
                 const { data: attendance } = await supabase
                     .from('attendance')
                     .select('student_id, status')
                     .in('student_id', studentIds)
                     .eq('date', today)
+                    .eq('school_id', schoolId)
+                    
                 if (!attendance?.length) return 0
+                
                 const presentCount = attendance.filter(a => a.status === 'present' || a.status === 'late').length
                 const rate = Math.round((presentCount / attendance.length) * 100)
                 this.teacherStats.todayAttendance = rate
@@ -287,13 +364,28 @@ export const useTeacherStore = defineStore('teacher', {
             try {
                 const teacherId = authStore.teacherId
                 if (!teacherId || this.myClasses.length === 0) return 0
+                
+                let schoolId = authStore.schoolId
+                
+                if (!schoolId) {
+                    schoolId = authStore.profile?.school_id
+                }
+                
+                if (!schoolId) {
+                    schoolId = localStorage.getItem('schoolId')
+                }
+
                 const classIds = this.myClasses.map(c => c.id)
+                
                 const { data, error } = await supabase
                     .from('exams')
                     .select('id')
                     .in('class_id', classIds)
                     .gte('exam_date', today)
+                    .eq('school_id', schoolId)
+                    
                 if (error) throw error
+                
                 const count = data?.length || 0
                 this.teacherStats.upcomingExams = count
                 return count
