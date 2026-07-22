@@ -212,6 +212,7 @@ export const useTeacherStore = defineStore('teacher', {
             }
         },
 
+        // FIX: Count students directly from the students table
         async fetchMyClasses() {
             this.isLoading = true
             const authStore = useAuthStore()
@@ -234,24 +235,38 @@ export const useTeacherStore = defineStore('teacher', {
                     return []
                 }
 
-                const { data, error } = await supabase
+                // Fetch classes
+                const { data: classes, error: classesError } = await supabase
                     .from('classes')
-                    .select('id, name, grade_level, section, capacity, current_enrollment')
+                    .select('id, name, grade_level, section, capacity')
                     .eq('teacher_id', teacherId)
                     .eq('school_id', schoolId)
                     .order('grade_level', { ascending: true })
                     
-                if (error) throw error
+                if (classesError) throw classesError
                 
-                this.myClasses = data || []
+                this.myClasses = classes || []
                 this.teacherStats.classesCount = this.myClasses.length
                 
-                // Calculate total students from current_enrollment
-                let totalStudents = 0
-                for (const cls of this.myClasses) {
-                    totalStudents += cls.current_enrollment || 0
+                // FIX: Count students directly from the students table
+                const classIds = this.myClasses.map(c => c.id)
+                
+                if (classIds.length > 0) {
+                    const { count: studentsCount, error: studentsError } = await supabase
+                        .from('students')
+                        .select('*', { count: 'exact', head: true })
+                        .in('class_id', classIds)
+                        .eq('status', 'active')
+                        .eq('school_id', schoolId)
+                    
+                    if (!studentsError) {
+                        this.teacherStats.studentsCount = studentsCount || 0
+                    } else {
+                        this.teacherStats.studentsCount = 0
+                    }
+                } else {
+                    this.teacherStats.studentsCount = 0
                 }
-                this.teacherStats.studentsCount = totalStudents
                 
                 return this.myClasses
             } catch (error) {
@@ -286,7 +301,10 @@ export const useTeacherStore = defineStore('teacher', {
                     classIds = this.myClasses.map(c => c.id)
                 }
                 
-                if (classIds.length === 0) return []
+                if (classIds.length === 0) {
+                    this.myStudents = []
+                    return []
+                }
                 
                 let query = supabase
                     .from('students')
@@ -300,6 +318,10 @@ export const useTeacherStore = defineStore('teacher', {
                 if (error) throw error
                 
                 this.myStudents = data || []
+                
+                // Also update studentsCount here
+                this.teacherStats.studentsCount = this.myStudents.length
+                
                 return this.myStudents
             } catch (error) {
                 console.error('Fetch my students error:', error)
@@ -314,7 +336,10 @@ export const useTeacherStore = defineStore('teacher', {
             const today = new Date().toISOString().split('T')[0]
             try {
                 const teacherId = authStore.teacherId
-                if (!teacherId || this.myClasses.length === 0) return 0
+                if (!teacherId || this.myClasses.length === 0) {
+                    this.teacherStats.todayAttendance = 0
+                    return 0
+                }
                 
                 let schoolId = authStore.schoolId
                 
@@ -335,7 +360,10 @@ export const useTeacherStore = defineStore('teacher', {
                     .eq('status', 'active')
                     .eq('school_id', schoolId)
                     
-                if (!students?.length) return 0
+                if (!students?.length) {
+                    this.teacherStats.todayAttendance = 0
+                    return 0
+                }
                 
                 const studentIds = students.map(s => s.id)
                 
@@ -346,7 +374,10 @@ export const useTeacherStore = defineStore('teacher', {
                     .eq('date', today)
                     .eq('school_id', schoolId)
                     
-                if (!attendance?.length) return 0
+                if (!attendance?.length) {
+                    this.teacherStats.todayAttendance = 0
+                    return 0
+                }
                 
                 const presentCount = attendance.filter(a => a.status === 'present' || a.status === 'late').length
                 const rate = Math.round((presentCount / attendance.length) * 100)
@@ -354,6 +385,7 @@ export const useTeacherStore = defineStore('teacher', {
                 return rate
             } catch (error) {
                 console.error('Fetch today attendance error:', error)
+                this.teacherStats.todayAttendance = 0
                 return 0
             }
         },
@@ -363,7 +395,10 @@ export const useTeacherStore = defineStore('teacher', {
             const today = new Date().toISOString().split('T')[0]
             try {
                 const teacherId = authStore.teacherId
-                if (!teacherId || this.myClasses.length === 0) return 0
+                if (!teacherId || this.myClasses.length === 0) {
+                    this.teacherStats.upcomingExams = 0
+                    return 0
+                }
                 
                 let schoolId = authStore.schoolId
                 
@@ -391,6 +426,7 @@ export const useTeacherStore = defineStore('teacher', {
                 return count
             } catch (error) {
                 console.error('Fetch upcoming exams error:', error)
+                this.teacherStats.upcomingExams = 0
                 return 0
             }
         },
@@ -398,10 +434,16 @@ export const useTeacherStore = defineStore('teacher', {
         async loadTeacherDashboard() {
             this.isLoading = true
             try {
+                // Load classes first
                 await this.fetchMyClasses()
+                
+                // Load students (this will update studentsCount)
                 await this.fetchMyStudents()
+                
+                // Load attendance and exams
                 await this.fetchTodayAttendanceRate()
                 await this.fetchUpcomingExams()
+                
                 return {
                     myClasses: this.myClasses,
                     myStudents: this.myStudents,
