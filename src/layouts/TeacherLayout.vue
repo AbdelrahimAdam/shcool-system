@@ -1,30 +1,42 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-yellow-200 to-gray-200 dark:from-gray-800 dark:to-gray-900 transition-colors duration-200">
-    <!-- Header with toggle event listener -->
+    <!-- Header -->
     <AppHeader @toggle-sidebar="toggleMobileMenu" />
 
-    <!-- Mobile Menu Overlay -->
+    <!-- Mobile Sidebar Overlay - Full screen -->
     <transition name="fade">
       <div 
         v-if="mobileMenuOpen" 
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm z-20 lg:hidden"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
         @click="closeMobileMenu"
       ></div>
     </transition>
 
-    <div class="flex h-[calc(100vh-64px)]">
-      <!-- Sidebar -->
+    <!-- Mobile Sidebar - Covers everything including header -->
+    <transition name="slide">
       <TeacherSidebar 
+        v-if="mobileMenuOpen"
         :is-open="mobileMenuOpen"
         @close="closeMobileMenu"
+        class="fixed top-0 left-0 z-50 lg:hidden"
       />
+    </transition>
 
+    <!-- Desktop Sidebar - Always visible -->
+    <div class="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-40">
+      <TeacherSidebar 
+        :is-open="true"
+        class="relative h-full"
+      />
+    </div>
+
+    <div class="flex h-[calc(100vh-64px)] lg:ml-72">
       <!-- Main Content -->
-      <main class="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 mt-16 lg:ml-72 overflow-y-auto overflow-x-hidden">
-        <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col min-h-0">
+      <main class="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 mt-16 overflow-y-auto overflow-x-hidden">
+        <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col min-h-0" style="overflow: visible !important;">
           <router-view v-slot="{ Component }">
-            <transition name="fade" mode="out-in" class="flex-1 flex flex-col min-h-0">
-              <component :is="Component" class="flex-1 flex flex-col min-h-0" />
+            <transition name="fade" mode="out-in" class="flex-1 flex flex-col min-h-0" style="overflow: visible !important;">
+              <component :is="Component" class="flex-1 flex flex-col min-h-0" style="overflow: visible !important;" />
             </transition>
           </router-view>
         </div>
@@ -46,15 +58,22 @@ const mobileMenuOpen = ref(false)
 
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value
+  // Prevent body scroll when sidebar is open
+  if (mobileMenuOpen.value) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
 }
 
 const closeMobileMenu = () => {
   mobileMenuOpen.value = false
+  document.body.style.overflow = ''
 }
 
 const handleResize = () => {
   if (window.innerWidth >= 1024 && mobileMenuOpen.value) {
-    mobileMenuOpen.value = false
+    closeMobileMenu()
   }
 }
 
@@ -64,21 +83,30 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  document.body.style.overflow = ''
 })
 </script>
 
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.3s ease;
 }
-.fade-enter-from {
-  opacity: 0;
-  transform: translateY(10px);
-}
+.fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+}
+
+/* Slide transition for mobile sidebar */
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.slide-enter-from {
+  transform: translateX(-100%);
+}
+.slide-leave-to {
+  transform: translateX(-100%);
 }
 
 /* Ensure all child components can scroll properly */
@@ -91,6 +119,7 @@ main :deep(.fade-leave-to) {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow: visible !important;
 }
 
 /* Fix for any nested scroll containers */
@@ -112,6 +141,7 @@ main :deep(.fade-leave-active) {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow: visible !important;
 }
 
 /* Ensure router-view content takes full height */
