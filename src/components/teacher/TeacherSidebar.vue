@@ -1,13 +1,10 @@
 <template>
   <aside 
-    class="w-72 h-full bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl overflow-y-auto"
+    class="sidebar fixed top-0 left-0 w-72 h-full bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transition-transform duration-300 ease-in-out z-50 overflow-y-auto"
     :class="[
       isOpen ? 'translate-x-0' : '-translate-x-full',
-      'transition-transform duration-300 ease-in-out'
+      'lg:top-16 lg:translate-x-0'
     ]"
-    :style="{
-      paddingBottom: window.innerWidth < 1024 ? 'calc(1rem + env(safe-area-inset-bottom, 0px))' : 'env(safe-area-inset-bottom, 0px)'
-    }"
   >
     <!-- Close Button (Mobile only) -->
     <button 
@@ -191,7 +188,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
@@ -209,8 +206,6 @@ const router = useRouter()
 const authStore = useAuthStore()
 const languageStore = useLanguageStore()
 
-const windowWidth = ref(window.innerWidth)
-
 const userFullName = computed(() => authStore.profile?.full_name || 'Teacher')
 const userInitials = computed(() => {
   if (!userFullName.value) return 'T'
@@ -220,25 +215,15 @@ const userInitials = computed(() => {
 })
 
 const closeSidebar = () => {
-  emit('close')
+  if (window.innerWidth < 1024) {
+    emit('close')
+  }
 }
 
 const handleLogout = async () => {
   await authStore.logout()
   router.push('/login')
 }
-
-const handleResize = () => {
-  windowWidth.value = window.innerWidth
-}
-
-onMounted(() => {
-  window.addEventListener('resize', handleResize)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-})
 </script>
 
 <style scoped>
@@ -259,5 +244,25 @@ onUnmounted(() => {
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 200ms;
+}
+
+/* Mobile styles - sidebar covers everything */
+@media (max-width: 1023px) {
+  .sidebar {
+    top: 0 !important;
+    z-index: 50 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
+}
+
+/* Desktop styles - sidebar below header */
+@media (min-width: 1024px) {
+  .sidebar {
+    top: 4rem !important;
+    z-index: 40 !important;
+    height: calc(100vh - 4rem) !important;
+    transform: translateX(0) !important;
+  }
 }
 </style>
