@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-yellow-200 to-gray-200 dark:from-gray-800 dark:to-gray-900 transition-colors duration-200">
-    <!-- Header with toggle event listener -->
+    <!-- Header -->
     <AppHeader @toggle-sidebar="toggleMobileMenu" />
 
     <!-- Mobile Menu Overlay -->
@@ -12,13 +12,10 @@
       ></div>
     </transition>
 
-    <!-- Sidebar (dark theme remains) -->
+    <!-- Sidebar -->
     <aside 
-      class="sidebar fixed left-0 w-72 bg-gray-900 dark:bg-gray-950 shadow-2xl border-r border-gray-800 dark:border-gray-700 transition-transform duration-300 ease-in-out overflow-y-auto"
-      :class="[
-        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
-        'lg:translate-x-0'
-      ]"
+      class="sidebar fixed left-0 w-72 bg-gray-900 dark:bg-gray-950 shadow-2xl border-r border-gray-800 dark:border-gray-700 overflow-y-auto transition-transform duration-300 ease-in-out"
+      :class="sidebarClasses"
     >
       <!-- Close button for mobile -->
       <button 
@@ -31,9 +28,10 @@
         </svg>
       </button>
 
-      <!-- Navigation (class adjustments for dark mode) -->
+      <!-- Navigation -->
       <nav class="py-6 pb-40">
         <div class="px-4 space-y-1.5">
+          <!-- Dashboard -->
           <router-link
             to="/admin"
             @click="closeMobileMenu"
@@ -205,7 +203,7 @@
         </div>
       </nav>
 
-      <!-- Sidebar Footer (User Info) – dark mode compatible -->
+      <!-- Sidebar Footer -->
       <div class="sidebar-footer absolute bottom-0 left-0 right-0 p-5 border-t border-gray-800 dark:border-gray-700 bg-gray-900 dark:bg-gray-950">
         <div class="flex items-center gap-3">
           <div class="flex-shrink-0">
@@ -230,7 +228,7 @@
       </div>
     </aside>
 
-    <!-- Main Content – responsive padding, adds bottom padding for mobile to avoid bottom nav -->
+    <!-- Main Content -->
     <main class="lg:pl-72 pt-16 pb-16 lg:pb-0">
       <div class="p-4 sm:p-6 lg:p-8">
         <div class="max-w-7xl mx-auto">
@@ -243,7 +241,7 @@
       </div>
     </main>
 
-    <!-- Bottom Navigation (mobile only) -->
+    <!-- Bottom Navigation -->
     <BottomNav />
   </div>
 </template>
@@ -263,7 +261,6 @@ const languageStore = useLanguageStore()
 
 const mobileMenuOpen = ref(false)
 
-const schoolName = computed(() => authStore.school?.name || 'School Management')
 const userFullName = computed(() => authStore.profile?.full_name || 'User')
 const userRole = computed(() => {
   const roleMap = {
@@ -282,6 +279,21 @@ const userInitials = computed(() => {
   const parts = userFullName.value.split(' ')
   if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+})
+
+// Clean computed property for sidebar classes
+const sidebarClasses = computed(() => {
+  const classes = ['sidebar']
+  
+  // Mobile: control with mobileMenuOpen
+  if (window.innerWidth < 1024) {
+    classes.push(mobileMenuOpen.value ? 'mobile-open' : 'mobile-closed')
+  } else {
+    // Desktop: always visible
+    classes.push('desktop-visible')
+  }
+  
+  return classes.join(' ')
 })
 
 const isActiveRoute = (path) => {
@@ -342,7 +354,7 @@ onUnmounted(() => {
   transform: translateY(-10px);
 }
 
-/* Custom scrollbar for sidebar – dark mode compatible */
+/* Custom scrollbar for sidebar */
 aside::-webkit-scrollbar {
   width: 6px;
 }
@@ -363,27 +375,37 @@ aside::-webkit-scrollbar-thumb:hover {
   z-index: 20;
   height: calc(100vh - 4rem);
   height: calc(100dvh - 4rem);
+  will-change: transform;
 }
 
-/* Mobile sidebar fixes */
+/* Mobile states */
 @media (max-width: 1023px) {
   .sidebar {
-    top: 0 !important;
-    z-index: 50 !important;
-    height: 100vh !important;
-    height: 100dvh !important;
-    padding-bottom: 5rem !important;
+    top: 0;
+    z-index: 50;
+    height: 100vh;
+    height: 100dvh;
+    padding-bottom: 5rem;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .sidebar.mobile-closed {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.mobile-open {
+    transform: translateX(0);
   }
   
   .sidebar-footer {
-    bottom: 5rem !important;
+    bottom: 5rem;
   }
 }
 
-/* Desktop sidebar fixes */
+/* Desktop state - always visible */
 @media (min-width: 1024px) {
-  .sidebar {
-    transform: translateX(0) !important;
+  .sidebar.desktop-visible {
+    transform: translateX(0);
   }
 }
 </style>
