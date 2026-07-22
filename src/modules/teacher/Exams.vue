@@ -50,35 +50,35 @@
     <!-- Exams List -->
     <div class="card dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="min-w-full text-sm dark:text-gray-200">
+        <table class="min-w-[600px] w-full text-sm dark:text-gray-200">
           <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th class="px-3 py-3 md:px-4 text-left dark:text-gray-300 min-w-[100px]">{{ languageStore.t('subject') }}</th>
-              <th class="px-3 py-3 md:px-4 text-left dark:text-gray-300 min-w-[100px]">{{ languageStore.t('class') }}</th>
-              <th class="px-3 py-3 md:px-4 text-left dark:text-gray-300 min-w-[80px]">{{ languageStore.t('examType') }}</th>
-              <th class="px-3 py-3 md:px-4 text-right dark:text-gray-300 min-w-[80px]">{{ languageStore.t('maxScore') }}</th>
-              <th class="px-3 py-3 md:px-4 text-left dark:text-gray-300 min-w-[100px]">{{ languageStore.t('examDate') }}</th>
-              <th class="px-3 py-3 md:px-4 text-center dark:text-gray-300 min-w-[200px]">{{ languageStore.t('actions') }}</th>
+              <th class="px-3 py-3 text-left dark:text-gray-300">{{ languageStore.t('subject') }}</th>
+              <th class="px-3 py-3 text-left dark:text-gray-300">{{ languageStore.t('class') }}</th>
+              <th class="px-3 py-3 text-left dark:text-gray-300 hidden sm:table-cell">{{ languageStore.t('examType') }}</th>
+              <th class="px-3 py-3 text-right dark:text-gray-300 hidden sm:table-cell">{{ languageStore.t('maxScore') }}</th>
+              <th class="px-3 py-3 text-left dark:text-gray-300 hidden md:table-cell">{{ languageStore.t('examDate') }}</th>
+              <th class="px-3 py-3 text-center dark:text-gray-300 min-w-[120px] sm:min-w-[180px]">{{ languageStore.t('actions') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="exam in exams" :key="exam.id" class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-              <td class="px-3 py-2 md:px-4 font-medium">{{ exam.subject }}</td>
-              <td class="px-3 py-2 md:px-4">{{ exam.class?.name }}</td>
-              <td class="px-3 py-2 md:px-4">
-                <span class="badge-neutral dark:bg-gray-600 dark:text-gray-200 text-xs sm:text-sm">{{ languageStore.t(exam.exam_type) }}</span>
+              <td class="px-3 py-2 font-medium text-xs sm:text-sm">{{ exam.subject }}</td>
+              <td class="px-3 py-2 text-xs sm:text-sm">{{ exam.class?.name }}</td>
+              <td class="px-3 py-2 hidden sm:table-cell">
+                <span class="badge-neutral dark:bg-gray-600 dark:text-gray-200 text-xs">{{ languageStore.t(exam.exam_type) }}</span>
               </td>
-              <td class="px-3 py-2 md:px-4 text-right">{{ exam.max_score }}</td>
-              <td class="px-3 py-2 md:px-4">{{ formatDate(exam.exam_date) }}</td>
-              <td class="px-3 py-2 md:px-4 text-center">
+              <td class="px-3 py-2 text-right hidden sm:table-cell text-xs sm:text-sm">{{ exam.max_score }}</td>
+              <td class="px-3 py-2 hidden md:table-cell text-xs sm:text-sm">{{ formatDate(exam.exam_date) }}</td>
+              <td class="px-3 py-2 text-center">
                 <div class="flex flex-wrap justify-center gap-1 sm:gap-2">
-                  <router-link :to="`/teacher/exams/${exam.id}/edit`" class="text-primary-600 hover:text-primary-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs sm:text-sm whitespace-nowrap">
+                  <router-link :to="`/teacher/exams/${exam.id}/edit`" class="text-primary-600 hover:text-primary-800 dark:text-blue-400 dark:hover:text-blue-300 text-[10px] sm:text-sm whitespace-nowrap px-1 sm:px-2 py-0.5 sm:py-1">
                     {{ languageStore.t('edit') }}
                   </router-link>
-                  <router-link :to="`/teacher/grade-entry?exam=${exam.id}`" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-xs sm:text-sm whitespace-nowrap">
+                  <router-link :to="`/teacher/grade-entry?exam=${exam.id}`" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-[10px] sm:text-sm whitespace-nowrap px-1 sm:px-2 py-0.5 sm:py-1">
                     {{ languageStore.t('enterGrades') }}
                   </router-link>
-                  <button @click="deleteExam(exam.id)" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-xs sm:text-sm whitespace-nowrap">
+                  <button @click="deleteExam(exam.id)" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-[10px] sm:text-sm whitespace-nowrap px-1 sm:px-2 py-0.5 sm:py-1">
                     {{ languageStore.t('delete') }}
                   </button>
                 </div>
@@ -261,22 +261,36 @@ const fetchMyClasses = async () => {
   isLoadingClasses.value = true
 
   try {
-    const schoolId = authStore.profile?.school_id
+    // FIX: Use authStore.schoolId (now available in auth store)
+    let schoolId = authStore.schoolId
+    
+    // Fallback to profile if schoolId is not set
+    if (!schoolId) {
+      schoolId = authStore.profile?.school_id
+    }
+    
+    // Fallback to localStorage
+    if (!schoolId) {
+      schoolId = localStorage.getItem('schoolId')
+    }
+
     const teacherId = authStore.teacherId
 
     if (!schoolId) {
       console.log('No school ID found')
+      showNotification('School not found. Please logout and login again.', 'error')
       isLoadingClasses.value = false
       return
     }
 
     if (!teacherId) {
-      console.log('No teacher ID found. Please ensure teacher is properly linked.')
+      console.log('No teacher ID found.')
+      showNotification('Teacher profile not found. Please contact admin.', 'error')
       isLoadingClasses.value = false
       return
     }
 
-    console.log('Fetching classes for teacher ID:', teacherId)
+    console.log('Fetching classes for teacher ID:', teacherId, 'School ID:', schoolId)
 
     const { data, error } = await supabase
       .from('classes')
@@ -287,13 +301,19 @@ const fetchMyClasses = async () => {
 
     if (error) {
       console.error('Error fetching classes:', error)
+      showNotification('Failed to load classes: ' + error.message, 'error')
       return
     }
 
     myClasses.value = data || []
     console.log('Classes loaded:', myClasses.value.length)
+    
+    if (myClasses.value.length === 0) {
+      showNotification('No classes assigned to you. Please contact admin.', 'warning')
+    }
   } catch (error) {
     console.error('Error in fetchMyClasses:', error)
+    showNotification('Failed to load classes. Please try again.', 'error')
   } finally {
     isLoadingClasses.value = false
   }
@@ -304,7 +324,16 @@ const fetchExams = async () => {
   isLoadingExams.value = true
 
   try {
-    const schoolId = authStore.profile?.school_id
+    let schoolId = authStore.schoolId
+    
+    if (!schoolId) {
+      schoolId = authStore.profile?.school_id
+    }
+    
+    if (!schoolId) {
+      schoolId = localStorage.getItem('schoolId')
+    }
+
     const teacherId = authStore.teacherId
 
     if (!schoolId) {
@@ -312,7 +341,6 @@ const fetchExams = async () => {
       return
     }
 
-    // SECURITY CHECK: If teacher has no classes, return empty array immediately
     if (!teacherId || myClasses.value.length === 0) {
       console.log('Teacher has no classes assigned - returning empty exam list')
       exams.value = []
@@ -320,7 +348,6 @@ const fetchExams = async () => {
       return
     }
 
-    // Get class IDs from teacher's assigned classes
     const classIds = myClasses.value.map(c => c.id)
     
     if (classIds.length === 0) {
@@ -331,7 +358,6 @@ const fetchExams = async () => {
 
     console.log('Fetching exams for class IDs:', classIds)
 
-    // SECURITY FIX: Only fetch exams that belong to the teacher's classes
     const { data, error } = await supabase
       .from('exams')
       .select('*, class:classes(name, grade_level)')
@@ -355,7 +381,6 @@ const fetchExams = async () => {
 
 // Create exam (with security check)
 const createExam = async () => {
-  // SECURITY CHECK: Verify the selected class belongs to this teacher
   if (!newExam.value.class_id) {
     showNotification(languageStore.t('pleaseSelectClass'), 'error')
     return
@@ -368,7 +393,22 @@ const createExam = async () => {
   }
 
   isSubmitting.value = true
-  const schoolId = authStore.profile?.school_id
+  
+  let schoolId = authStore.schoolId
+  
+  if (!schoolId) {
+    schoolId = authStore.profile?.school_id
+  }
+  
+  if (!schoolId) {
+    schoolId = localStorage.getItem('schoolId')
+  }
+
+  if (!schoolId) {
+    showNotification('School not found. Please logout and login again.', 'error')
+    isSubmitting.value = false
+    return
+  }
 
   const examData = {
     ...newExam.value,
@@ -471,19 +511,40 @@ onMounted(async () => {
     font-size: 14px;
   }
   .card {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
   
-  /* Ensure table cells have proper padding on mobile */
   td, th {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
+    padding: 0.375rem 0.4rem !important;
+    font-size: 0.7rem !important;
   }
   
-  /* Make action buttons more touchable */
   .whitespace-nowrap {
-    padding: 4px 6px;
+    padding: 2px 4px !important;
+    font-size: 0.6rem !important;
+  }
+  
+  .badge-neutral {
+    font-size: 0.6rem !important;
+    padding: 1px 4px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+  
+  td, th {
+    padding: 0.25rem 0.25rem !important;
+    font-size: 0.6rem !important;
+  }
+  
+  .whitespace-nowrap {
+    padding: 1px 3px !important;
+    font-size: 0.55rem !important;
   }
 }
 
