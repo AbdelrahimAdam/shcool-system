@@ -37,7 +37,7 @@
     <div class="card p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700 transition-colors duration-200 flex flex-col flex-1 min-h-0">
       <h1 class="text-xl md:text-2xl font-bold mb-6 dark:text-white flex-shrink-0">{{ languageStore.t('enterGrades') }}</h1>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 flex-shrink-0">
+      <div class="grid grid-cols-1 gap-4 mb-6 flex-shrink-0">
         <div>
           <label class="form-label dark:text-gray-300">{{ languageStore.t('exam') }}</label>
           <select v-model="selectedExamId" @change="loadStudents" class="form-select dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 w-full">
@@ -49,8 +49,8 @@
         </div>
       </div>
 
-      <!-- Scrollable content area - table only -->
-      <div class="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
+      <!-- Desktop Table View (hidden on mobile) -->
+      <div class="hidden sm:block flex-1 min-h-0 overflow-y-auto overflow-x-auto">
         <div v-if="isLoading" class="flex justify-center py-12">
           <div class="spinner dark:border-gray-600 dark:border-t-blue-400"></div>
         </div>
@@ -60,11 +60,11 @@
             <table class="min-w-full text-sm dark:text-gray-200">
               <thead class="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                 <tr>
-                  <th class="px-3 py-2 md:px-4 text-left dark:text-gray-300 min-w-[120px]">{{ languageStore.t('studentName') }}</th>
-                  <th class="px-3 py-2 md:px-4 text-center dark:text-gray-300 min-w-[100px]">{{ languageStore.t('score') }} ({{ selectedExam.max_score }})</th>
-                  <th class="px-3 py-2 md:px-4 text-center dark:text-gray-300 min-w-[90px]">{{ languageStore.t('percentage') }}%</th>
-                  <th class="px-3 py-2 md:px-4 text-center dark:text-gray-300 min-w-[80px]">{{ languageStore.t('grade') }}</th>
-                  <th class="px-3 py-2 md:px-4 text-left dark:text-gray-300 min-w-[140px]">{{ languageStore.t('remarks') }}</th>
+                  <th class="px-3 py-2 md:px-4 text-left dark:text-gray-300">{{ languageStore.t('studentName') }}</th>
+                  <th class="px-3 py-2 md:px-4 text-center dark:text-gray-300">{{ languageStore.t('score') }} ({{ selectedExam.max_score }})</th>
+                  <th class="px-3 py-2 md:px-4 text-center dark:text-gray-300">{{ languageStore.t('percentage') }}%</th>
+                  <th class="px-3 py-2 md:px-4 text-center dark:text-gray-300">{{ languageStore.t('grade') }}</th>
+                  <th class="px-3 py-2 md:px-4 text-left dark:text-gray-300">{{ languageStore.t('remarks') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -97,6 +97,77 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <div v-else-if="selectedExam && !students.length && !isLoading" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          {{ languageStore.t('noStudentsInClass') }}
+        </div>
+
+        <div v-else-if="!selectedExam" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          {{ languageStore.t('selectExamToStart') }}
+        </div>
+      </div>
+
+      <!-- Mobile Card View (visible only on mobile) -->
+      <div class="sm:hidden flex-1 min-h-0 overflow-y-auto">
+        <div v-if="isLoading" class="flex justify-center py-12">
+          <div class="spinner dark:border-gray-600 dark:border-t-blue-400"></div>
+        </div>
+
+        <div v-else-if="selectedExam && students.length">
+          <div class="space-y-4">
+            <div 
+              v-for="student in students" 
+              :key="student.id" 
+              class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3"
+            >
+              <div class="flex items-center justify-between">
+                <span class="font-medium text-gray-900 dark:text-white text-sm">{{ student.full_name }}</span>
+                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ languageStore.t('student') }}</span>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">{{ languageStore.t('score') }}</label>
+                  <input
+                    :value="getGradeScore(student.id)"
+                    @input="updateScore(student.id, $event.target.value)"
+                    type="number"
+                    :max="selectedExam.max_score"
+                    min="0"
+                    step="0.5"
+                    class="form-input w-full text-center dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 text-sm py-2"
+                    :placeholder="languageStore.t('score')"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">{{ languageStore.t('percentage') }}</label>
+                  <div class="w-full text-center font-medium dark:text-gray-300 text-sm py-2 bg-white dark:bg-gray-800 rounded border dark:border-gray-600">
+                    {{ getGradePercentage(student.id) !== null ? getGradePercentage(student.id).toFixed(1) : '-' }}%
+                  </div>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">{{ languageStore.t('grade') }}</label>
+                  <div class="w-full text-center font-bold text-sm py-2 bg-white dark:bg-gray-800 rounded border dark:border-gray-600" :class="getGradeColor(getGradePercentage(student.id))">
+                    {{ getGradeLetter(student.id) || '-' }}
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">{{ languageStore.t('remarks') }}</label>
+                  <input
+                    :value="getGradeRemarks(student.id)"
+                    @input="updateRemarks(student.id, $event.target.value)"
+                    type="text"
+                    class="form-input w-full text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 py-2"
+                    :placeholder="languageStore.t('optional')"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -159,58 +230,95 @@ const clearNotification = () => {
 
 // SECURITY FIX: Load teacher's classes first
 const loadMyClasses = async () => {
-  const schoolId = authStore.profile?.school_id
-  const teacherId = authStore.teacherId
-  
-  if (!schoolId || !teacherId) {
-    console.log('No school ID or teacher ID found')
-    return
+  try {
+    let schoolId = authStore.schoolId
+    
+    if (!schoolId) {
+      schoolId = authStore.profile?.school_id
+    }
+    
+    if (!schoolId) {
+      schoolId = localStorage.getItem('schoolId')
+    }
+    
+    const teacherId = authStore.teacherId
+    
+    if (!schoolId || !teacherId) {
+      console.log('No school ID or teacher ID found')
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('classes')
+      .select('id')
+      .eq('school_id', schoolId)
+      .eq('teacher_id', teacherId)
+
+    if (error) {
+      console.error('Error loading classes:', error)
+      showNotification('Failed to load your classes. Please refresh.', 'error')
+      return
+    }
+
+    myClasses.value = data || []
+    console.log('Classes loaded for teacher:', myClasses.value.length)
+    
+    if (myClasses.value.length === 0) {
+      showNotification('No classes assigned to you. Please contact admin.', 'warning')
+    }
+  } catch (error) {
+    console.error('Error in loadMyClasses:', error)
   }
-
-  const { data, error } = await supabase
-    .from('classes')
-    .select('id')
-    .eq('school_id', schoolId)
-    .eq('teacher_id', teacherId)
-
-  if (error) {
-    console.error('Error loading classes:', error)
-    return
-  }
-
-  myClasses.value = data || []
-  console.log('Classes loaded for teacher:', myClasses.value.length)
 }
 
 // SECURITY FIX: Load only exams for teacher's classes
 const loadExams = async () => {
-  const schoolId = authStore.profile?.school_id
-  const teacherId = authStore.teacherId
-  
-  if (!schoolId) return
+  try {
+    let schoolId = authStore.schoolId
+    
+    if (!schoolId) {
+      schoolId = authStore.profile?.school_id
+    }
+    
+    if (!schoolId) {
+      schoolId = localStorage.getItem('schoolId')
+    }
+    
+    if (!schoolId) {
+      exams.value = []
+      return
+    }
 
-  // If teacher has no classes, return empty
-  if (myClasses.value.length === 0) {
-    exams.value = []
-    return
+    // If teacher has no classes, return empty
+    if (myClasses.value.length === 0) {
+      exams.value = []
+      return
+    }
+
+    const classIds = myClasses.value.map(c => c.id)
+
+    const { data, error } = await supabase
+      .from('exams')
+      .select('*, class:classes(id, name, teacher_id)')
+      .eq('school_id', schoolId)
+      .in('class_id', classIds)
+      .order('exam_date', { ascending: false })
+
+    if (error) {
+      console.error('Error loading exams:', error)
+      showNotification('Failed to load exams. Please refresh.', 'error')
+      return
+    }
+
+    exams.value = data || []
+    console.log('Exams loaded for teacher:', exams.value.length)
+    
+    if (exams.value.length === 0) {
+      showNotification('No exams found for your classes.', 'warning')
+    }
+  } catch (error) {
+    console.error('Error in loadExams:', error)
   }
-
-  const classIds = myClasses.value.map(c => c.id)
-
-  const { data, error } = await supabase
-    .from('exams')
-    .select('*, class:classes(id, name, teacher_id)')
-    .eq('school_id', schoolId)
-    .in('class_id', classIds) // SECURITY: Only exams from teacher's classes
-    .order('exam_date', { ascending: false })
-
-  if (error) {
-    console.error('Error loading exams:', error)
-    return
-  }
-
-  exams.value = data || []
-  console.log('Exams loaded for teacher:', exams.value.length)
 }
 
 const loadStudents = async () => {
@@ -317,7 +425,16 @@ const getGradeColor = (percentage) => {
 
 const saveGrades = async () => {
   isSaving.value = true
-  const schoolId = authStore.profile?.school_id
+  
+  let schoolId = authStore.schoolId
+  
+  if (!schoolId) {
+    schoolId = authStore.profile?.school_id
+  }
+  
+  if (!schoolId) {
+    schoolId = localStorage.getItem('schoolId')
+  }
 
   // SECURITY CHECK: Verify the exam belongs to the teacher
   const exam = exams.value.find(e => e.id === selectedExamId.value)
@@ -414,28 +531,12 @@ onMounted(async () => {
     padding-right: 0.75rem;
   }
   
-  /* Smaller inputs on mobile */
   .form-input {
-    padding: 0.25rem 0.5rem;
+    padding: 0.5rem;
   }
   
-  /* Ensure table cells have proper padding on mobile */
-  td, th {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .form-input {
-    font-size: 12px;
-    width: 56px !important;
-  }
-  
-  td, th {
-    font-size: 12px;
-    padding-left: 0.25rem !important;
-    padding-right: 0.25rem !important;
+  .form-input[type="number"] {
+    min-height: 40px;
   }
 }
 
@@ -512,11 +613,11 @@ onMounted(async () => {
 @media (max-width: 640px) {
   .form-input[type="number"],
   .form-input[type="text"] {
-    min-height: 36px;
+    min-height: 40px;
   }
   
   select.form-select {
-    min-height: 42px;
+    min-height: 44px;
   }
 }
 </style>
