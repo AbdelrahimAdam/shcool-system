@@ -47,38 +47,40 @@
       </button>
     </div>
 
-    <!-- Exams List -->
-    <div class="card dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
+    <!-- Desktop Table View (hidden on mobile) -->
+    <div class="hidden sm:block card dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="min-w-[600px] w-full text-sm dark:text-gray-200">
+        <table class="min-w-full text-sm dark:text-gray-200">
           <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th class="px-3 py-3 text-left dark:text-gray-300">{{ languageStore.t('subject') }}</th>
-              <th class="px-3 py-3 text-left dark:text-gray-300">{{ languageStore.t('class') }}</th>
-              <th class="px-3 py-3 text-left dark:text-gray-300 hidden sm:table-cell">{{ languageStore.t('examType') }}</th>
-              <th class="px-3 py-3 text-right dark:text-gray-300 hidden sm:table-cell">{{ languageStore.t('maxScore') }}</th>
-              <th class="px-3 py-3 text-left dark:text-gray-300 hidden md:table-cell">{{ languageStore.t('examDate') }}</th>
-              <th class="px-3 py-3 text-center dark:text-gray-300 min-w-[120px] sm:min-w-[180px]">{{ languageStore.t('actions') }}</th>
+              <th class="px-4 py-3 text-left dark:text-gray-300">{{ languageStore.t('subject') }}</th>
+              <th class="px-4 py-3 text-left dark:text-gray-300">{{ languageStore.t('class') }}</th>
+              <th class="px-4 py-3 text-left dark:text-gray-300">{{ languageStore.t('examType') }}</th>
+              <th class="px-4 py-3 text-center dark:text-gray-300">{{ languageStore.t('maxScore') }}</th>
+              <th class="px-4 py-3 text-left dark:text-gray-300">{{ languageStore.t('examDate') }}</th>
+              <th class="px-4 py-3 text-center dark:text-gray-300">{{ languageStore.t('actions') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="exam in exams" :key="exam.id" class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-              <td class="px-3 py-2 font-medium text-xs sm:text-sm">{{ exam.subject }}</td>
-              <td class="px-3 py-2 text-xs sm:text-sm">{{ exam.class?.name }}</td>
-              <td class="px-3 py-2 hidden sm:table-cell">
+              <td class="px-4 py-3 font-medium">{{ exam.subject }}</td>
+              <td class="px-4 py-3">{{ exam.class?.name }}</td>
+              <td class="px-4 py-3">
                 <span class="badge-neutral dark:bg-gray-600 dark:text-gray-200 text-xs">{{ languageStore.t(exam.exam_type) }}</span>
               </td>
-              <td class="px-3 py-2 text-right hidden sm:table-cell text-xs sm:text-sm">{{ exam.max_score }}</td>
-              <td class="px-3 py-2 hidden md:table-cell text-xs sm:text-sm">{{ formatDate(exam.exam_date) }}</td>
-              <td class="px-3 py-2 text-center">
-                <div class="flex flex-wrap justify-center gap-1 sm:gap-2">
-                  <router-link :to="`/teacher/exams/${exam.id}/edit`" class="text-primary-600 hover:text-primary-800 dark:text-blue-400 dark:hover:text-blue-300 text-[10px] sm:text-sm whitespace-nowrap px-1 sm:px-2 py-0.5 sm:py-1">
+              <td class="px-4 py-3 text-center font-medium">{{ exam.max_score }}</td>
+              <td class="px-4 py-3">{{ formatDate(exam.exam_date) }}</td>
+              <td class="px-4 py-3">
+                <div class="flex items-center justify-center gap-2">
+                  <router-link :to="`/teacher/exams/${exam.id}/edit`" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
                     {{ languageStore.t('edit') }}
                   </router-link>
-                  <router-link :to="`/teacher/grade-entry?exam=${exam.id}`" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-[10px] sm:text-sm whitespace-nowrap px-1 sm:px-2 py-0.5 sm:py-1">
-                    {{ languageStore.t('enterGrades') }}
+                  <span class="text-gray-300 dark:text-gray-600">|</span>
+                  <router-link :to="`/teacher/grade-entry?exam=${exam.id}`" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-sm font-medium">
+                    {{ languageStore.t('grades') }}
                   </router-link>
-                  <button @click="deleteExam(exam.id)" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-[10px] sm:text-sm whitespace-nowrap px-1 sm:px-2 py-0.5 sm:py-1">
+                  <span class="text-gray-300 dark:text-gray-600">|</span>
+                  <button @click="deleteExam(exam.id)" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium">
                     {{ languageStore.t('delete') }}
                   </button>
                 </div>
@@ -94,6 +96,68 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Mobile Card View (visible only on mobile) -->
+    <div class="sm:hidden space-y-4">
+      <div v-if="isLoadingExams" class="flex justify-center py-8">
+        <div class="spinner dark:border-gray-600 dark:border-t-blue-400"></div>
+      </div>
+      
+      <div v-else-if="exams.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+        {{ languageStore.t('noExams') }}
+      </div>
+      
+      <div 
+        v-for="exam in exams" 
+        :key="exam.id" 
+        class="card dark:bg-gray-800 dark:border-gray-700 p-4 space-y-3"
+      >
+        <!-- Header: Subject and Badge -->
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ exam.subject }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ exam.class?.name }}</p>
+          </div>
+          <span class="badge-neutral dark:bg-gray-600 dark:text-gray-200 text-xs px-2 py-1 rounded-full">
+            {{ languageStore.t(exam.exam_type) }}
+          </span>
+        </div>
+        
+        <!-- Details Grid -->
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">{{ languageStore.t('maxScore') }}:</span>
+            <span class="font-medium text-gray-900 dark:text-white ml-1">{{ exam.max_score }}</span>
+          </div>
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">{{ languageStore.t('examDate') }}:</span>
+            <span class="font-medium text-gray-900 dark:text-white ml-1">{{ formatDate(exam.exam_date) }}</span>
+          </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+          <router-link 
+            :to="`/teacher/exams/${exam.id}/edit`" 
+            class="flex-1 min-w-[60px] text-center px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+          >
+            {{ languageStore.t('edit') }}
+          </router-link>
+          <router-link 
+            :to="`/teacher/grade-entry?exam=${exam.id}`" 
+            class="flex-1 min-w-[60px] text-center px-3 py-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
+          >
+            {{ languageStore.t('grades') }}
+          </router-link>
+          <button 
+            @click="deleteExam(exam.id)" 
+            class="flex-1 min-w-[60px] text-center px-3 py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+          >
+            {{ languageStore.t('delete') }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -261,15 +325,12 @@ const fetchMyClasses = async () => {
   isLoadingClasses.value = true
 
   try {
-    // FIX: Use authStore.schoolId (now available in auth store)
     let schoolId = authStore.schoolId
     
-    // Fallback to profile if schoolId is not set
     if (!schoolId) {
       schoolId = authStore.profile?.school_id
     }
     
-    // Fallback to localStorage
     if (!schoolId) {
       schoolId = localStorage.getItem('schoolId')
     }
@@ -505,49 +566,6 @@ onMounted(async () => {
   100% { transform: rotate(360deg); }
 }
 
-/* Mobile adjustments */
-@media (max-width: 640px) {
-  .form-input, .form-select, .form-textarea {
-    font-size: 14px;
-  }
-  .card {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-  
-  td, th {
-    padding: 0.375rem 0.4rem !important;
-    font-size: 0.7rem !important;
-  }
-  
-  .whitespace-nowrap {
-    padding: 2px 4px !important;
-    font-size: 0.6rem !important;
-  }
-  
-  .badge-neutral {
-    font-size: 0.6rem !important;
-    padding: 1px 4px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .card {
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
-  }
-  
-  td, th {
-    padding: 0.25rem 0.25rem !important;
-    font-size: 0.6rem !important;
-  }
-  
-  .whitespace-nowrap {
-    padding: 1px 3px !important;
-    font-size: 0.55rem !important;
-  }
-}
-
 /* Modal scroll styles */
 .max-h-\[90vh\] {
   max-height: 90vh;
@@ -613,6 +631,18 @@ select option:hover {
 @media (prefers-color-scheme: dark) {
   select option:hover {
     background-color: #374151;
+  }
+}
+
+/* Mobile Card Styles */
+@media (max-width: 640px) {
+  .card {
+    padding: 1rem;
+  }
+  
+  .badge-neutral {
+    font-size: 0.65rem;
+    padding: 2px 10px;
   }
 }
 </style>
