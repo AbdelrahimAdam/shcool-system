@@ -1,5 +1,5 @@
 <template>
-  <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 pb-safe">
+  <div class="lg:hidden fixed bottom-0 inset-x-0 z-30 pb-safe">
     <div class="bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-700 shadow-lg rounded-t-2xl">
       <div class="flex justify-around items-center px-1 sm:px-2 py-1">
         <router-link
@@ -12,6 +12,7 @@
               ? 'text-primary-600 dark:text-primary-400'
               : 'text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-300'
           ]"
+          @click="handleNavigation"
         >
           <div class="relative">
             <!-- Dashboard -->
@@ -128,16 +129,32 @@ const navItems = computed(() => {
 })
 
 const isActive = (path) => {
-  // Exact match for dashboard roots
   if (path === '/admin' && route.path === '/admin') return true
   if (path === '/teacher' && route.path === '/teacher') return true
   if (path === '/parent' && route.path === '/parent') return true
   if (path === '/student' && route.path === '/student') return true
   if (path === '/super-admin' && route.path === '/super-admin') return true
   if (path === '/accountant' && route.path === '/accountant') return true
-  // For nested routes, check if route starts with path (except for root paths to avoid false positives)
   if (path !== '/' && route.path.startsWith(path)) return true
   return false
+}
+
+// Handle navigation - close sidebar if it's open
+const handleNavigation = () => {
+  // Emit event to close sidebar - the parent layout handles this
+  // This works with the TeacherLayout's closeMobileMenu function
+  if (window.innerWidth < 1024) {
+    // Find the sidebar close function from parent
+    const sidebar = document.querySelector('.sidebar')
+    if (sidebar) {
+      // The parent layout's closeMobileMenu will handle this
+      // Just trigger a click on the overlay or let the route change close it
+      const overlay = document.querySelector('.fixed.inset-0.bg-black\\/50')
+      if (overlay) {
+        overlay.click()
+      }
+    }
+  }
 }
 </script>
 
@@ -149,5 +166,17 @@ const isActive = (path) => {
 /* Improve touch response on mobile */
 .touch-manipulation {
   touch-action: manipulation;
+}
+
+/* Bottom nav should be below sidebar */
+@media (max-width: 1023px) {
+  .pb-safe {
+    z-index: 30 !important; /* Below sidebar (z-50) but above content */
+  }
+}
+
+/* Ensure bottom nav doesn't interfere with content */
+.lg\:hidden {
+  pointer-events: auto;
 }
 </style>
