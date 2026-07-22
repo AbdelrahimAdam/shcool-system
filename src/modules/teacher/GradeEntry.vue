@@ -49,14 +49,14 @@
         </div>
       </div>
 
-      <!-- Scrollable content area -->
-      <div class="flex-1 min-h-0 overflow-auto">
+      <!-- Scrollable content area - table only -->
+      <div class="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
         <div v-if="isLoading" class="flex justify-center py-12">
           <div class="spinner dark:border-gray-600 dark:border-t-blue-400"></div>
         </div>
 
-        <div v-else-if="selectedExam && students.length" class="space-y-4">
-          <div class="overflow-x-auto rounded-lg border dark:border-gray-700">
+        <div v-else-if="selectedExam && students.length">
+          <div class="rounded-lg border dark:border-gray-700">
             <table class="min-w-full text-sm dark:text-gray-200">
               <thead class="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                 <tr>
@@ -97,17 +97,22 @@
               </tbody>
             </table>
           </div>
-
-          <div class="flex justify-end flex-shrink-0 py-2">
-            <button @click="saveGrades" :disabled="isSaving" class="btn-primary dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50">
-              {{ isSaving ? languageStore.t('saving') : languageStore.t('saveGrades') }}
-            </button>
-          </div>
         </div>
 
         <div v-else-if="selectedExam && !students.length && !isLoading" class="text-center py-8 text-gray-500 dark:text-gray-400">
           {{ languageStore.t('noStudentsInClass') }}
         </div>
+        
+        <div v-else-if="!selectedExam" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          {{ languageStore.t('selectExamToStart') }}
+        </div>
+      </div>
+
+      <!-- Save button - always visible at bottom -->
+      <div v-if="selectedExam && students.length" class="flex justify-end flex-shrink-0 pt-4 mt-4 border-t dark:border-gray-700">
+        <button @click="saveGrades" :disabled="isSaving" class="btn-primary dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50 w-full sm:w-auto">
+          {{ isSaving ? languageStore.t('saving') : languageStore.t('saveGrades') }}
+        </button>
       </div>
     </div>
   </div>
@@ -340,33 +345,33 @@ onMounted(() => {
 }
 
 /* Custom scrollbar styles */
-.overflow-auto::-webkit-scrollbar {
+.overflow-y-auto::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-.overflow-auto::-webkit-scrollbar-track {
+.overflow-y-auto::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 4px;
 }
 
-.overflow-auto::-webkit-scrollbar-thumb {
+.overflow-y-auto::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 4px;
 }
 
-.overflow-auto::-webkit-scrollbar-thumb:hover {
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
 
 @media (prefers-color-scheme: dark) {
-  .overflow-auto::-webkit-scrollbar-track {
+  .overflow-y-auto::-webkit-scrollbar-track {
     background: #1f2937;
   }
-  .overflow-auto::-webkit-scrollbar-thumb {
+  .overflow-y-auto::-webkit-scrollbar-thumb {
     background: #4b5563;
   }
-  .overflow-auto::-webkit-scrollbar-thumb:hover {
+  .overflow-y-auto::-webkit-scrollbar-thumb:hover {
     background: #6b7280;
   }
 }
@@ -379,5 +384,13 @@ onMounted(() => {
 /* Ensure inputs don't overflow on small screens */
 .form-input {
   max-width: 100%;
+}
+
+/* Make save button full width on mobile */
+@media (max-width: 640px) {
+  .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
 }
 </style>
