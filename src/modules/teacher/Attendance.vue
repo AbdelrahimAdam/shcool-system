@@ -273,8 +273,44 @@ const saveAttendance = async () => {
   }
 
   isSaving.value = true
-  const schoolId = authStore.profile?.school_id
+  
+  // FIX: Use authStore.schoolId (now available in state)
+  let schoolId = authStore.schoolId
+  
+  // Fallback to profile if schoolId is not set
+  if (!schoolId) {
+    schoolId = authStore.profile?.school_id
+  }
+  
+  // Fallback to localStorage
+  if (!schoolId) {
+    schoolId = localStorage.getItem('schoolId')
+  }
+  
+  if (!schoolId) {
+    console.error('No school ID found! Auth store:', {
+      schoolId: authStore.schoolId,
+      profile: authStore.profile,
+      user: authStore.user
+    })
+    alert('School ID not found. Please logout and login again.')
+    isSaving.value = false
+    return
+  }
+
   const userId = authStore.user?.id
+  const teacherId = authStore.teacherId
+  const markedBy = userId || teacherId
+
+  console.log('Saving attendance with:', { 
+    schoolId, 
+    userId, 
+    teacherId, 
+    markedBy,
+    classId: selectedClass.value,
+    date: attendanceDate.value,
+    studentCount: students.value.length
+  })
 
   const records = students.value.map(student => ({
     school_id: schoolId,
@@ -283,7 +319,7 @@ const saveAttendance = async () => {
     date: attendanceDate.value,
     status: attendanceData.value[student.id]?.status || 'present',
     notes: attendanceData.value[student.id]?.notes || '',
-    marked_by: userId
+    marked_by: markedBy
   }))
 
   try {
@@ -323,8 +359,14 @@ const resetForm = () => {
   dateError.value = ''
 }
 
-onMounted(() => {
-  loadClasses()
+onMounted(async () => {
+  // Ensure school_id is loaded
+  if (!authStore.schoolId && authStore.profile?.school_id) {
+    authStore.schoolId = authStore.profile.school_id
+    localStorage.setItem('schoolId', authStore.profile.school_id)
+  }
+  
+  await loadClasses()
 })
 </script>
 
