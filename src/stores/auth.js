@@ -426,4 +426,4 @@ export const useAuthStore = defineStore('auth', {
             return permissions.includes('*') || permissions.includes(permission)
         }
     }
-})
+}) 
