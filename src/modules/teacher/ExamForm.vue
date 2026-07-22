@@ -8,7 +8,7 @@
           <!-- Class Selection with Search -->
           <div>
             <label class="form-label">{{ languageStore.t('class') }} *</label>
-            
+
             <!-- Search Input -->
             <div class="relative mb-2">
               <input 
@@ -22,7 +22,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            
+
             <!-- Class Dropdown -->
             <select v-model="form.class_id" required class="form-select" size="5">
               <option :value="null">{{ languageStore.t('selectClass') }}</option>
@@ -35,17 +35,17 @@
                 {{ cls.name }} ({{ languageStore.t('grade') }} {{ cls.grade_level }}) - {{ cls.section || 'A' }}
               </option>
             </select>
-            
+
             <!-- Loading State -->
             <div v-if="isLoadingClasses" class="text-center py-4">
               <div class="spinner"></div>
             </div>
-            
+
             <!-- No results message -->
             <p v-if="!isLoadingClasses && filteredClasses.length === 0 && classSearch" class="text-sm text-gray-500 mt-2">
               {{ languageStore.t('noClassesFound') }}
             </p>
-            
+
             <p v-if="!isLoadingClasses && filteredClasses.length === 0 && !classSearch && !isLoadingClasses" class="text-sm text-yellow-600 mt-2">
               {{ languageStore.t('noClassesAssigned') }}
             </p>
@@ -122,6 +122,7 @@ const isLoading = ref(false)
 const isLoadingClasses = ref(false)
 const myClasses = ref([])
 const classSearch = ref('')
+const originalExamClassId = ref(null) // Store original class ID for security check
 
 const form = ref({
   class_id: null,
@@ -151,7 +152,7 @@ const loadMyClasses = async () => {
   
   try {
     const schoolId = authStore.profile?.school_id
-    const teacherId = authStore.teacherId // Get teacher_id from auth store
+    const teacherId = authStore.teacherId
     
     if (!schoolId) {
       console.log('No school ID found')
@@ -203,8 +204,20 @@ const loadExam = async () => {
     
     if (error) {
       console.error('Error loading exam:', error)
-    } else if (data) {
+      return
+    }
+    
+    if (data) {
+      // SECURITY CHECK: Verify the exam belongs to one of the teacher's classes
+      const isTeacherClass = myClasses.value.some(c => c.id === data.class_id)
+      if (!isTeacherClass) {
+        alert('You do not have permission to edit this exam')
+        router.push('/teacher/exams')
+        return
+      }
+      
       form.value = data
+      originalExamClassId.value = data.class_id
     }
   }
 }
@@ -226,18 +239,39 @@ const handleSubmit = async () => {
     return
   }
 
+  // SECURITY CHECK: Verify the selected class belongs to this teacher
+  const selectedClass = myClasses.value.find(c => c.id === form.value.class_id)
+  if (!selectedClass) {
+    alert('You can only create exams for your assigned classes')
+    isLoading.value = false
+    return
+  }
+
+  // SECURITY CHECK: For edit, verify the class hasn't been changed to an unauthorized class
+  if (isEdit.value && originalExamClassId.value !== form.value.class_id) {
+    const newClass = myClasses.value.find(c => c.id === form.value.class_id)
+    if (!newClass) {
+      alert('You can only assign exams to your assigned classes')
+      isLoading.value = false
+      return
+    }
+  }
+
   const examData = { 
     ...form.value, 
     school_id: schoolId,
-    academic_year: form.value.academic_year || new Date().getFullYear() + '-' + (new Date().getFullYear() + 1)
+    academic_year: form.value.academic_year || new Date().getFullYear() + '-' + (new Date().getFullYear() + 1),
+    created_by: authStore.teacherId // Track who created/updated it
   }
 
   let error
   if (isEdit.value) {
+    // SECURITY CHECK: Ensure we're only updating the teacher's own exam
     const { error: updateError } = await supabase
       .from('exams')
       .update(examData)
       .eq('id', route.params.id)
+      .in('class_id', myClasses.value.map(c => c.id)) // Only update if class belongs to teacher
     error = updateError
   } else {
     const { error: insertError } = await supabase
@@ -260,6 +294,8 @@ onMounted(async () => {
   if (authStore.role === 'teacher' && !authStore.teacherId) {
     await authStore.fetchTeacherId()
   }
+  
+  // SECURITY FIX: Load classes first, then load exam
   await loadMyClasses()
   await loadExam()
 })
@@ -279,5 +315,20 @@ select option {
 
 select option:hover {
   background-color: #f3f4f6;
+}
+
+.spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
