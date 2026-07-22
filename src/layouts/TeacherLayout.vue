@@ -20,7 +20,7 @@
       />
 
       <!-- Main Content -->
-      <main class="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 mt-16 lg:ml-72 overflow-hidden">
+      <main class="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 mt-16 lg:ml-72 overflow-y-auto overflow-x-hidden">
         <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col min-h-0">
           <router-view v-slot="{ Component }">
             <transition name="fade" mode="out-in" class="flex-1 flex flex-col min-h-0">
@@ -134,6 +134,89 @@ main > * {
 @media (max-width: 1023px) {
   main {
     padding-bottom: 5rem;
+  }
+}
+
+/* CRITICAL FIXES FOR ATTENDANCE TABLE ON MOBILE */
+/* Allow the attendance table container to overflow and scroll */
+main :deep(.attendance-table-container) {
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+/* Allow the table scroll wrapper to scroll horizontally */
+main :deep(.table-scroll-wrapper) {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  max-height: none !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Ensure card doesn't clip overflow */
+main :deep(.card) {
+  overflow: visible !important;
+}
+
+/* Allow any overflow-auto containers to actually overflow */
+main :deep(.overflow-auto) {
+  overflow: auto !important;
+  max-height: none !important;
+}
+
+/* Fix for the main container itself - allow scrolling */
+main {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Ensure the max-w-7xl container doesn't restrict overflow */
+main :deep(.max-w-7xl) {
+  overflow: visible !important;
+}
+
+/* Allow the flex container to grow as needed */
+main :deep(.flex-1) {
+  min-height: auto !important;
+}
+
+/* Fix for any nested overflow-hidden elements */
+main :deep(.overflow-hidden) {
+  overflow: visible !important;
+}
+
+/* Ensure radio buttons and controls are accessible on mobile */
+@media (max-width: 640px) {
+  main :deep(.attendance-table) {
+    min-width: 600px !important;
+  }
+  
+  main :deep(.sticky-col) {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 10 !important;
+    background-color: #f9fafb !important;
+  }
+  
+  main :deep(.dark .sticky-col) {
+    background-color: #1f2937 !important;
+  }
+  
+  /* Ensure table cells have proper padding for touch targets */
+  main :deep(.attendance-table td),
+  main :deep(.attendance-table th) {
+    padding: 0.5rem 0.75rem !important;
+  }
+  
+  /* Ensure radio labels are touch-friendly */
+  main :deep(.radio-label) {
+    padding: 8px !important;
+    display: inline-block !important;
+  }
+  
+  /* Make sure the table scroll wrapper is visible */
+  main :deep(.table-scroll-wrapper) {
+    padding-bottom: 4px !important;
+    margin-bottom: -4px !important;
   }
 }
 </style>
