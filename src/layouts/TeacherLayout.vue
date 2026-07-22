@@ -157,10 +157,10 @@ main > * {
   min-height: 0;
 }
 
-/* Mobile bottom nav spacing */
+/* Mobile bottom nav spacing - CRITICAL FIX */
 @media (max-width: 1023px) {
   main {
-    padding-bottom: 5rem;
+    padding-bottom: 6rem !important; /* Increased from 5rem to 6rem for more space */
   }
   
   /* Ensure main content takes full height on mobile */
