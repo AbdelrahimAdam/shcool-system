@@ -14,13 +14,11 @@
 
     <!-- Sidebar (dark theme remains) -->
     <aside 
-      class="fixed top-0 left-0 w-72 bg-gray-900 dark:bg-gray-950 shadow-2xl border-r border-gray-800 dark:border-gray-700 transition-transform duration-300 ease-in-out z-50 lg:translate-x-0 overflow-y-auto"
-      :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'"
-      :style="{
-        height: window.innerWidth < 1024 ? '100vh' : 'calc(100vh - 4rem)',
-        height: window.innerWidth < 1024 ? '100dvh' : 'calc(100dvh - 4rem)',
-        paddingBottom: window.innerWidth < 1024 ? '5rem' : '0'
-      }"
+      class="sidebar fixed left-0 w-72 bg-gray-900 dark:bg-gray-950 shadow-2xl border-r border-gray-800 dark:border-gray-700 transition-transform duration-300 ease-in-out overflow-y-auto"
+      :class="[
+        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
+        'lg:translate-x-0'
+      ]"
     >
       <!-- Close button for mobile -->
       <button 
@@ -208,10 +206,7 @@
       </nav>
 
       <!-- Sidebar Footer (User Info) – dark mode compatible -->
-      <div class="absolute bottom-0 left-0 right-0 p-5 border-t border-gray-800 dark:border-gray-700 bg-gray-900 dark:bg-gray-950"
-           :style="{
-             bottom: window.innerWidth < 1024 ? '5rem' : '0'
-           }">
+      <div class="sidebar-footer absolute bottom-0 left-0 right-0 p-5 border-t border-gray-800 dark:border-gray-700 bg-gray-900 dark:bg-gray-950">
         <div class="flex items-center gap-3">
           <div class="flex-shrink-0">
             <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 flex items-center justify-center">
@@ -267,7 +262,6 @@ const authStore = useAuthStore()
 const languageStore = useLanguageStore()
 
 const mobileMenuOpen = ref(false)
-const windowWidth = ref(window.innerWidth)
 
 const schoolName = computed(() => authStore.school?.name || 'School Management')
 const userFullName = computed(() => authStore.profile?.full_name || 'User')
@@ -309,7 +303,6 @@ const handleLogout = async () => {
 }
 
 const handleResize = () => {
-  windowWidth.value = window.innerWidth
   if (window.innerWidth >= 1024 && mobileMenuOpen.value) {
     mobileMenuOpen.value = false
   }
@@ -364,23 +357,32 @@ aside::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }
 
+/* Sidebar base styles */
+.sidebar {
+  top: 4rem;
+  z-index: 20;
+  height: calc(100vh - 4rem);
+  height: calc(100dvh - 4rem);
+}
+
 /* Mobile sidebar fixes */
 @media (max-width: 1023px) {
-  aside {
+  .sidebar {
     top: 0 !important;
     z-index: 50 !important;
     height: 100vh !important;
     height: 100dvh !important;
+    padding-bottom: 5rem !important;
+  }
+  
+  .sidebar-footer {
+    bottom: 5rem !important;
   }
 }
 
 /* Desktop sidebar fixes */
 @media (min-width: 1024px) {
-  aside {
-    top: 4rem !important;
-    z-index: 20 !important;
-    height: calc(100vh - 4rem) !important;
-    height: calc(100dvh - 4rem) !important;
+  .sidebar {
     transform: translateX(0) !important;
   }
 }
