@@ -183,18 +183,19 @@ input[type="button"] {
 .rtl .text-left { text-align: right; }
 .rtl .text-right { text-align: left; }
 
-/* Fade transition for route changes */
+/* Fade transition for route changes - FIXED BLINKING */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.2s ease;
 }
 .fade-enter-from {
   opacity: 0;
-  transform: translateY(10px);
 }
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+}
+.fade-enter-active {
+  transition-delay: 0.05s;
 }
 
 /* Loading spinner animation */
@@ -233,5 +234,76 @@ input[type="button"] {
     min-height: 44px;
     min-width: 44px;
   }
+}
+
+/* ============================================
+   GLOBAL SIDEBAR STYLES - FIX BLINKING ISSUE
+   ============================================ */
+
+/* Base sidebar styles - applied to all sidebars */
+.sidebar {
+  will-change: transform;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Mobile sidebar - start hidden to prevent flash */
+@media (max-width: 1023px) {
+  .sidebar {
+    transform: translateX(-100%);
+    top: 0 !important;
+    z-index: 50 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    padding-bottom: 5rem !important;
+  }
+  
+  /* When open, slide in */
+  .sidebar.mobile-open {
+    transform: translateX(0) !important;
+  }
+  
+  /* Sidebar footer adjustment for mobile */
+  .sidebar-footer {
+    bottom: 5rem !important;
+  }
+}
+
+/* Desktop sidebar - always visible */
+@media (min-width: 1024px) {
+  .sidebar {
+    transform: translateX(0) !important;
+    top: 4rem !important;
+    z-index: 20 !important;
+    height: calc(100vh - 4rem) !important;
+    height: calc(100dvh - 4rem) !important;
+  }
+}
+
+/* Prevent sidebar flash during route transitions */
+.fade-enter-active .sidebar,
+.fade-leave-active .sidebar {
+  transition: none !important;
+}
+
+/* Ensure sidebar content doesn't overflow */
+.sidebar nav {
+  padding-bottom: 8rem;
+}
+
+/* Custom scrollbar for all sidebars */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 8px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 </style>
