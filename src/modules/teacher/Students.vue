@@ -31,94 +31,97 @@
       <div class="spinner dark:border-gray-600 dark:border-t-blue-400"></div>
     </div>
 
-    <!-- Desktop Table View (hidden on mobile) -->
-    <div v-else class="hidden sm:block card dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-sm dark:text-gray-200">
-          <thead class="bg-gray-50 dark:bg-gray-700">
-            <tr>
-              <th class="px-4 py-3 text-left dark:text-gray-300">{{ languageStore.t('studentNumber') }}</th>
-              <th class="px-4 py-3 text-left dark:text-gray-300">{{ languageStore.t('studentName') }}</th>
-              <th class="px-4 py-3 text-left dark:text-gray-300">{{ languageStore.t('class') }}</th>
-              <th class="px-4 py-3 text-center dark:text-gray-300">{{ languageStore.t('actions') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="student in filteredStudents" :key="student.id" class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-              <td class="px-4 py-3 font-mono text-xs dark:text-gray-400">{{ student.student_number }}</td>
-              <td class="px-4 py-3 font-medium dark:text-gray-200">{{ student.full_name }}</td>
-              <td class="px-4 py-3 dark:text-gray-300">
-                {{ getClassName(student.class_id) }}
-              </td>
-              <td class="px-4 py-3 text-center">
-                <div class="flex items-center justify-center gap-3">
-                  <router-link :to="`/teacher/students/${student.id}`" class="text-primary-600 hover:text-primary-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
-                    {{ languageStore.t('view') }}
-                  </router-link>
-                  <span class="text-gray-300 dark:text-gray-600">|</span>
-                  <router-link :to="`/teacher/grades?student=${student.id}`" class="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 text-sm font-medium">
-                    {{ languageStore.t('grades') }}
-                  </router-link>
-                  <span class="text-gray-300 dark:text-gray-600">|</span>
-                  <router-link :to="`/teacher/attendance?student=${student.id}`" class="text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300 text-sm font-medium">
-                    {{ languageStore.t('attendance') }}
-                  </router-link>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="filteredStudents.length === 0">
-              <td colspan="4" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ languageStore.t('noStudentsFound') }}</td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- Content: Desktop + Mobile (shown when not loading) -->
+    <template v-else>
+      <!-- Desktop Table View (hidden on mobile) -->
+      <div class="hidden sm:block card dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm dark:text-gray-200">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th class="px-4 py-3 text-left dark:text-gray-300">{{ languageStore.t('studentNumber') }}</th>
+                <th class="px-4 py-3 text-left dark:text-gray-300">{{ languageStore.t('studentName') }}</th>
+                <th class="px-4 py-3 text-left dark:text-gray-300">{{ languageStore.t('class') }}</th>
+                <th class="px-4 py-3 text-center dark:text-gray-300">{{ languageStore.t('actions') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="student in filteredStudents" :key="student.id" class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <td class="px-4 py-3 font-mono text-xs dark:text-gray-400">{{ student.student_number }}</td>
+                <td class="px-4 py-3 font-medium dark:text-gray-200">{{ student.full_name }}</td>
+                <td class="px-4 py-3 dark:text-gray-300">
+                  {{ getClassName(student.class_id) }}
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <div class="flex items-center justify-center gap-3">
+                    <router-link :to="`/teacher/students/${student.id}`" class="text-primary-600 hover:text-primary-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
+                      {{ languageStore.t('view') }}
+                    </router-link>
+                    <span class="text-gray-300 dark:text-gray-600">|</span>
+                    <router-link :to="`/teacher/grades?student=${student.id}`" class="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 text-sm font-medium">
+                      {{ languageStore.t('grades') }}
+                    </router-link>
+                    <span class="text-gray-300 dark:text-gray-600">|</span>
+                    <router-link :to="`/teacher/attendance?student=${student.id}`" class="text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300 text-sm font-medium">
+                      {{ languageStore.t('attendance') }}
+                    </router-link>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="filteredStudents.length === 0">
+                <td colspan="4" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ languageStore.t('noStudentsFound') }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <!-- Mobile Card View (visible only on mobile) -->
-    <div v-else class="sm:hidden space-y-4">
-      <div v-if="filteredStudents.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-        {{ languageStore.t('noStudentsFound') }}
-      </div>
-      
-      <div 
-        v-for="student in filteredStudents" 
-        :key="student.id" 
-        class="card dark:bg-gray-800 dark:border-gray-700 p-4 space-y-3"
-      >
-        <!-- Header: Student Name and Number -->
-        <div class="flex items-start justify-between">
-          <div class="flex-1 min-w-0">
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white truncate">{{ student.full_name }}</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{{ languageStore.t('studentNumber') }}: {{ student.student_number }}</p>
-          </div>
-          <span class="badge-neutral dark:bg-gray-700 dark:text-gray-300 text-xs px-2 py-1 rounded-full flex-shrink-0 ml-2">
-            {{ getClassName(student.class_id) }}
-          </span>
+      <!-- Mobile Card View (visible only on mobile) -->
+      <div class="sm:hidden space-y-4">
+        <div v-if="filteredStudents.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          {{ languageStore.t('noStudentsFound') }}
         </div>
         
-        <!-- Action Buttons -->
-        <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-          <router-link 
-            :to="`/teacher/students/${student.id}`" 
-            class="flex-1 min-w-[60px] text-center px-3 py-2.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-          >
-            {{ languageStore.t('view') }}
-          </router-link>
-          <router-link 
-            :to="`/teacher/grades?student=${student.id}`" 
-            class="flex-1 min-w-[60px] text-center px-3 py-2.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
-          >
-            {{ languageStore.t('grades') }}
-          </router-link>
-          <router-link 
-            :to="`/teacher/attendance?student=${student.id}`" 
-            class="flex-1 min-w-[60px] text-center px-3 py-2.5 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 rounded-lg text-sm font-medium hover:bg-yellow-100 dark:hover:bg-yellow-900/50 transition-colors"
-          >
-            {{ languageStore.t('attendance') }}
-          </router-link>
+        <div 
+          v-for="student in filteredStudents" 
+          :key="student.id" 
+          class="card dark:bg-gray-800 dark:border-gray-700 p-4 space-y-3"
+        >
+          <!-- Header: Student Name and Number -->
+          <div class="flex items-start justify-between">
+            <div class="flex-1 min-w-0">
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white truncate">{{ student.full_name }}</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{{ languageStore.t('studentNumber') }}: {{ student.student_number }}</p>
+            </div>
+            <span class="badge-neutral dark:bg-gray-700 dark:text-gray-300 text-xs px-2 py-1 rounded-full flex-shrink-0 ml-2">
+              {{ getClassName(student.class_id) }}
+            </span>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+            <router-link 
+              :to="`/teacher/students/${student.id}`" 
+              class="flex-1 min-w-[60px] text-center px-3 py-2.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+            >
+              {{ languageStore.t('view') }}
+            </router-link>
+            <router-link 
+              :to="`/teacher/grades?student=${student.id}`" 
+              class="flex-1 min-w-[60px] text-center px-3 py-2.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
+            >
+              {{ languageStore.t('grades') }}
+            </router-link>
+            <router-link 
+              :to="`/teacher/attendance?student=${student.id}`" 
+              class="flex-1 min-w-[60px] text-center px-3 py-2.5 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 rounded-lg text-sm font-medium hover:bg-yellow-100 dark:hover:bg-yellow-900/50 transition-colors"
+            >
+              {{ languageStore.t('attendance') }}
+            </router-link>
+          </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
