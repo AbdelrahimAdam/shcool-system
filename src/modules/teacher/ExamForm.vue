@@ -156,22 +156,34 @@ const loadMyClasses = async () => {
   isLoadingClasses.value = true
   
   try {
-    const schoolId = authStore.profile?.school_id
+    // FIX: Use authStore.schoolId with fallbacks
+    let schoolId = authStore.schoolId
+    
+    if (!schoolId) {
+      schoolId = authStore.profile?.school_id
+    }
+    
+    if (!schoolId) {
+      schoolId = localStorage.getItem('schoolId')
+    }
+    
     const teacherId = authStore.teacherId
     
     if (!schoolId) {
       console.log('No school ID found')
+      alert('School not found. Please logout and login again.')
       isLoadingClasses.value = false
       return
     }
     
     if (!teacherId) {
-      console.log('No teacher ID found. Make sure teacher is properly linked.')
+      console.log('No teacher ID found.')
+      alert('Teacher profile not found. Please contact administrator.')
       isLoadingClasses.value = false
       return
     }
     
-    console.log('Loading classes for teacher ID:', teacherId)
+    console.log('Loading classes for teacher ID:', teacherId, 'School ID:', schoolId)
     
     const { data: classes, error } = await supabase
       .from('classes')
@@ -182,6 +194,7 @@ const loadMyClasses = async () => {
 
     if (error) {
       console.error('Error loading classes:', error)
+      alert('Failed to load classes: ' + error.message)
       return
     }
 
@@ -189,10 +202,11 @@ const loadMyClasses = async () => {
     console.log('Classes loaded:', myClasses.value.length)
     
     if (myClasses.value.length === 0) {
-      console.warn('No classes assigned to this teacher. Please ask admin to assign classes.')
+      console.warn('No classes assigned to this teacher.')
     }
   } catch (error) {
     console.error('Error in loadMyClasses:', error)
+    alert('Failed to load classes. Please try again.')
   } finally {
     isLoadingClasses.value = false
   }
@@ -230,7 +244,18 @@ const loadExam = async () => {
 // Handle form submission
 const handleSubmit = async () => {
   isLoading.value = true
-  const schoolId = authStore.profile?.school_id
+  
+  // FIX: Get school_id with fallbacks
+  let schoolId = authStore.schoolId
+  
+  if (!schoolId) {
+    schoolId = authStore.profile?.school_id
+  }
+  
+  if (!schoolId) {
+    schoolId = localStorage.getItem('schoolId')
+  }
+  
   const teacherId = authStore.teacherId
   
   if (!schoolId) {
