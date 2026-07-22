@@ -105,7 +105,7 @@
           <div class="space-y-4">
             <div>
               <label class="form-label dark:text-gray-300">{{ languageStore.t('class') }} *</label>
-              
+
               <!-- Search Input for Classes -->
               <div class="relative mb-2">
                 <input 
@@ -118,7 +118,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              
+
               <select v-model="newExam.class_id" required class="form-select dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 <option :value="null">{{ languageStore.t('selectClass') }}</option>
                 <option 
@@ -129,17 +129,17 @@
                   {{ cls.name }} ({{ languageStore.t('grade') }} {{ cls.grade_level }}) - {{ cls.section || 'A' }}
                 </option>
               </select>
-              
+
               <p v-if="myClasses.length === 0 && !isLoadingClasses" class="text-sm text-yellow-600 dark:text-yellow-400 mt-2">
                 {{ languageStore.t('noClassesAssigned') }}
               </p>
             </div>
-            
+
             <div>
               <label class="form-label dark:text-gray-300">{{ languageStore.t('subject') }} *</label>
               <input v-model="newExam.subject" type="text" required class="form-input dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
             </div>
-            
+
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="form-label dark:text-gray-300">{{ languageStore.t('examType') }} *</label>
@@ -166,7 +166,7 @@
                 <input v-model="newExam.term" type="text" class="form-input dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="e.g., Term 1" />
               </div>
             </div>
-            
+
             <div>
               <label class="form-label dark:text-gray-300">{{ languageStore.t('description') }}</label>
               <textarea v-model="newExam.description" rows="2" class="form-textarea dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
@@ -246,25 +246,25 @@ const filteredClasses = computed(() => {
 // Fetch classes assigned to this teacher
 const fetchMyClasses = async () => {
   isLoadingClasses.value = true
-  
+
   try {
     const schoolId = authStore.profile?.school_id
     const teacherId = authStore.teacherId
-    
+
     if (!schoolId) {
       console.log('No school ID found')
       isLoadingClasses.value = false
       return
     }
-    
+
     if (!teacherId) {
       console.log('No teacher ID found. Please ensure teacher is properly linked.')
       isLoadingClasses.value = false
       return
     }
-    
+
     console.log('Fetching classes for teacher ID:', teacherId)
-    
+
     const { data, error } = await supabase
       .from('classes')
       .select('id, name, grade_level, section')
@@ -286,42 +286,53 @@ const fetchMyClasses = async () => {
   }
 }
 
-// Fetch exams
+// SECURITY FIX: Fetch only exams that belong to the teacher's classes
 const fetchExams = async () => {
   isLoadingExams.value = true
-  
+
   try {
     const schoolId = authStore.profile?.school_id
     const teacherId = authStore.teacherId
-    
+
     if (!schoolId) {
       isLoadingExams.value = false
       return
     }
+
+    // SECURITY CHECK: If teacher has no classes, return empty array immediately
+    if (!teacherId || myClasses.value.length === 0) {
+      console.log('Teacher has no classes assigned - returning empty exam list')
+      exams.value = []
+      isLoadingExams.value = false
+      return
+    }
+
+    // Get class IDs from teacher's assigned classes
+    const classIds = myClasses.value.map(c => c.id)
     
-    let query = supabase
+    if (classIds.length === 0) {
+      exams.value = []
+      isLoadingExams.value = false
+      return
+    }
+
+    console.log('Fetching exams for class IDs:', classIds)
+
+    // SECURITY FIX: Only fetch exams that belong to the teacher's classes
+    const { data, error } = await supabase
       .from('exams')
       .select('*, class:classes(name, grade_level)')
       .eq('school_id', schoolId)
+      .in('class_id', classIds)  // CRITICAL: Only exams from teacher's classes
       .order('exam_date', { ascending: false })
 
-    // If teacher has classes assigned, filter by those classes
-    if (teacherId && myClasses.value.length > 0) {
-      const classIds = myClasses.value.map(c => c.id)
-      if (classIds.length) {
-        query = query.in('class_id', classIds)
-      }
-    }
-
-    const { data, error } = await query
-    
     if (error) {
       console.error('Error fetching exams:', error)
       return
     }
-    
+
     exams.value = data || []
-    console.log('Exams loaded:', exams.value.length)
+    console.log('Exams loaded for teacher:', exams.value.length)
   } catch (error) {
     console.error('Error in fetchExams:', error)
   } finally {
@@ -329,21 +340,28 @@ const fetchExams = async () => {
   }
 }
 
-// Create exam
+// Create exam (with security check)
 const createExam = async () => {
-  isSubmitting.value = true
-  const schoolId = authStore.profile?.school_id
-
+  // SECURITY CHECK: Verify the selected class belongs to this teacher
   if (!newExam.value.class_id) {
     showNotification(languageStore.t('pleaseSelectClass'), 'error')
-    isSubmitting.value = false
     return
   }
+
+  const selectedClass = myClasses.value.find(c => c.id === newExam.value.class_id)
+  if (!selectedClass) {
+    showNotification('You can only create exams for your assigned classes', 'error')
+    return
+  }
+
+  isSubmitting.value = true
+  const schoolId = authStore.profile?.school_id
 
   const examData = {
     ...newExam.value,
     school_id: schoolId,
-    academic_year: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1)
+    academic_year: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1),
+    created_by: authStore.teacherId // Track who created it
   }
 
   const { error } = await supabase
@@ -361,14 +379,28 @@ const createExam = async () => {
   isSubmitting.value = false
 }
 
-// Delete exam
+// Delete exam (with security check)
 const deleteExam = async (id) => {
+  // First, verify the exam belongs to one of the teacher's classes
+  const examToDelete = exams.value.find(e => e.id === id)
+  if (!examToDelete) {
+    showNotification('Exam not found', 'error')
+    return
+  }
+
+  // SECURITY CHECK: Verify the exam's class belongs to this teacher
+  const isTeacherClass = myClasses.value.some(c => c.id === examToDelete.class_id)
+  if (!isTeacherClass) {
+    showNotification('You do not have permission to delete this exam', 'error')
+    return
+  }
+
   if (confirm(languageStore.t('confirmDelete'))) {
     const { error } = await supabase
       .from('exams')
       .delete()
       .eq('id', id)
-    
+
     if (!error) {
       showNotification(languageStore.t('examDeletedSuccessfully'), 'success')
       await fetchExams()
@@ -403,7 +435,8 @@ onMounted(async () => {
   if (authStore.role === 'teacher' && !authStore.teacherId) {
     await authStore.fetchTeacherId()
   }
-  
+
+  // CRITICAL FIX: Load classes first, then fetch exams
   await fetchMyClasses()
   await fetchExams()
 })
