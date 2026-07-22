@@ -1,15 +1,25 @@
 <template>
   <aside 
-    class="sidebar fixed top-16 left-0 w-72 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transition-transform duration-300 ease-in-out z-40 overflow-y-auto lg:translate-x-0"
+    class="w-72 h-full bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl overflow-y-auto"
     :class="[
       isOpen ? 'translate-x-0' : '-translate-x-full',
-      'h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)]'
+      'transition-transform duration-300 ease-in-out'
     ]"
-    :style="{ 
-      paddingBottom: window.innerWidth < 1024 ? '5rem' : '0',
-      height: window.innerWidth < 1024 ? 'calc(100vh - 4rem - 5rem)' : 'calc(100vh - 4rem)'
+    :style="{
+      paddingBottom: window.innerWidth < 1024 ? 'calc(1rem + env(safe-area-inset-bottom, 0px))' : 'env(safe-area-inset-bottom, 0px)'
     }"
   >
+    <!-- Close Button (Mobile only) -->
+    <button 
+      @click="closeSidebar"
+      class="lg:hidden absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-700/50 transition-colors z-20"
+      aria-label="Close menu"
+    >
+      <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
     <!-- Sidebar Header -->
     <div class="p-5 border-b border-gray-700 sticky top-0 bg-gray-900 z-10">
       <div class="flex items-center gap-3">
@@ -42,7 +52,7 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="py-6 pb-32">
+    <nav class="py-6 pb-40">
       <div class="px-4 space-y-1.5">
         <!-- Dashboard -->
         <router-link
@@ -166,11 +176,7 @@
     </nav>
 
     <!-- Sidebar Footer (Logout) -->
-    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700 bg-gray-900 z-10" 
-         :style="{ 
-           bottom: window.innerWidth < 1024 ? '5rem' : '0',
-           paddingBottom: window.innerWidth < 1024 ? 'calc(1rem + env(safe-area-inset-bottom))' : '1rem'
-         }">
+    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700 bg-gray-900 z-10">
       <button 
         @click="handleLogout" 
         class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-gray-400 hover:bg-red-500/10 hover:text-red-400 group"
@@ -214,9 +220,7 @@ const userInitials = computed(() => {
 })
 
 const closeSidebar = () => {
-  if (window.innerWidth < 1024) {
-    emit('close')
-  }
+  emit('close')
 }
 
 const handleLogout = async () => {
@@ -255,30 +259,5 @@ onUnmounted(() => {
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 200ms;
-}
-
-/* Ensure sidebar doesn't overlap header */
-.sidebar {
-  z-index: 40;
-}
-
-/* Fix for mobile bottom nav overlap */
-@media (max-width: 1023px) {
-  .sidebar {
-    height: calc(100vh - 4rem - 5rem) !important;
-    padding-bottom: 0 !important;
-  }
-}
-
-/* Ensure sidebar content doesn't clip */
-.sidebar nav {
-  padding-bottom: 8rem;
-}
-
-/* Fix for safe area on notched devices */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .sidebar {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
 }
 </style>
