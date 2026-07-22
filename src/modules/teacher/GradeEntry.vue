@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div class="flex flex-col h-full min-h-0">
     <!-- Notification Toast -->
     <transition
       enter-active-class="transition ease-out duration-300"
@@ -34,13 +34,13 @@
       </div>
     </transition>
 
-    <div class="card p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700 transition-colors duration-200">
-      <h1 class="text-xl md:text-2xl font-bold mb-6 dark:text-white">{{ languageStore.t('enterGrades') }}</h1>
+    <div class="card p-4 md:p-6 dark:bg-gray-800 dark:border-gray-700 transition-colors duration-200 flex flex-col flex-1 min-h-0">
+      <h1 class="text-xl md:text-2xl font-bold mb-6 dark:text-white flex-shrink-0">{{ languageStore.t('enterGrades') }}</h1>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 flex-shrink-0">
         <div>
           <label class="form-label dark:text-gray-300">{{ languageStore.t('exam') }}</label>
-          <select v-model="selectedExamId" @change="loadStudents" class="form-select dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+          <select v-model="selectedExamId" @change="loadStudents" class="form-select dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 w-full">
             <option :value="null">{{ languageStore.t('selectExam') }}</option>
             <option v-for="exam in exams" :key="exam.id" :value="exam.id">
               {{ exam.subject }} - {{ languageStore.t(exam.exam_type) }} ({{ exam.class?.name }})
@@ -49,60 +49,65 @@
         </div>
       </div>
 
-      <div v-if="isLoading" class="flex justify-center py-12">
-        <div class="spinner dark:border-gray-600 dark:border-t-blue-400"></div>
-      </div>
-
-      <div v-else-if="selectedExam && students.length" class="overflow-x-auto rounded-lg">
-        <table class="min-w-full text-sm dark:text-gray-200">
-          <thead class="bg-gray-50 dark:bg-gray-700">
-            <tr>
-              <th class="px-3 py-2 md:px-4 text-left dark:text-gray-300">{{ languageStore.t('studentName') }}</th>
-              <th class="px-3 py-2 md:px-4 text-center dark:text-gray-300">{{ languageStore.t('score') }} ({{ selectedExam.max_score }})</th>
-              <th class="px-3 py-2 md:px-4 text-center dark:text-gray-300">{{ languageStore.t('percentage') }}%</th>
-              <th class="px-3 py-2 md:px-4 text-center dark:text-gray-300">{{ languageStore.t('grade') }}</th>
-              <th class="px-3 py-2 md:px-4 text-left dark:text-gray-300">{{ languageStore.t('remarks') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="student in students" :key="student.id" class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-              <td class="px-3 py-2 md:px-4 font-medium dark:text-gray-200">{{ student.full_name }}</td>
-              <td class="px-3 py-2 md:px-4 text-center">
-                <input
-                  :value="getGradeScore(student.id)"
-                  @input="updateScore(student.id, $event.target.value)"
-                  type="number"
-                  :max="selectedExam.max_score"
-                  min="0"
-                  step="0.5"
-                  class="form-input w-20 sm:w-24 text-center dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                />
-              </td>
-              <td class="px-3 py-2 md:px-4 text-center font-medium dark:text-gray-300">{{ getGradePercentage(student.id) || '-' }}%</td>
-              <td class="px-3 py-2 md:px-4 text-center font-bold" :class="getGradeColor(getGradePercentage(student.id))">
-                {{ getGradeLetter(student.id) || '-' }}
-              </td>
-              <td class="px-3 py-2 md:px-4">
-                <input
-                  :value="getGradeRemarks(student.id)"
-                  @input="updateRemarks(student.id, $event.target.value)"
-                  type="text"
-                  class="form-input w-32 sm:w-40 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="mt-6 flex justify-end">
-          <button @click="saveGrades" :disabled="isSaving" class="btn-primary dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50">
-            {{ isSaving ? languageStore.t('saving') : languageStore.t('saveGrades') }}
-          </button>
+      <!-- Scrollable content area -->
+      <div class="flex-1 min-h-0 overflow-auto">
+        <div v-if="isLoading" class="flex justify-center py-12">
+          <div class="spinner dark:border-gray-600 dark:border-t-blue-400"></div>
         </div>
-      </div>
 
-      <div v-else-if="selectedExam && !students.length && !isLoading" class="text-center py-8 text-gray-500 dark:text-gray-400">
-        {{ languageStore.t('noStudentsInClass') }}
+        <div v-else-if="selectedExam && students.length" class="space-y-4">
+          <div class="overflow-x-auto rounded-lg border dark:border-gray-700">
+            <table class="min-w-full text-sm dark:text-gray-200">
+              <thead class="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
+                <tr>
+                  <th class="px-3 py-2 md:px-4 text-left dark:text-gray-300">{{ languageStore.t('studentName') }}</th>
+                  <th class="px-3 py-2 md:px-4 text-center dark:text-gray-300">{{ languageStore.t('score') }} ({{ selectedExam.max_score }})</th>
+                  <th class="px-3 py-2 md:px-4 text-center dark:text-gray-300">{{ languageStore.t('percentage') }}%</th>
+                  <th class="px-3 py-2 md:px-4 text-center dark:text-gray-300">{{ languageStore.t('grade') }}</th>
+                  <th class="px-3 py-2 md:px-4 text-left dark:text-gray-300">{{ languageStore.t('remarks') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="student in students" :key="student.id" class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <td class="px-3 py-2 md:px-4 font-medium dark:text-gray-200">{{ student.full_name }}</td>
+                  <td class="px-3 py-2 md:px-4 text-center">
+                    <input
+                      :value="getGradeScore(student.id)"
+                      @input="updateScore(student.id, $event.target.value)"
+                      type="number"
+                      :max="selectedExam.max_score"
+                      min="0"
+                      step="0.5"
+                      class="form-input w-20 sm:w-24 text-center dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    />
+                  </td>
+                  <td class="px-3 py-2 md:px-4 text-center font-medium dark:text-gray-300">{{ getGradePercentage(student.id) !== null ? getGradePercentage(student.id).toFixed(1) : '-' }}%</td>
+                  <td class="px-3 py-2 md:px-4 text-center font-bold" :class="getGradeColor(getGradePercentage(student.id))">
+                    {{ getGradeLetter(student.id) || '-' }}
+                  </td>
+                  <td class="px-3 py-2 md:px-4">
+                    <input
+                      :value="getGradeRemarks(student.id)"
+                      @input="updateRemarks(student.id, $event.target.value)"
+                      type="text"
+                      class="form-input w-32 sm:w-40 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex justify-end flex-shrink-0 py-2">
+            <button @click="saveGrades" :disabled="isSaving" class="btn-primary dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-50">
+              {{ isSaving ? languageStore.t('saving') : languageStore.t('saveGrades') }}
+            </button>
+          </div>
+        </div>
+
+        <div v-else-if="selectedExam && !students.length && !isLoading" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          {{ languageStore.t('noStudentsInClass') }}
+        </div>
       </div>
     </div>
   </div>
@@ -125,7 +130,6 @@ const gradesData = ref({})
 const isLoading = ref(false)
 const isSaving = ref(false)
 
-// Notification state
 const notification = ref({
   message: '',
   type: 'success'
@@ -166,7 +170,13 @@ const loadExams = async () => {
 }
 
 const loadStudents = async () => {
-  if (!selectedExamId.value) return
+  if (!selectedExamId.value) {
+    students.value = []
+    selectedExam.value = null
+    gradesData.value = {}
+    return
+  }
+  
   isLoading.value = true
 
   const exam = exams.value.find(e => e.id === selectedExamId.value)
@@ -243,12 +253,12 @@ const calculateGrade = (studentId) => {
 }
 
 const getGradeColor = (percentage) => {
+  if (percentage === null || percentage === undefined) return ''
   if (percentage >= 90) return 'text-green-600 dark:text-green-400'
   if (percentage >= 80) return 'text-blue-600 dark:text-blue-400'
   if (percentage >= 70) return 'text-yellow-600 dark:text-yellow-400'
   if (percentage >= 60) return 'text-orange-600 dark:text-orange-400'
-  if (percentage) return 'text-red-600 dark:text-red-400'
-  return ''
+  return 'text-red-600 dark:text-red-400'
 }
 
 const saveGrades = async () => {
@@ -288,7 +298,6 @@ const saveGrades = async () => {
       showNotification(error.message, 'error')
     } else {
       showNotification(languageStore.t('gradesSaved'), 'success')
-      // Close the form by resetting selection and clearing data
       selectedExamId.value = null
       selectedExam.value = null
       students.value = []
@@ -330,17 +339,45 @@ onMounted(() => {
   }
 }
 
-/* Custom dark mode scrollbar for table (optional) */
+/* Custom scrollbar styles */
+.overflow-auto::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.overflow-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
 @media (prefers-color-scheme: dark) {
-  .overflow-x-auto::-webkit-scrollbar {
-    height: 6px;
-  }
-  .overflow-x-auto::-webkit-scrollbar-track {
+  .overflow-auto::-webkit-scrollbar-track {
     background: #1f2937;
   }
-  .overflow-x-auto::-webkit-scrollbar-thumb {
+  .overflow-auto::-webkit-scrollbar-thumb {
     background: #4b5563;
-    border-radius: 3px;
   }
+  .overflow-auto::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+}
+
+/* Sticky header in table */
+.sticky {
+  position: sticky;
+}
+
+/* Ensure inputs don't overflow on small screens */
+.form-input {
+  max-width: 100%;
 }
 </style>
