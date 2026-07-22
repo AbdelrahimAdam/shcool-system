@@ -103,7 +103,7 @@
         <div v-else-if="selectedExam && !students.length && !isLoading" class="text-center py-8 text-gray-500 dark:text-gray-400">
           {{ languageStore.t('noStudentsInClass') }}
         </div>
-        
+
         <div v-else-if="!selectedExam" class="text-center py-8 text-gray-500 dark:text-gray-400">
           {{ languageStore.t('selectExamToStart') }}
         </div>
@@ -135,6 +135,7 @@ const students = ref([])
 const gradesData = ref({})
 const isLoading = ref(false)
 const isSaving = ref(false)
+const myClasses = ref([])
 
 const notification = ref({
   message: '',
@@ -156,23 +157,60 @@ const clearNotification = () => {
   notification.value.message = ''
 }
 
+// SECURITY FIX: Load teacher's classes first
+const loadMyClasses = async () => {
+  const schoolId = authStore.profile?.school_id
+  const teacherId = authStore.teacherId
+  
+  if (!schoolId || !teacherId) {
+    console.log('No school ID or teacher ID found')
+    return
+  }
+
+  const { data, error } = await supabase
+    .from('classes')
+    .select('id')
+    .eq('school_id', schoolId)
+    .eq('teacher_id', teacherId)
+
+  if (error) {
+    console.error('Error loading classes:', error)
+    return
+  }
+
+  myClasses.value = data || []
+  console.log('Classes loaded for teacher:', myClasses.value.length)
+}
+
+// SECURITY FIX: Load only exams for teacher's classes
 const loadExams = async () => {
   const schoolId = authStore.profile?.school_id
   const teacherId = authStore.teacherId
+  
   if (!schoolId) return
 
-  let query = supabase
+  // If teacher has no classes, return empty
+  if (myClasses.value.length === 0) {
+    exams.value = []
+    return
+  }
+
+  const classIds = myClasses.value.map(c => c.id)
+
+  const { data, error } = await supabase
     .from('exams')
     .select('*, class:classes(id, name, teacher_id)')
     .eq('school_id', schoolId)
+    .in('class_id', classIds) // SECURITY: Only exams from teacher's classes
     .order('exam_date', { ascending: false })
 
-  if (teacherId) {
-    query = query.eq('class.teacher_id', teacherId)
+  if (error) {
+    console.error('Error loading exams:', error)
+    return
   }
 
-  const { data } = await query
   exams.value = data || []
+  console.log('Exams loaded for teacher:', exams.value.length)
 }
 
 const loadStudents = async () => {
@@ -189,6 +227,16 @@ const loadStudents = async () => {
   selectedExam.value = exam
 
   if (!exam) {
+    isLoading.value = false
+    return
+  }
+
+  // SECURITY CHECK: Verify the exam belongs to one of the teacher's classes
+  const isTeacherClass = myClasses.value.some(c => c.id === exam.class_id)
+  if (!isTeacherClass) {
+    showNotification('You do not have permission to view this exam', 'error')
+    selectedExamId.value = null
+    selectedExam.value = null
     isLoading.value = false
     return
   }
@@ -271,6 +319,21 @@ const saveGrades = async () => {
   isSaving.value = true
   const schoolId = authStore.profile?.school_id
 
+  // SECURITY CHECK: Verify the exam belongs to the teacher
+  const exam = exams.value.find(e => e.id === selectedExamId.value)
+  if (!exam) {
+    showNotification('Exam not found', 'error')
+    isSaving.value = false
+    return
+  }
+
+  const isTeacherClass = myClasses.value.some(c => c.id === exam.class_id)
+  if (!isTeacherClass) {
+    showNotification('You do not have permission to save grades for this exam', 'error')
+    isSaving.value = false
+    return
+  }
+
   const records = students.value
     .map(student => {
       const data = gradesData.value[student.id]
@@ -315,8 +378,15 @@ const saveGrades = async () => {
   isSaving.value = false
 }
 
-onMounted(() => {
-  loadExams()
+onMounted(async () => {
+  // Ensure teacher_id is loaded from auth store
+  if (authStore.role === 'teacher' && !authStore.teacherId) {
+    await authStore.fetchTeacherId()
+  }
+  
+  // SECURITY FIX: Load classes first, then exams
+  await loadMyClasses()
+  await loadExams()
 })
 </script>
 
