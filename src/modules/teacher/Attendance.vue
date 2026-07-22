@@ -1,9 +1,9 @@
 <template>
-  <div class="space-y-6">
-    <div class="card bg-white dark:bg-gray-800 p-4 md:p-6 transition-colors duration-200">
-      <h1 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ languageStore.t('attendance') }}</h1>
+  <div class="flex flex-col h-full min-h-0">
+    <div class="card bg-white dark:bg-gray-800 p-4 md:p-6 transition-colors duration-200 flex flex-col flex-1 min-h-0">
+      <h1 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-6 flex-shrink-0">{{ languageStore.t('attendance') }}</h1>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 flex-shrink-0">
         <div>
           <label class="form-label text-gray-700 dark:text-gray-300">{{ languageStore.t('class') }}</label>
           <select v-model="selectedClass" @change="loadStudents" class="form-select w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -21,107 +21,124 @@
         </div>
       </div>
 
-      <button 
-        @click="loadStudents" 
-        :disabled="!selectedClass || isLoading" 
-        class="btn-primary w-full md:w-auto mb-6 dark:bg-primary-600 dark:hover:bg-primary-700"
-      >
-        {{ isLoading ? languageStore.t('loading') : languageStore.t('loadStudents') }}
-      </button>
-
-      <!-- Loading State -->
-      <div v-if="isLoading" class="flex justify-center py-8">
-        <div class="spinner dark:border-gray-600 dark:border-t-primary-400"></div>
+      <div class="flex flex-col sm:flex-row gap-3 mb-6 flex-shrink-0">
+        <button 
+          @click="loadStudents" 
+          :disabled="!selectedClass || isLoading" 
+          class="btn-primary w-full sm:w-auto dark:bg-primary-600 dark:hover:bg-primary-700"
+        >
+          {{ isLoading ? languageStore.t('loading') : languageStore.t('loadStudents') }}
+        </button>
       </div>
 
-      <!-- Attendance Table -->
-      <div v-else-if="students.length > 0" class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead class="bg-gray-50 dark:bg-gray-700">
-            <tr>
-              <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-200">{{ languageStore.t('studentName') }}</th>
-              <th class="px-3 py-2 text-center text-gray-700 dark:text-gray-200">{{ languageStore.t('present') }}</th>
-              <th class="px-3 py-2 text-center text-gray-700 dark:text-gray-200">{{ languageStore.t('absent') }}</th>
-              <th class="px-3 py-2 text-center text-gray-700 dark:text-gray-200">{{ languageStore.t('late') }}</th>
-              <th class="px-3 py-2 text-center text-gray-700 dark:text-gray-200">{{ languageStore.t('excused') }}</th>
-              <th class="px-3 py-2 text-gray-700 dark:text-gray-200">{{ languageStore.t('notes') }}</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="student in students" :key="student.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-              <td class="px-3 py-2 font-medium text-gray-900 dark:text-white">{{ student.full_name }}</td>
-              <td class="px-3 py-2 text-center">
-                <input 
-                  type="radio" 
-                  :name="`status-${student.id}`" 
-                  value="present" 
-                  :checked="getAttendanceStatus(student.id) === 'present'"
-                  @change="updateAttendanceStatus(student.id, 'present')"
-                  class="w-4 h-4 accent-primary-600 dark:accent-primary-400"
-                />
-              </td>
-              <td class="px-3 py-2 text-center">
-                <input 
-                  type="radio" 
-                  :name="`status-${student.id}`" 
-                  value="absent" 
-                  :checked="getAttendanceStatus(student.id) === 'absent'"
-                  @change="updateAttendanceStatus(student.id, 'absent')"
-                  class="w-4 h-4 accent-red-600 dark:accent-red-400"
-                />
-              </td>
-              <td class="px-3 py-2 text-center">
-                <input 
-                  type="radio" 
-                  :name="`status-${student.id}`" 
-                  value="late" 
-                  :checked="getAttendanceStatus(student.id) === 'late'"
-                  @change="updateAttendanceStatus(student.id, 'late')"
-                  class="w-4 h-4 accent-yellow-600 dark:accent-yellow-400"
-                />
-              </td>
-              <td class="px-3 py-2 text-center">
-                <input 
-                  type="radio" 
-                  :name="`status-${student.id}`" 
-                  value="excused" 
-                  :checked="getAttendanceStatus(student.id) === 'excused'"
-                  @change="updateAttendanceStatus(student.id, 'excused')"
-                  class="w-4 h-4 accent-blue-600 dark:accent-blue-400"
-                />
-              </td>
-              <td class="px-3 py-2">
-                <input 
-                  :value="getAttendanceNotes(student.id)"
-                  @input="updateAttendanceNotes(student.id, $event.target.value)"
-                  type="text" 
-                  class="form-input text-sm w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  :placeholder="languageStore.t('notes')"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Scrollable Table Area -->
+      <div class="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
+        <!-- Loading State -->
+        <div v-if="isLoading" class="flex justify-center py-8">
+          <div class="spinner dark:border-gray-600 dark:border-t-primary-400"></div>
+        </div>
 
-        <div class="mt-6 flex flex-col sm:flex-row justify-end gap-3">
-          <button @click="resetForm" class="btn-secondary w-full sm:w-auto dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
-            {{ languageStore.t('cancel') }}
-          </button>
-          <button @click="saveAttendance" :disabled="isSaving" class="btn-primary w-full sm:w-auto dark:bg-primary-600 dark:hover:bg-primary-700">
-            {{ isSaving ? languageStore.t('saving') : languageStore.t('saveAttendance') }}
-          </button>
+        <!-- Attendance Table -->
+        <div v-else-if="students.length > 0">
+          <div class="border dark:border-gray-700 rounded-lg">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
+                <tr>
+                  <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-200 min-w-[120px]">{{ languageStore.t('studentName') }}</th>
+                  <th class="px-3 py-2 text-center text-gray-700 dark:text-gray-200 min-w-[80px]">{{ languageStore.t('present') }}</th>
+                  <th class="px-3 py-2 text-center text-gray-700 dark:text-gray-200 min-w-[80px]">{{ languageStore.t('absent') }}</th>
+                  <th class="px-3 py-2 text-center text-gray-700 dark:text-gray-200 min-w-[80px]">{{ languageStore.t('late') }}</th>
+                  <th class="px-3 py-2 text-center text-gray-700 dark:text-gray-200 min-w-[80px]">{{ languageStore.t('excused') }}</th>
+                  <th class="px-3 py-2 text-gray-700 dark:text-gray-200 min-w-[140px]">{{ languageStore.t('notes') }}</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                <tr v-for="student in students" :key="student.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <td class="px-3 py-2 font-medium text-gray-900 dark:text-white">{{ student.full_name }}</td>
+                  <td class="px-3 py-2 text-center">
+                    <input 
+                      type="radio" 
+                      :name="`status-${student.id}`" 
+                      value="present" 
+                      :checked="getAttendanceStatus(student.id) === 'present'"
+                      @change="updateAttendanceStatus(student.id, 'present')"
+                      class="w-5 h-5 accent-primary-600 dark:accent-primary-400 cursor-pointer"
+                    />
+                  </td>
+                  <td class="px-3 py-2 text-center">
+                    <input 
+                      type="radio" 
+                      :name="`status-${student.id}`" 
+                      value="absent" 
+                      :checked="getAttendanceStatus(student.id) === 'absent'"
+                      @change="updateAttendanceStatus(student.id, 'absent')"
+                      class="w-5 h-5 accent-red-600 dark:accent-red-400 cursor-pointer"
+                    />
+                  </td>
+                  <td class="px-3 py-2 text-center">
+                    <input 
+                      type="radio" 
+                      :name="`status-${student.id}`" 
+                      value="late" 
+                      :checked="getAttendanceStatus(student.id) === 'late'"
+                      @change="updateAttendanceStatus(student.id, 'late')"
+                      class="w-5 h-5 accent-yellow-600 dark:accent-yellow-400 cursor-pointer"
+                    />
+                  </td>
+                  <td class="px-3 py-2 text-center">
+                    <input 
+                      type="radio" 
+                      :name="`status-${student.id}`" 
+                      value="excused" 
+                      :checked="getAttendanceStatus(student.id) === 'excused'"
+                      @change="updateAttendanceStatus(student.id, 'excused')"
+                      class="w-5 h-5 accent-blue-600 dark:accent-blue-400 cursor-pointer"
+                    />
+                  </td>
+                  <td class="px-3 py-2">
+                    <input 
+                      :value="getAttendanceNotes(student.id)"
+                      @input="updateAttendanceNotes(student.id, $event.target.value)"
+                      type="text" 
+                      class="form-input text-sm w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      :placeholder="languageStore.t('notes')"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div v-else-if="selectedClass && !students.length && !isLoading" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          {{ languageStore.t('noStudentsInClass') }}
         </div>
       </div>
 
-      <div v-else-if="selectedClass && !students.length && !isLoading" class="text-center py-8 text-gray-500 dark:text-gray-400">
-        {{ languageStore.t('noStudentsInClass') }}
+      <!-- Action Buttons - Always visible at bottom -->
+      <div v-if="students.length > 0" class="flex flex-col sm:flex-row justify-end gap-3 pt-4 mt-4 border-t dark:border-gray-700 flex-shrink-0">
+        <button @click="resetForm" class="btn-secondary w-full sm:w-auto dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+          {{ languageStore.t('cancel') }}
+        </button>
+        <button @click="saveAttendance" :disabled="isSaving" class="btn-primary w-full sm:w-auto dark:bg-primary-600 dark:hover:bg-primary-700">
+          {{ isSaving ? languageStore.t('saving') : languageStore.t('saveAttendance') }}
+        </button>
       </div>
     </div>
 
     <!-- Success Toast -->
-    <div v-if="showSuccess" class="fixed bottom-4 right-4 bg-green-500 dark:bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300">
-      {{ languageStore.t('attendanceSaved') }}
-    </div>
+    <transition
+      enter-active-class="transition ease-out duration-300"
+      enter-from-class="transform opacity-0 translate-y-2"
+      enter-to-class="transform opacity-100 translate-y-0"
+      leave-active-class="transition ease-in duration-200"
+      leave-from-class="transform opacity-100 translate-y-0"
+      leave-to-class="transform opacity-0 translate-y-2"
+    >
+      <div v-if="showSuccess" class="fixed bottom-4 right-4 bg-green-500 dark:bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+        {{ languageStore.t('attendanceSaved') }}
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -146,7 +163,6 @@ const isSaving = ref(false)
 const showSuccess = ref(false)
 const dateError = ref('')
 
-// Validate date (cannot be in the future)
 const validateDate = () => {
   const today = new Date().toISOString().split('T')[0]
   if (attendanceDate.value > today) {
@@ -216,7 +232,10 @@ const loadClasses = async () => {
 
 const loadStudents = async () => {
   if (!selectedClass.value) return
-  if (!validateDate()) return
+  if (!validateDate()) {
+    alert(dateError.value)
+    return
+  }
 
   isLoading.value = true
   try {
@@ -273,7 +292,6 @@ const saveAttendance = async () => {
   }))
 
   try {
-    // Delete existing records for this date/class
     const { error: deleteError } = await supabase
       .from('attendance')
       .delete()
@@ -281,17 +299,14 @@ const saveAttendance = async () => {
       .eq('date', attendanceDate.value)
     if (deleteError) throw deleteError
 
-    // Insert new records
     const { error: insertError } = await supabase
       .from('attendance')
       .insert(records)
     if (insertError) throw insertError
 
-    // Show success message
     showSuccess.value = true
     setTimeout(() => { showSuccess.value = false }, 3000)
 
-    // Reset form
     resetForm()
   } catch (error) {
     console.error('Error saving attendance:', error)
@@ -332,5 +347,143 @@ onMounted(() => {
     border-color: #4b5563;
     border-top-color: #60a5fa;
   }
+}
+
+/* Mobile-first responsive adjustments */
+@media (max-width: 640px) {
+  .form-input, .form-select {
+    font-size: 14px;
+  }
+  .card {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Smaller table cells on mobile */
+  td, th {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 12px;
+  }
+  
+  /* Larger radio buttons for touch targets */
+  input[type="radio"] {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  td, th {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+    font-size: 11px;
+  }
+  
+  .form-input {
+    font-size: 12px;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  input[type="radio"] {
+    width: 18px !important;
+    height: 18px !important;
+  }
+}
+
+/* Custom scrollbar styles */
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track,
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+@media (prefers-color-scheme: dark) {
+  .overflow-y-auto::-webkit-scrollbar-track,
+  .overflow-x-auto::-webkit-scrollbar-track {
+    background: #1f2937;
+  }
+  .overflow-y-auto::-webkit-scrollbar-thumb,
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #4b5563;
+  }
+  .overflow-y-auto::-webkit-scrollbar-thumb:hover,
+  .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+}
+
+/* Sticky header in table */
+.sticky {
+  position: sticky;
+}
+
+/* Ensure inputs don't overflow on small screens */
+.form-input {
+  max-width: 100%;
+}
+
+/* Make buttons full width on mobile */
+@media (max-width: 640px) {
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Fix for border on table container */
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+/* Ensure table scrolls horizontally on small screens */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Improve touch targets on mobile */
+@media (max-width: 640px) {
+  .form-input[type="text"] {
+    min-height: 36px;
+  }
+  
+  select.form-select {
+    min-height: 42px;
+  }
+  
+  input[type="radio"] {
+    cursor: pointer;
+    margin: 0;
+  }
+}
+
+/* Toast animation */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>
