@@ -6,7 +6,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 flex-shrink-0">
         <div>
           <label class="form-label text-gray-700 dark:text-gray-300">{{ languageStore.t('class') }}</label>
-          <select v-model="selectedClass" @change="loadStudents" class="form-select w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+          <select v-model="selectedClass" @change="onClassChange" class="form-select w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white">
             <option :value="null">{{ languageStore.t('selectClass') }}</option>
             <option v-for="cls in classes" :key="cls.id" :value="cls.id">
               {{ cls.name }}
@@ -113,6 +113,10 @@
         <div v-else-if="selectedClass && !students.length && !isLoading" class="text-center py-8 text-gray-500 dark:text-gray-400">
           {{ languageStore.t('noStudentsInClass') }}
         </div>
+        
+        <div v-else-if="!selectedClass" class="text-center py-8 text-gray-500 dark:text-gray-400">
+          {{ languageStore.t('selectClassToViewStudents') }}
+        </div>
       </div>
 
       <!-- Action Buttons - Always visible at bottom -->
@@ -146,11 +150,9 @@
 import { ref, onMounted, watch } from 'vue'
 import { supabase } from '@/services/supabase'
 import { useAuthStore } from '@/stores/auth'
-import { useTeacherStore } from '@/stores/teacher'
 import { useLanguageStore } from '@/stores/language'
 
 const authStore = useAuthStore()
-const teacherStore = useTeacherStore()
 const languageStore = useLanguageStore()
 
 const classes = ref([])
@@ -209,29 +211,55 @@ const updateAttendanceNotes = (studentId, notes) => {
 }
 
 const loadClasses = async () => {
-  isLoading.value = true
   try {
-    const teacherId = authStore.teacherId
+    // Get teacher ID from auth store
+    const teacherId = authStore.teacherId || authStore.profile?.teacher_id
+    
     if (!teacherId) {
+      console.warn('No teacher ID found')
       classes.value = []
       return
     }
+
     const { data, error } = await supabase
       .from('classes')
       .select('id, name, grade_level')
       .eq('teacher_id', teacherId)
       .order('grade_level', { ascending: true })
-    if (error) throw error
+      
+    if (error) {
+      console.error('Error loading classes:', error)
+      throw error
+    }
+    
     classes.value = data || []
+    
+    // Auto-select first class if available
+    if (classes.value.length > 0 && !selectedClass.value) {
+      selectedClass.value = classes.value[0].id
+      await loadStudents()
+    }
   } catch (error) {
     console.error('Error loading classes:', error)
-  } finally {
-    isLoading.value = false
+  }
+}
+
+const onClassChange = () => {
+  // Clear students when class changes
+  students.value = []
+  attendanceData.value = {}
+  if (selectedClass.value) {
+    loadStudents()
   }
 }
 
 const loadStudents = async () => {
-  if (!selectedClass.value) return
+  if (!selectedClass.value) {
+    students.value = []
+    attendanceData.value = {}
+    return
+  }
+  
   if (!validateDate()) {
     alert(dateError.value)
     return
@@ -239,22 +267,41 @@ const loadStudents = async () => {
 
   isLoading.value = true
   try {
+    // Load students for the selected class
     const { data: studentList, error: studentError } = await supabase
       .from('students')
       .select('id, full_name')
       .eq('class_id', selectedClass.value)
       .eq('status', 'active')
       .order('full_name')
-    if (studentError) throw studentError
+      
+    if (studentError) {
+      console.error('Error loading students:', studentError)
+      throw studentError
+    }
+    
     students.value = studentList || []
+    
+    // If no students found, clear attendance data
+    if (students.value.length === 0) {
+      attendanceData.value = {}
+      isLoading.value = false
+      return
+    }
 
+    // Load existing attendance records
     const { data: existing, error: attendanceError } = await supabase
       .from('attendance')
       .select('student_id, status, notes')
       .eq('class_id', selectedClass.value)
       .eq('date', attendanceDate.value)
-    if (attendanceError) throw attendanceError
+      
+    if (attendanceError) {
+      console.error('Error loading attendance:', attendanceError)
+      throw attendanceError
+    }
 
+    // Initialize attendance data for each student
     attendanceData.value = {}
     students.value.forEach(student => {
       const existingRec = existing?.find(e => e.student_id === student.id)
@@ -263,15 +310,22 @@ const loadStudents = async () => {
         notes: existingRec?.notes || ''
       }
     })
+    
   } catch (error) {
-    console.error('Error loading students:', error)
+    console.error('Error in loadStudents:', error)
+    students.value = []
+    attendanceData.value = {}
   } finally {
     isLoading.value = false
   }
 }
 
 const saveAttendance = async () => {
-  if (!selectedClass.value || students.value.length === 0) return
+  if (!selectedClass.value || students.value.length === 0) {
+    alert(languageStore.t('noStudentsToSave'))
+    return
+  }
+  
   if (!validateDate()) {
     alert(dateError.value)
     return
@@ -292,21 +346,32 @@ const saveAttendance = async () => {
   }))
 
   try {
+    // Delete existing records for this date/class
     const { error: deleteError } = await supabase
       .from('attendance')
       .delete()
       .eq('class_id', selectedClass.value)
       .eq('date', attendanceDate.value)
-    if (deleteError) throw deleteError
+      
+    if (deleteError) {
+      console.error('Delete error:', deleteError)
+      throw deleteError
+    }
 
+    // Insert new records
     const { error: insertError } = await supabase
       .from('attendance')
       .insert(records)
-    if (insertError) throw insertError
+      
+    if (insertError) {
+      console.error('Insert error:', insertError)
+      throw insertError
+    }
 
     showSuccess.value = true
     setTimeout(() => { showSuccess.value = false }, 3000)
 
+    // Reset form after successful save
     resetForm()
   } catch (error) {
     console.error('Error saving attendance:', error)
@@ -322,10 +387,13 @@ const resetForm = () => {
   attendanceData.value = {}
   attendanceDate.value = new Date().toISOString().split('T')[0]
   dateError.value = ''
+  
+  // Reload classes and auto-select first
+  loadClasses()
 }
 
-onMounted(() => {
-  loadClasses()
+onMounted(async () => {
+  await loadClasses()
 })
 </script>
 
@@ -359,14 +427,12 @@ onMounted(() => {
     padding-right: 0.75rem;
   }
   
-  /* Smaller table cells on mobile */
   td, th {
     padding-left: 0.5rem !important;
     padding-right: 0.5rem !important;
     font-size: 12px;
   }
   
-  /* Larger radio buttons for touch targets */
   input[type="radio"] {
     width: 20px !important;
     height: 20px !important;
@@ -435,12 +501,10 @@ onMounted(() => {
   position: sticky;
 }
 
-/* Ensure inputs don't overflow on small screens */
 .form-input {
   max-width: 100%;
 }
 
-/* Make buttons full width on mobile */
 @media (max-width: 640px) {
   .btn-primary, .btn-secondary {
     width: 100%;
@@ -449,18 +513,15 @@ onMounted(() => {
   }
 }
 
-/* Fix for border on table container */
 .rounded-lg {
   border-radius: 0.5rem;
 }
 
-/* Ensure table scrolls horizontally on small screens */
 .overflow-x-auto {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 }
 
-/* Improve touch targets on mobile */
 @media (max-width: 640px) {
   .form-input[type="text"] {
     min-height: 36px;
@@ -476,7 +537,6 @@ onMounted(() => {
   }
 }
 
-/* Toast animation */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease;
