@@ -22,14 +22,16 @@
       </div>
     </div>
 
-    <!-- Stats Cards -->
+    <!-- Stats Cards - Show loading placeholders -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
       <!-- My Classes -->
       <div class="card p-4 sm:p-6 dark:bg-gray-800 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ languageStore.t('myClasses') }}</p>
-            <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ teacherStats.classesCount || 0 }}</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              {{ isStatsLoading ? '...' : (teacherStats.classesCount || 0) }}
+            </p>
           </div>
           <div class="bg-blue-100 dark:bg-blue-900/30 rounded-full p-2 sm:p-3">
             <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,12 +41,14 @@
         </div>
       </div>
 
-      <!-- Total Students (Fixed - Only teacher's students) -->
+      <!-- Total Students -->
       <div class="card p-4 sm:p-6 dark:bg-gray-800 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ languageStore.t('totalStudents') }}</p>
-            <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ teacherStats.studentsCount || 0 }}</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              {{ isStatsLoading ? '...' : (teacherStats.studentsCount || 0) }}
+            </p>
           </div>
           <div class="bg-green-100 dark:bg-green-900/30 rounded-full p-2 sm:p-3">
             <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,7 +63,9 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ languageStore.t('todayAttendance') }}</p>
-            <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ teacherStats.todayAttendance || 0 }}%</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              {{ isStatsLoading ? '...' : (teacherStats.todayAttendance || 0) }}%
+            </p>
           </div>
           <div class="bg-yellow-100 dark:bg-yellow-900/30 rounded-full p-2 sm:p-3">
             <svg class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,7 +80,9 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ languageStore.t('upcomingExams') }}</p>
-            <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ teacherStats.upcomingExams || 0 }}</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              {{ isStatsLoading ? '...' : (teacherStats.upcomingExams || 0) }}
+            </p>
           </div>
           <div class="bg-purple-100 dark:bg-purple-900/30 rounded-full p-2 sm:p-3">
             <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,6 +99,13 @@
         <h2 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">{{ languageStore.t('myClasses') }}</h2>
       </div>
       <div class="divide-y divide-gray-200 dark:divide-gray-700">
+        <!-- Show loading skeleton -->
+        <div v-if="isLoading" class="p-4 sm:p-5">
+          <div class="animate-pulse flex flex-col gap-2">
+            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+            <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+          </div>
+        </div>
         <div v-for="cls in myClasses" :key="cls.id" class="p-4 sm:p-5 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div class="flex-1 min-w-0">
@@ -110,11 +125,8 @@
             </div>
           </div>
         </div>
-        <div v-if="myClasses.length === 0 && !isLoading" class="p-8 text-center text-gray-500 dark:text-gray-400">
+        <div v-if="!isLoading && myClasses.length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">
           {{ languageStore.t('noClassesAssigned') }}
-        </div>
-        <div v-if="isLoading" class="p-8 text-center">
-          <div class="spinner dark:border-gray-600 dark:border-t-blue-400"></div>
         </div>
       </div>
     </div>
@@ -125,6 +137,16 @@
         <h2 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">{{ languageStore.t('recentActivities') }}</h2>
       </div>
       <div class="divide-y divide-gray-200 dark:divide-gray-700">
+        <!-- Show loading skeleton -->
+        <div v-if="isLoading" class="p-4 sm:p-5">
+          <div class="animate-pulse flex items-center gap-3">
+            <div class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            <div class="flex-1">
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+              <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mt-1"></div>
+            </div>
+          </div>
+        </div>
         <div v-for="activity in recentActivities" :key="activity.id" class="p-4 sm:p-5 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
           <div class="flex items-start gap-3">
             <div class="flex-shrink-0">
@@ -140,7 +162,7 @@
             </div>
           </div>
         </div>
-        <div v-if="recentActivities.length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">
+        <div v-if="!isLoading && recentActivities.length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">
           {{ languageStore.t('noRecentActivity') }}
         </div>
       </div>
@@ -149,7 +171,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { supabase } from '@/services/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useTeacherStore } from '@/stores/teacher'
@@ -159,7 +181,8 @@ const authStore = useAuthStore()
 const teacherStore = useTeacherStore()
 const languageStore = useLanguageStore()
 
-const isLoading = ref(false)
+const isLoading = ref(true)
+const isStatsLoading = ref(true)
 const recentActivities = ref([])
 
 // Computed properties from teacher store
@@ -171,19 +194,23 @@ const fetchRecentActivities = async () => {
   const userId = authStore.user?.id
   if (!userId) return
 
-  const { data, error } = await supabase
-    .from('activity_logs')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(10)
+  try {
+    const { data, error } = await supabase
+      .from('activity_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(10)
 
-  if (error) {
-    console.error('Error fetching activities:', error)
-    return
+    if (error) {
+      console.error('Error fetching activities:', error)
+      return
+    }
+
+    recentActivities.value = data || []
+  } catch (error) {
+    console.error('Error in fetchRecentActivities:', error)
   }
-
-  recentActivities.value = data || []
 }
 
 // Format relative time
@@ -199,14 +226,31 @@ const formatRelativeTime = (date) => {
   return `${Math.floor(diffMinutes / 1440)} ${languageStore.t('daysAgo')}`
 }
 
+// ✅ FIX: Load data after page renders
+const loadDashboardData = async () => {
+  try {
+    // Load teacher dashboard data from store
+    await teacherStore.loadTeacherDashboard()
+    isStatsLoading.value = false
+    
+    // Load recent activities
+    await fetchRecentActivities()
+  } catch (error) {
+    console.error('Error loading dashboard:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
 onMounted(async () => {
-  isLoading.value = true
+  // ✅ FIX: Use nextTick to ensure DOM is ready before loading data
+  await nextTick()
   
-  // Load teacher dashboard data from store
-  await teacherStore.loadTeacherDashboard()
-  await fetchRecentActivities()
-  
-  isLoading.value = false
+  // ✅ FIX: Load data with a small delay to allow UI to render first
+  // This makes the page scrollable immediately
+  setTimeout(() => {
+    loadDashboardData()
+  }, 150)
 })
 </script>
 
@@ -231,5 +275,14 @@ onMounted(async () => {
     border-color: #4b5563;
     border-top-color: #60a5fa;
   }
+}
+
+/* Skeleton loading animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 </style>
