@@ -23,7 +23,7 @@
     </transition>
 
     <!-- Desktop Sidebar - Always visible -->
-    <div class="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:mt-16" style="height: calc(100vh - 4rem);">
+    <div class="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:mt-16">
       <TeacherSidebar 
         :is-open="true"
         class="relative h-full"
@@ -31,9 +31,9 @@
     </div>
 
     <!-- Main Content -->
-    <div class="lg:ml-72" style="min-height: 100vh;">
-      <main class="p-4 sm:p-6 lg:p-8 mt-16" style="min-height: calc(100vh - 4rem);">
-        <div class="max-w-7xl mx-auto">
+    <div class="lg:ml-72 flex flex-col" style="min-height: 100vh; height: 100%;">
+      <main class="flex-1 p-4 sm:p-6 lg:p-8 mt-16" style="min-height: calc(100vh - 4rem); height: 100%;">
+        <div class="max-w-7xl mx-auto" style="height: 100%;">
           <router-view v-slot="{ Component }">
             <transition name="fade" mode="out-in">
               <component :is="Component" />
@@ -58,16 +58,14 @@ const mobileMenuOpen = ref(false)
 
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value
-  if (mobileMenuOpen.value) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
-  }
+  // ✅ FIX: Don't set body overflow to hidden
+  // This was causing the scroll freeze
+  // The sidebar overlay already handles the backdrop
 }
 
 const closeMobileMenu = () => {
   mobileMenuOpen.value = false
-  document.body.style.overflow = ''
+  // ✅ FIX: No need to reset body overflow
 }
 
 const handleResize = () => {
@@ -76,23 +74,32 @@ const handleResize = () => {
   }
 }
 
-// Ensure scrolling works on mount
-onMounted(() => {
-  window.addEventListener('resize', handleResize)
-  
-  // Force scroll to work
+// ✅ FIX: Force a scroll reset on mount
+const fixScroll = () => {
   nextTick(() => {
     const mainElement = document.querySelector('main')
     if (mainElement) {
+      // Force browser to recalculate layout
       mainElement.style.overflow = 'auto'
-      mainElement.style.height = 'auto'
+      mainElement.style.height = '100%'
+      // Trigger reflow
+      void mainElement.offsetHeight
     }
   })
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+  // ✅ FIX: Ensure scroll works on mount
+  fixScroll()
+  
+  // ✅ FIX: Also fix scroll after a small delay (when content loads)
+  setTimeout(fixScroll, 500)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
-  document.body.style.overflow = ''
+  // ✅ FIX: Don't reset body overflow on unmount
 })
 </script>
 
@@ -118,6 +125,25 @@ onUnmounted(() => {
   transform: translateX(-100%);
 }
 
+/* ✅ FIX: Main content scroll */
+main {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure content can grow */
+main :deep(.router-view-wrapper),
+main :deep(.fade-enter-active),
+main :deep(.fade-leave-active) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 /* Mobile bottom nav spacing */
 @media (max-width: 1023px) {
   main {
@@ -140,28 +166,6 @@ onUnmounted(() => {
   }
 }
 
-/* Main content scrolling */
-main {
-  overflow-y: auto;
-  overflow-x: hidden;
-  height: 100%;
-  flex: 1;
-}
-
-/* Ensure content can grow */
-main :deep(.router-view-wrapper),
-main :deep(.fade-enter-active),
-main :deep(.fade-leave-active) {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-main :deep(.card) {
-  overflow: visible !important;
-}
-
 /* Allow tables to scroll horizontally */
 main :deep(.attendance-table-container) {
   overflow: visible !important;
@@ -178,6 +182,12 @@ main :deep(.table-scroll-wrapper) {
 main :deep(.overflow-auto) {
   overflow: auto !important;
   max-height: none !important;
+}
+
+/* ✅ FIX: Prevent body overflow manipulation */
+body {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
 /* Ensure radio buttons and controls are accessible on mobile */
