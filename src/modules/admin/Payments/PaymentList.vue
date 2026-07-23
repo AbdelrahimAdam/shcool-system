@@ -8,24 +8,61 @@
         </h1>
         <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
           {{ languageStore.t('totalPayments') }}: {{ totalCount }}
+          <span v-if="pendingCount" class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300">
+            {{ pendingCount }} {{ languageStore.t('pending') }}
+          </span>
+          <span v-if="parentRequestCount" class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+            {{ parentRequestCount }} {{ languageStore.t('parentRequests') }}
+          </span>
         </p>
       </div>
-      <router-link 
-        to="/admin/payments/create" 
-        class="btn-primary inline-flex items-center justify-center w-full sm:w-auto px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg"
+      <div class="flex flex-wrap gap-2">
+        <router-link 
+          to="/admin/payments/create" 
+          class="btn-primary inline-flex items-center justify-center w-full sm:w-auto px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg"
+        >
+          <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          {{ languageStore.t('addPayment') }}
+        </router-link>
+        <router-link 
+          to="/admin/payments/approval" 
+          class="btn-secondary inline-flex items-center justify-center w-full sm:w-auto px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg"
+        >
+          <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {{ languageStore.t('approve') }}
+          <span v-if="pendingCount" class="ml-1.5 px-1.5 py-0.5 bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 rounded-full text-[10px]">
+            {{ pendingCount }}
+          </span>
+        </router-link>
+      </div>
+    </div>
+
+    <!-- Filter: Show Parent Requests Toggle -->
+    <div class="flex flex-wrap items-center gap-4">
+      <button
+        @click="showParentRequests = !showParentRequests"
+        class="inline-flex items-center gap-2 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-colors"
+        :class="showParentRequests 
+          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
+          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
       >
-        <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
-        {{ languageStore.t('addPayment') }}
-      </router-link>
+        {{ languageStore.t('parentPaymentRequests') }}
+        <span v-if="parentRequestCount" class="ml-1 text-xs text-blue-600 dark:text-blue-400">{{ parentRequestCount }}</span>
+      </button>
     </div>
 
     <!-- Desktop Table View -->
     <div class="hidden md:block overflow-x-auto rounded-lg shadow dark:shadow-gray-800">
       <DataTable
         :columns="columns"
-        :data="payments"
+        :data="displayPayments"
         :total="totalCount"
         :loading="isLoading"
         :filter-options="filterOptions"
@@ -52,33 +89,48 @@
         <template #column-student="{ row }">
           {{ row.student?.full_name || '-' }}
         </template>
+
+        <!-- Add badge for parent-requested payments -->
+        <template #column-payment_number="{ row }">
+          <div class="flex items-center gap-1.5">
+            <span class="font-mono text-xs">{{ row.payment_number }}</span>
+            <span v-if="row.created_by && row.status === 'pending'" class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+              {{ languageStore.t('parentRequest') }}
+            </span>
+          </div>
+        </template>
       </DataTable>
     </div>
 
     <!-- Mobile Card View -->
     <div class="md:hidden space-y-3">
       <!-- Loading State -->
-      <div v-if="isLoading && payments.length === 0" class="flex justify-center py-8">
+      <div v-if="isLoading && displayPayments.length === 0" class="flex justify-center py-8">
         <div class="spinner dark:border-gray-600 dark:border-t-blue-400"></div>
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="payments.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+      <div v-else-if="displayPayments.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
         {{ languageStore.t('noPaymentsFound') }}
       </div>
 
       <!-- Payment Cards -->
       <div 
-        v-for="payment in payments" 
+        v-for="payment in displayPayments" 
         :key="payment.id" 
         class="card bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-shadow p-3 sm:p-4"
       >
         <!-- Payment Header -->
         <div class="flex items-start justify-between mb-2">
           <div class="flex-1 min-w-0">
-            <h3 class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
-              {{ payment.student?.full_name || '-' }}
-            </h3>
+            <div class="flex items-center gap-1.5">
+              <h3 class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
+                {{ payment.student?.full_name || '-' }}
+              </h3>
+              <span v-if="payment.created_by && payment.status === 'pending'" class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex-shrink-0">
+                {{ languageStore.t('parentRequest') }}
+              </span>
+            </div>
             <p class="text-xs text-gray-500 dark:text-gray-400 font-mono">
               {{ payment.payment_number || '-' }}
             </p>
@@ -144,6 +196,13 @@
           >
             {{ languageStore.t('reject') }}
           </button>
+          <button 
+            v-if="payment.created_by && payment.status === 'pending'"
+            @click="markPaymentReceived(payment)"
+            class="flex-1 min-w-[40px] text-center px-2 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+          >
+            {{ languageStore.t('markReceived') }}
+          </button>
         </div>
       </div>
 
@@ -186,11 +245,29 @@ const languageStore = useLanguageStore()
 const authStore = useAuthStore()
 
 const currentPage = ref(1)
+const showParentRequests = ref(false)
 const totalPages = computed(() => Math.ceil(totalCount.value / 10))
 
 const payments = computed(() => paymentStore.payments)
 const totalCount = computed(() => paymentStore.totalCount)
 const isLoading = computed(() => paymentStore.isLoading)
+
+// Count pending payments and parent requests
+const pendingCount = computed(() => {
+  return payments.value.filter(p => p.status === 'pending').length
+})
+
+const parentRequestCount = computed(() => {
+  return payments.value.filter(p => p.created_by && p.status === 'pending').length
+})
+
+// Display filtered payments
+const displayPayments = computed(() => {
+  if (showParentRequests.value) {
+    return payments.value.filter(p => p.created_by && p.status === 'pending')
+  }
+  return payments.value
+})
 
 const columns = [
   { key: 'payment_number', label: 'paymentNumber', type: 'text' },
@@ -297,9 +374,32 @@ const rejectPayment = async (payment) => {
   }
 }
 
+// Mark parent payment as received (admin confirms parent paid)
+const markPaymentReceived = async (payment) => {
+  if (confirm(languageStore.t('confirmMarkReceived'))) {
+    const { error } = await supabase
+      .from('payments')
+      .update({ 
+        status: 'processing',
+        payment_date: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        notes: payment.notes ? `${payment.notes}\nPayment received by admin on ${new Date().toLocaleDateString()}` : `Payment received by admin on ${new Date().toLocaleDateString()}`
+      })
+      .eq('id', payment.id)
+    
+    if (error) {
+      alert(error.message)
+    } else {
+      alert(languageStore.t('paymentMarkedReceived'))
+      await paymentStore.fetchPayments(currentPage.value, paymentStore.filters)
+    }
+  }
+}
+
 const getStatusClass = (status) => {
   const map = {
     pending: 'text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-900/30 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium',
+    processing: 'text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium',
     approved: 'text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium',
     rejected: 'text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium',
     cancelled: 'text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium'
