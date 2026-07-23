@@ -1,12 +1,23 @@
 <template>
   <div class="space-y-6 sm:space-y-8">
     <!-- Page Header -->
-    <div class="mb-6 sm:mb-8">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">{{ languageStore.t('payments') }}</h1>
-      <p class="text-sm sm:text-base text-gray-500 mt-1">{{ languageStore.t('trackYourPayments') }}</p>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">{{ languageStore.t('payments') }}</h1>
+        <p class="text-sm sm:text-base text-gray-500 mt-1">{{ languageStore.t('trackAndManagePayments') }}</p>
+      </div>
+      <button 
+        @click="showRequestModal = true" 
+        class="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        {{ languageStore.t('requestPayment') }}
+      </button>
     </div>
 
-    <!-- Mobile Filter Toggle Button -->
+    <!-- Mobile Filter Toggle -->
     <div class="block lg:hidden">
       <button 
         @click="showFilters = !showFilters"
@@ -24,9 +35,9 @@
       </button>
     </div>
 
-    <!-- Filters Section -->
+    <!-- Filters -->
     <div :class="['bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 transition-all duration-300', showFilters ? 'block' : 'hidden lg:block']">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 block">{{ languageStore.t('selectChild') }}</label>
           <select v-model="selectedChildId" @change="filterPayments" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all">
@@ -56,7 +67,7 @@
       </div>
     </div>
 
-    <!-- Stats Cards - Luxurious Design -->
+    <!-- Stats Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all duration-200 group">
         <div class="flex items-center justify-between">
@@ -198,6 +209,120 @@
       </div>
     </div>
 
+    <!-- Request Payment Modal -->
+    <div v-if="showRequestModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="closeRequestModal">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
+          <h3 class="text-lg font-semibold text-gray-800">{{ languageStore.t('requestPayment') }}</h3>
+          <button @click="closeRequestModal" class="p-1 rounded-lg hover:bg-gray-100 transition-colors">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form @submit.prevent="submitPaymentRequest" class="p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ languageStore.t('selectChild') }} *</label>
+            <select 
+              v-model="paymentRequest.student_id" 
+              required 
+              class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+            >
+              <option :value="null">{{ languageStore.t('selectChild') }}</option>
+              <option v-for="child in children" :key="child.id" :value="child.id">{{ child.full_name }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ languageStore.t('amount') }} *</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">SDG</span>
+              <input 
+                v-model.number="paymentRequest.amount" 
+                type="number" 
+                required 
+                min="1"
+                class="w-full pl-12 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                :placeholder="languageStore.t('enterAmount')"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ languageStore.t('paymentMethod') }} *</label>
+            <select 
+              v-model="paymentRequest.payment_method" 
+              required 
+              class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+            >
+              <option value="cash">{{ languageStore.t('cash') }}</option>
+              <option value="bankak">{{ languageStore.t('bankak') }}</option>
+            </select>
+          </div>
+
+          <div v-if="paymentRequest.payment_method === 'bankak'">
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ languageStore.t('bankakNumber') }}</label>
+            <input 
+              v-model="paymentRequest.bankak_number" 
+              type="text" 
+              class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+              :placeholder="languageStore.t('enterBankakNumber')"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ languageStore.t('paymentType') }}</label>
+            <select 
+              v-model="paymentRequest.payment_type" 
+              class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+            >
+              <option value="tuition">{{ languageStore.t('tuition') }}</option>
+              <option value="exam_fees">{{ languageStore.t('examFees') }}</option>
+              <option value="activity_fees">{{ languageStore.t('activityFees') }}</option>
+              <option value="other">{{ languageStore.t('other') }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ languageStore.t('notes') }}</label>
+            <textarea 
+              v-model="paymentRequest.notes" 
+              rows="2" 
+              class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+              :placeholder="languageStore.t('enterNotes')"
+            ></textarea>
+          </div>
+
+          <!-- Payment Instructions -->
+          <div class="bg-blue-50 rounded-xl p-4">
+            <p class="text-xs font-medium text-blue-800 mb-2">{{ languageStore.t('paymentInstructions') }}</p>
+            <ul class="text-xs text-blue-700 space-y-1">
+              <li v-if="paymentRequest.payment_method === 'cash'">
+                • {{ languageStore.t('payCashAtSchool') }}
+              </li>
+              <li v-else>
+                • {{ languageStore.t('bankakInstructions') }}
+              </li>
+              <li>• {{ languageStore.t('keepReceipt') }}</li>
+            </ul>
+          </div>
+
+          <div class="flex gap-3 pt-3 border-t border-gray-100">
+            <button type="button" @click="closeRequestModal" class="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors">
+              {{ languageStore.t('cancel') }}
+            </button>
+            <button type="submit" :disabled="isSubmitting" class="flex-1 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              <svg v-if="isSubmitting" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              </svg>
+              {{ isSubmitting ? languageStore.t('submitting') : languageStore.t('submitRequest') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Payment Details Modal -->
     <div v-if="showPaymentModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="closePaymentModal">
       <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -252,6 +377,17 @@ const selectedType = ref(null)
 const showPaymentModal = ref(false)
 const selectedPayment = ref(null)
 const showFilters = ref(false)
+const showRequestModal = ref(false)
+const isSubmitting = ref(false)
+
+const paymentRequest = ref({
+  student_id: null,
+  amount: '',
+  payment_method: 'cash',
+  bankak_number: '',
+  payment_type: 'tuition',
+  notes: ''
+})
 
 const filteredPayments = computed(() => {
   let filtered = payments.value
@@ -294,9 +430,55 @@ const loadPayments = async (parentId = null) => {
   } catch (error) { console.error('Error loading payments:', error); payments.value = [] }
 }
 
+const submitPaymentRequest = async () => {
+  if (!paymentRequest.value.student_id || !paymentRequest.value.amount) {
+    alert(languageStore.t('pleaseFillRequiredFields'))
+    return
+  }
+
+  isSubmitting.value = true
+
+  try {
+    const schoolId = authStore.profile?.school_id || authStore.schoolId
+    const userId = authStore.user?.id
+
+    const year = new Date().getFullYear()
+    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+    const paymentNumber = `PAY-${year}-${random}`
+
+    const paymentData = {
+      school_id: schoolId,
+      student_id: paymentRequest.value.student_id,
+      payment_number: paymentNumber,
+      amount: parseFloat(paymentRequest.value.amount),
+      payment_method: paymentRequest.value.payment_method,
+      payment_type: paymentRequest.value.payment_type || 'tuition',
+      status: 'pending',
+      due_date: new Date().toISOString().split('T')[0],
+      bankak_number: paymentRequest.value.bankak_number || null,
+      notes: paymentRequest.value.notes || `Payment requested by parent ${userId}`,
+      created_by: userId,
+      created_at: new Date().toISOString()
+    }
+
+    const { error } = await supabase.from('payments').insert([paymentData])
+    if (error) throw error
+
+    alert(languageStore.t('paymentRequestSubmitted'))
+    closeRequestModal()
+    await loadPayments()
+  } catch (error) {
+    console.error('Error submitting payment:', error)
+    alert(error.message || languageStore.t('operationFailed'))
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
 const filterPayments = () => {}
 const viewPaymentDetails = (payment) => { selectedPayment.value = payment; showPaymentModal.value = true }
 const closePaymentModal = () => { showPaymentModal.value = false; selectedPayment.value = null }
+const closeRequestModal = () => { showRequestModal.value = false; paymentRequest.value = { student_id: null, amount: '', payment_method: 'cash', bankak_number: '', payment_type: 'tuition', notes: '' } }
 const downloadReceipt = () => { if (selectedPayment.value?.proof_image_url) window.open(selectedPayment.value.proof_image_url, '_blank') }
 const formatDate = (date) => date ? new Date(date).toLocaleDateString() : '-'
 const formatTime = (date) => date ? new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'
