@@ -23,7 +23,7 @@
     </transition>
 
     <!-- Desktop Sidebar - Always visible -->
-    <div class="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:mt-16">
+    <div class="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:mt-16" style="height: calc(100vh - 4rem);">
       <TeacherSidebar 
         :is-open="true"
         class="relative h-full"
@@ -31,12 +31,12 @@
     </div>
 
     <!-- Main Content -->
-    <div class="lg:ml-72 flex flex-col">
-      <main class="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 mt-16">
-        <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col">
+    <div class="lg:ml-72" style="min-height: 100vh;">
+      <main class="p-4 sm:p-6 lg:p-8 mt-16" style="min-height: calc(100vh - 4rem);">
+        <div class="max-w-7xl mx-auto">
           <router-view v-slot="{ Component }">
-            <transition name="fade" mode="out-in" class="flex-1 flex flex-col">
-              <component :is="Component" class="flex-1 flex flex-col" />
+            <transition name="fade" mode="out-in">
+              <component :is="Component" />
             </transition>
           </router-view>
         </div>
@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import AppHeader from '@/components/common/AppHeader.vue'
 import TeacherSidebar from '@/components/teacher/TeacherSidebar.vue'
 import BottomNav from '@/components/common/BottomNav.vue'
@@ -76,8 +76,18 @@ const handleResize = () => {
   }
 }
 
+// Ensure scrolling works on mount
 onMounted(() => {
   window.addEventListener('resize', handleResize)
+  
+  // Force scroll to work
+  nextTick(() => {
+    const mainElement = document.querySelector('main')
+    if (mainElement) {
+      mainElement.style.overflow = 'auto'
+      mainElement.style.height = 'auto'
+    }
+  })
 })
 
 onUnmounted(() => {
@@ -108,19 +118,38 @@ onUnmounted(() => {
   transform: translateX(-100%);
 }
 
-/* Ensure router-view content takes full height */
-main :deep(.router-view-wrapper),
-main :deep(.fade-enter-active),
-main :deep(.fade-leave-active),
-main :deep(.fade-enter-from),
-main :deep(.fade-leave-to) {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
+/* Mobile bottom nav spacing */
+@media (max-width: 1023px) {
+  main {
+    padding-bottom: 5rem;
+  }
+  
+  .lg\:ml-72 {
+    margin-left: 0;
+  }
 }
 
-/* Fix for transition wrapper */
+/* Desktop fixes */
+@media (min-width: 1024px) {
+  .lg\:mt-16 {
+    margin-top: 4rem;
+  }
+  
+  .lg\:ml-72 {
+    margin-left: 18rem;
+  }
+}
+
+/* Main content scrolling */
+main {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+  flex: 1;
+}
+
+/* Ensure content can grow */
+main :deep(.router-view-wrapper),
 main :deep(.fade-enter-active),
 main :deep(.fade-leave-active) {
   display: flex;
@@ -129,40 +158,11 @@ main :deep(.fade-leave-active) {
   min-height: 0;
 }
 
-/* Ensure router-view content takes full height */
-main :deep(.router-view-wrapper) {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
+main :deep(.card) {
+  overflow: visible !important;
 }
 
-/* Mobile bottom nav spacing */
-@media (max-width: 1023px) {
-  main {
-    padding-bottom: 5rem;
-  }
-  
-  /* Ensure main content takes full height on mobile */
-  .lg\:ml-72 {
-    margin-left: 0;
-  }
-}
-
-/* Desktop fixes */
-@media (min-width: 1024px) {
-  /* Desktop sidebar positioning */
-  .lg\:mt-16 {
-    margin-top: 4rem;
-  }
-  
-  /* Ensure main content doesn't overlap sidebar */
-  .lg\:ml-72 {
-    margin-left: 18rem; /* 72 * 0.25rem = 18rem */
-  }
-}
-
-/* Allow tables and cards to scroll naturally */
+/* Allow tables to scroll horizontally */
 main :deep(.attendance-table-container) {
   overflow: visible !important;
   max-height: none !important;
@@ -175,25 +175,9 @@ main :deep(.table-scroll-wrapper) {
   -webkit-overflow-scrolling: touch !important;
 }
 
-main :deep(.card) {
-  overflow: visible !important;
-}
-
 main :deep(.overflow-auto) {
   overflow: auto !important;
   max-height: none !important;
-}
-
-main :deep(.max-w-7xl) {
-  overflow: visible !important;
-}
-
-main :deep(.flex-1) {
-  min-height: auto !important;
-}
-
-main :deep(.overflow-hidden) {
-  overflow: visible !important;
 }
 
 /* Ensure radio buttons and controls are accessible on mobile */
