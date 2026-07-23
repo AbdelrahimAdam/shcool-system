@@ -16,7 +16,7 @@
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">{{ languageStore.t('createAccount') }}</p>
         </div>
 
-        <!-- Success Message - Registration Complete -->
+        <!-- Success Message -->
         <div v-if="registrationSuccess" class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
           <div class="flex items-start gap-2">
             <svg class="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -25,17 +25,20 @@
             <div>
               <p class="text-sm text-green-800 dark:text-green-200 font-medium">{{ languageStore.t('registrationSuccess') }}</p>
               <p class="text-xs text-green-700 dark:text-green-300 mt-1">{{ languageStore.t('pendingApprovalMessage') }}</p>
-              <p class="text-xs text-green-600 dark:text-green-300 mt-2 font-medium">{{ languageStore.t('willNotifyOnApproval') }}</p>
+              <p class="text-xs text-green-600 dark:text-green-300 mt-2">{{ languageStore.t('willNotifyOnApproval') }}</p>
             </div>
           </div>
           <div class="mt-3 text-center">
-            <router-link to="/login" class="text-sm text-green-700 dark:text-green-300 hover:underline font-medium">
-              {{ languageStore.t('goToLogin') }}
+            <router-link to="/parent" class="text-sm text-green-700 dark:text-green-300 hover:underline font-medium inline-flex items-center gap-1">
+              {{ languageStore.t('goToDashboard') }}
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
             </router-link>
           </div>
         </div>
 
-        <!-- Registration Form (Hidden after success) -->
+        <!-- Registration Form -->
         <form v-if="!registrationSuccess" @submit.prevent="handleRegister" class="space-y-4 sm:space-y-5">
           <!-- Full Name -->
           <div>
@@ -290,7 +293,7 @@
           </button>
         </form>
 
-        <!-- Login Link (Hidden after success) -->
+        <!-- Login Link -->
         <div v-if="!registrationSuccess" class="mt-6 text-center">
           <p class="text-sm text-gray-600 dark:text-gray-400">
             {{ languageStore.t('alreadyHaveAccount') }}
@@ -403,7 +406,7 @@ const handleRegister = async () => {
   isLoading.value = true
   
   try {
-    // FIRST: Check if user already exists
+    // Check if user already exists
     const { data: existingUser } = await supabase
       .from('users')
       .select('id, email')
@@ -417,7 +420,7 @@ const handleRegister = async () => {
       return
     }
     
-    // Step 1: Create auth user
+    // Create auth user
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: form.value.email,
       password: form.value.password,
@@ -445,7 +448,7 @@ const handleRegister = async () => {
       throw new Error('User creation failed')
     }
     
-    // Step 2: Create parent record with PENDING status
+    // Create parent record with PENDING status
     const parentData = {
       user_id: authData.user.id,
       school_id: form.value.school_id,
@@ -463,7 +466,7 @@ const handleRegister = async () => {
     
     if (parentError) throw parentError
     
-    // Step 3: Upsert user record in public.users with is_active: false
+    // Upsert user record with is_active: false
     const userData = {
       id: authData.user.id,
       email: form.value.email,
@@ -471,7 +474,7 @@ const handleRegister = async () => {
       phone: form.value.phone,
       role: 'parent',
       school_id: form.value.school_id,
-      is_active: false,  // ← CRITICAL: Prevents login until approved
+      is_active: false,
       updated_at: new Date().toISOString()
     }
     
@@ -481,7 +484,7 @@ const handleRegister = async () => {
     
     if (userError) throw userError
     
-    // Step 4: Show success message (NO AUTO-LOGIN)
+    // Show success message
     registrationSuccess.value = true
     errorMessage.value = ''
     
