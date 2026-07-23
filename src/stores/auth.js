@@ -14,7 +14,7 @@ export const useAuthStore = defineStore('auth', {
         permissions: [],
         isInitialized: false,
         teacherId: null,
-        schoolId: null  // ADDED: store schoolId separately
+        schoolId: null
     }),
 
     getters: {
@@ -27,7 +27,7 @@ export const useAuthStore = defineStore('auth', {
         userProfile: (state) => state.profile,
         isReady: (state) => state.isInitialized,
         getTeacherId: (state) => state.teacherId,
-        getSchoolId: (state) => state.schoolId  // ADDED: getter for schoolId
+        getSchoolId: (state) => state.schoolId
     },
 
     actions: {
@@ -42,13 +42,12 @@ export const useAuthStore = defineStore('auth', {
             try {
                 const userId = this.user?.id
                 if (!userId) {
-                    console.log('No user ID available to fetch teacher ID')
                     return null
                 }
 
                 const { data, error } = await supabase
                     .from('teachers')
-                    .select('id, school_id')  // Also fetch school_id
+                    .select('id, school_id')
                     .eq('user_id', userId)
                     .maybeSingle()
 
@@ -58,12 +57,10 @@ export const useAuthStore = defineStore('auth', {
                 }
 
                 this.teacherId = data?.id || null
-                // Also update schoolId from teacher record
                 if (data?.school_id) {
                     this.schoolId = data.school_id
                     localStorage.setItem('schoolId', data.school_id)
                 }
-                console.log('Teacher ID loaded:', this.teacherId, 'School ID:', this.schoolId)
                 return this.teacherId
             } catch (error) {
                 console.error('Error in fetchTeacherId:', error)
@@ -82,8 +79,6 @@ export const useAuthStore = defineStore('auth', {
                 })
 
                 if (authError) throw authError
-
-                console.log('Auth success, user ID:', authData.user.id)
 
                 const { data: profile, error: profileError } = await supabase
                     .from('users')
@@ -122,14 +117,14 @@ export const useAuthStore = defineStore('auth', {
                             school_id: basicProfile.school_id,
                             is_active: basicProfile.is_active
                         }])
-                        .then(() => console.log('Profile saved in background'))
+                        .then(() => {})
                         .catch(err => console.error('Failed to save profile:', err))
 
                     this.user = authData.user
                     this.profile = basicProfile
                     this.role = basicProfile.role
                     this.school = null
-                    this.schoolId = basicProfile.school_id  // ADDED
+                    this.schoolId = basicProfile.school_id
                     this.isAuthenticated = true
 
                     if (basicProfile.school_id) {
@@ -150,24 +145,19 @@ export const useAuthStore = defineStore('auth', {
                         await this.fetchTeacherId()
                     }
 
-                    await new Promise(resolve => setTimeout(resolve, 50))
-
+                    // ✅ FIX: Removed unnecessary delay
                     return { success: true, role: basicProfile.role }
                 }
 
                 if (!profile) {
-                    console.error('No profile found')
                     throw new Error('Profile not found')
                 }
-
-                console.log('User profile loaded:', profile)
-                console.log('User role:', profile.role)
 
                 this.user = authData.user
                 this.profile = profile
                 this.role = profile.role
                 this.school = profile.schools || null
-                this.schoolId = profile.school_id  // ADDED
+                this.schoolId = profile.school_id
                 this.isAuthenticated = true
 
                 if (profile.school_id) {
@@ -188,8 +178,7 @@ export const useAuthStore = defineStore('auth', {
                     await this.fetchTeacherId()
                 }
 
-                await new Promise(resolve => setTimeout(resolve, 50))
-
+                // ✅ FIX: Removed unnecessary delay
                 return { success: true, role: profile.role }
             } catch (error) {
                 console.error('Login error:', error)
@@ -202,20 +191,29 @@ export const useAuthStore = defineStore('auth', {
         async logout() {
             try {
                 await supabase.auth.signOut()
-                this.user = null
-                this.profile = null
-                this.school = null
-                this.isAuthenticated = false
-                this.role = null
-                this.isInitialized = false
-                this.teacherId = null
-                this.schoolId = null  // ADDED
-                localStorage.removeItem('schoolId')  // ADDED
-                cacheService.clear()
-                return { success: true }
             } catch (error) {
-                return { success: false, error: error.message }
+                console.error('Sign out error:', error)
             }
+
+            // ✅ FIX: Clear state immediately (synchronously)
+            this.user = null
+            this.profile = null
+            this.school = null
+            this.isAuthenticated = false
+            this.role = null
+            this.isInitialized = false
+            this.teacherId = null
+            this.schoolId = null
+            
+            localStorage.removeItem('schoolId')
+            
+            try {
+                cacheService.clear()
+            } catch (error) {
+                console.error('Cache clear error:', error)
+            }
+            
+            return { success: true }
         },
 
         async getCurrentUser() {
@@ -223,24 +221,20 @@ export const useAuthStore = defineStore('auth', {
                 const { data: { session } } = await supabase.auth.getSession()
 
                 if (!session) {
-                    console.log('No active session found')
                     this.isAuthenticated = false
                     this.user = null
                     this.profile = null
                     this.role = null
                     this.teacherId = null
-                    this.schoolId = null  // ADDED
+                    this.schoolId = null
                     return null
                 }
 
                 const user = session.user
                 if (!user) {
-                    console.log('No user in session')
                     this.isAuthenticated = false
                     return null
                 }
-
-                console.log('Getting current user:', user.email)
 
                 const cachedProfile = cacheService.get(`user_${user.id}`)
                 if (cachedProfile) {
@@ -248,9 +242,8 @@ export const useAuthStore = defineStore('auth', {
                     this.user = user
                     this.role = cachedProfile.role
                     this.school = cachedProfile.schools
-                    this.schoolId = cachedProfile.school_id  // ADDED
+                    this.schoolId = cachedProfile.school_id
                     this.isAuthenticated = true
-                    console.log('Using cached profile, role:', this.role)
 
                     if (this.role === 'teacher' && !this.teacherId) {
                         await this.fetchTeacherId()
@@ -271,8 +264,6 @@ export const useAuthStore = defineStore('auth', {
                 }
 
                 if (!profile) {
-                    console.log('No profile found, creating one from auth metadata...')
-
                     const userRole = user.user_metadata?.role || 'parent'
                     const newProfile = {
                         id: user.id,
@@ -294,13 +285,13 @@ export const useAuthStore = defineStore('auth', {
                             school_id: newProfile.school_id,
                             is_active: newProfile.is_active
                         }])
-                        .then(() => console.log('Profile created in background'))
+                        .then(() => {})
                         .catch(err => console.error('Failed to create profile:', err))
 
                     this.profile = newProfile
                     this.user = user
                     this.role = newProfile.role
-                    this.schoolId = newProfile.school_id  // ADDED
+                    this.schoolId = newProfile.school_id
                     this.isAuthenticated = true
                     cacheService.set(`user_${user.id}`, newProfile, 3600000)
 
@@ -311,13 +302,11 @@ export const useAuthStore = defineStore('auth', {
                     return newProfile
                 }
 
-                console.log('Profile loaded from DB, role:', profile.role)
-
                 this.user = user
                 this.profile = profile
                 this.role = profile.role
                 this.school = profile.schools || null
-                this.schoolId = profile.school_id  // ADDED
+                this.schoolId = profile.school_id
                 this.isAuthenticated = true
 
                 if (profile.school_id) {
@@ -335,13 +324,12 @@ export const useAuthStore = defineStore('auth', {
                 if (error?.message?.includes('Auth session missing') || 
                     error?.message?.includes('session') ||
                     error?.status === 401) {
-                    console.log('No auth session, user not logged in')
                     this.isAuthenticated = false
                     this.user = null
                     this.profile = null
                     this.role = null
                     this.teacherId = null
-                    this.schoolId = null  // ADDED
+                    this.schoolId = null
                     return null
                 }
                 console.error('Get current user error:', error)
@@ -365,7 +353,7 @@ export const useAuthStore = defineStore('auth', {
                 this.profile = profile
                 this.role = profile?.role || this.role
                 this.school = profile?.schools || null
-                this.schoolId = profile?.school_id || null  // ADDED
+                this.schoolId = profile?.school_id || null
                 if (profile) {
                     cacheService.set(`user_${this.user.id}`, profile, 3600000)
                     if (profile.school_id) {
@@ -399,7 +387,7 @@ export const useAuthStore = defineStore('auth', {
 
                 this.profile = { ...this.profile, ...data }
                 this.role = data?.role || this.role
-                this.schoolId = data?.school_id || this.schoolId  // ADDED
+                this.schoolId = data?.school_id || this.schoolId
                 cacheService.set(`user_${this.user.id}`, this.profile, 3600000)
 
                 if (this.role === 'teacher') {
@@ -426,4 +414,4 @@ export const useAuthStore = defineStore('auth', {
             return permissions.includes('*') || permissions.includes(permission)
         }
     }
-}) 
+})
