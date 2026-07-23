@@ -5,7 +5,16 @@
   >
     <OfflineIndicator v-if="!isOnline" />
     <div class="app-content">
-      <router-view v-slot="{ Component }">
+      <!-- Loading State -->
+      <div v-if="isLoading" class="flex items-center justify-center min-h-screen">
+        <div class="text-center">
+          <div class="spinner dark:border-gray-600 dark:border-t-blue-400"></div>
+          <p class="mt-4 text-gray-500 dark:text-gray-400">{{ languageStore.t('loading') }}...</p>
+        </div>
+      </div>
+      
+      <!-- Main Content -->
+      <router-view v-else v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
         </transition>
@@ -23,14 +32,19 @@ import InstallPrompt from './components/common/InstallPrompt.vue'
 
 const languageStore = useLanguageStore()
 const isOnline = ref(navigator.onLine)
+const isLoading = ref(true)
 
 const updateOnlineStatus = () => {
   isOnline.value = navigator.onLine
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('online', updateOnlineStatus)
   window.addEventListener('offline', updateOnlineStatus)
+  
+  // Small delay to ensure everything is ready
+  await new Promise(resolve => setTimeout(resolve, 300))
+  isLoading.value = false
 })
 
 onUnmounted(() => {
@@ -183,7 +197,7 @@ input[type="button"] {
 .rtl .text-left { text-align: right; }
 .rtl .text-right { text-align: left; }
 
-/* Fade transition for route changes - FIXED BLINKING */
+/* Fade transition for route changes */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;
@@ -204,6 +218,23 @@ input[type="button"] {
 }
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+.spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .spinner {
+    border-color: #4b5563;
+    border-top-color: #60a5fa;
+  }
 }
 
 /* Focus styles for accessibility – visible only on keyboard navigation */
@@ -237,18 +268,19 @@ input[type="button"] {
 }
 
 /* ============================================
-   GLOBAL SIDEBAR STYLES - FIX BLINKING ISSUE
+   GLOBAL SIDEBAR STYLES - PREVENT FLASH ON LOGIN
    ============================================ */
 
 /* Base sidebar styles - applied to all sidebars */
 .sidebar {
   will-change: transform;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  /* Ensure sidebar is in correct position by default */
+  transform: translateX(0);
 }
 
-/* Mobile sidebar - start hidden to prevent flash */
+/* Mobile sidebar - start hidden, but only if not open */
 @media (max-width: 1023px) {
   .sidebar {
     transform: translateX(-100%);
@@ -257,6 +289,7 @@ input[type="button"] {
     height: 100vh !important;
     height: 100dvh !important;
     padding-bottom: 5rem !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   /* When open, slide in */
@@ -278,6 +311,7 @@ input[type="button"] {
     z-index: 20 !important;
     height: calc(100vh - 4rem) !important;
     height: calc(100dvh - 4rem) !important;
+    transition: none !important;
   }
 }
 
@@ -285,6 +319,16 @@ input[type="button"] {
 .fade-enter-active .sidebar,
 .fade-leave-active .sidebar {
   transition: none !important;
+}
+
+/* Prevent sidebar from being affected by fade animation */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 /* Ensure sidebar content doesn't overflow */
@@ -305,5 +349,15 @@ input[type="button"] {
 }
 .sidebar::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
+}
+
+/* Prevent layout shift during loading */
+.app-content {
+  min-height: 100vh;
+}
+
+/* Ensure content doesn't shift when sidebar appears */
+main {
+  transition: margin-left 0.3s ease;
 }
 </style>
