@@ -16,7 +16,7 @@
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">{{ languageStore.t('createAccount') }}</p>
         </div>
 
-        <!-- Success Message -->
+        <!-- Success Message - Registration Complete (No Login) -->
         <div v-if="registrationSuccess" class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
           <div class="flex items-start gap-2">
             <svg class="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -25,11 +25,18 @@
             <div>
               <p class="text-sm text-green-800 dark:text-green-200 font-medium">{{ languageStore.t('registrationSuccess') }}</p>
               <p class="text-xs text-green-700 dark:text-green-300 mt-1">{{ languageStore.t('pendingApprovalMessage') }}</p>
+              <p class="text-xs text-green-600 dark:text-green-300 mt-2 font-medium">{{ languageStore.t('willNotifyOnApproval') }}</p>
             </div>
+          </div>
+          <div class="mt-3 text-center">
+            <router-link to="/login" class="text-sm text-green-700 dark:text-green-300 hover:underline font-medium">
+              {{ languageStore.t('goToLogin') }}
+            </router-link>
           </div>
         </div>
 
-        <form @submit.prevent="handleRegister" class="space-y-4 sm:space-y-5">
+        <!-- Registration Form (Hidden after success) -->
+        <form v-if="!registrationSuccess" @submit.prevent="handleRegister" class="space-y-4 sm:space-y-5">
           <!-- Full Name -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -266,15 +273,10 @@
             <p class="text-red-600 dark:text-red-400 text-sm text-center">{{ errorMessage }}</p>
           </div>
 
-          <!-- Success Message -->
-          <div v-if="registrationSuccess" class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-3">
-            <p class="text-green-600 dark:text-green-400 text-sm text-center">{{ languageStore.t('registrationSuccess') }}</p>
-          </div>
-
           <!-- Submit Button -->
           <button
             type="submit"
-            :disabled="isLoading || registrationSuccess"
+            :disabled="isLoading"
             class="w-full bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 text-white py-3 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span v-if="!isLoading">{{ languageStore.t('register') }}</span>
@@ -288,8 +290,8 @@
           </button>
         </form>
 
-        <!-- Login Link -->
-        <div class="mt-6 text-center">
+        <!-- Login Link (Hidden after success - user will click "Go to Login") -->
+        <div v-if="!registrationSuccess" class="mt-6 text-center">
           <p class="text-sm text-gray-600 dark:text-gray-400">
             {{ languageStore.t('alreadyHaveAccount') }}
             <router-link to="/login" class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
@@ -401,8 +403,8 @@ const handleRegister = async () => {
   isLoading.value = true
   
   try {
-    // FIRST: Check if user already exists in auth
-    const { data: existingUser, error: checkError } = await supabase
+    // FIRST: Check if user already exists
+    const { data: existingUser } = await supabase
       .from('users')
       .select('id, email')
       .eq('email', form.value.email)
@@ -415,7 +417,7 @@ const handleRegister = async () => {
       return
     }
     
-    // Step 1: Create auth user with 'parent' role
+    // Step 1: Create auth user
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: form.value.email,
       password: form.value.password,
@@ -429,11 +431,9 @@ const handleRegister = async () => {
       }
     })
     
-    // Handle auth errors
     if (authError) {
       if (authError.message?.includes('User already registered') || 
-          authError.status === 400 ||
-          authError.message?.includes('duplicate')) {
+          authError.status === 400) {
         errorMessage.value = 'An account with this email already exists. Please login instead.'
         setTimeout(() => router.push('/login'), 2500)
         return
@@ -445,7 +445,7 @@ const handleRegister = async () => {
       throw new Error('User creation failed')
     }
     
-    // Step 2: Create parent record with selected school and pending status
+    // Step 2: Create parent record with PENDING status
     const parentData = {
       user_id: authData.user.id,
       school_id: form.value.school_id,
@@ -454,7 +454,7 @@ const handleRegister = async () => {
       email: form.value.email,
       address: form.value.address || null,
       relationship: form.value.relationship,
-      status: 'pending'
+      status: 'pending'  // ← PENDING - NOT active
     }
     
     const { error: parentError } = await supabase
@@ -463,7 +463,7 @@ const handleRegister = async () => {
     
     if (parentError) throw parentError
     
-    // Step 3: Upsert user record in public.users
+    // Step 3: Upsert user record in public.users (NOT active)
     const userData = {
       id: authData.user.id,
       email: form.value.email,
@@ -471,7 +471,7 @@ const handleRegister = async () => {
       phone: form.value.phone,
       role: 'parent',
       school_id: form.value.school_id,
-      is_active: true,
+      is_active: false,  // ← FALSE - Account is not active until approved
       updated_at: new Date().toISOString()
     }
     
@@ -481,7 +481,7 @@ const handleRegister = async () => {
     
     if (userError) throw userError
     
-    // Show success message
+    // Show success message (NO AUTO-LOGIN)
     registrationSuccess.value = true
     errorMessage.value = ''
     
