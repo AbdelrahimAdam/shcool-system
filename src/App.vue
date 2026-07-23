@@ -12,7 +12,7 @@
           <p class="mt-4 text-gray-500 dark:text-gray-400">{{ languageStore.t('loading') }}...</p>
         </div>
       </div>
-      
+
       <!-- Main Content -->
       <router-view v-else v-slot="{ Component }">
         <transition name="fade" mode="out-in">
@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useLanguageStore } from './stores/language'
 import OfflineIndicator from './components/common/OfflineIndicator.vue'
 import InstallPrompt from './components/common/InstallPrompt.vue'
@@ -42,8 +42,14 @@ onMounted(async () => {
   window.addEventListener('online', updateOnlineStatus)
   window.addEventListener('offline', updateOnlineStatus)
   
-  // Small delay to ensure everything is ready
-  await new Promise(resolve => setTimeout(resolve, 300))
+  // ✅ FIX: Increased delay to ensure dashboard is fully loaded
+  // Wait for DOM to be ready, then wait additional time for data fetching
+  await nextTick()
+  
+  // Wait for the app to be fully ready - increased from 300ms to 1500ms
+  // This gives enough time for the auth store to initialize and dashboard to load
+  await new Promise(resolve => setTimeout(resolve, 1500))
+  
   isLoading.value = false
 })
 
