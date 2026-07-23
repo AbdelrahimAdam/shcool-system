@@ -404,10 +404,10 @@ const paymentRequest = ref({
 })
 
 const schoolBankak = ref({
-  accountNumber: '1234567890',
-  accountName: 'مدارس زاك العالمية',
-  phone: '+249123456789',
-  reference: 'ZACK-' + new Date().getFullYear()
+  accountNumber: '',
+  accountName: '',
+  phone: '',
+  reference: ''
 })
 
 const whatsappMessage = ref('')
@@ -473,7 +473,7 @@ const loadSchoolBankakDetails = async () => {
     
     const { data, error } = await supabase
       .from('schools')
-      .select('bankak_account_number, bankak_account_name, bankak_phone')
+      .select('bankak_account_number, bankak_account_name, bankak_phone, bankak_reference_prefix')
       .eq('id', schoolId)
       .single()
     
@@ -484,11 +484,24 @@ const loadSchoolBankakDetails = async () => {
         accountNumber: data.bankak_account_number || '1234567890',
         accountName: data.bankak_account_name || 'مدارس زاك العالمية',
         phone: data.bankak_phone || '+249123456789',
+        reference: `${data.bankak_reference_prefix || 'ZACK'}-${new Date().getFullYear()}`
+      }
+    } else {
+      schoolBankak.value = {
+        accountNumber: '1234567890',
+        accountName: 'مدارس زاك العالمية',
+        phone: '+249123456789',
         reference: `ZACK-${new Date().getFullYear()}`
       }
     }
   } catch (error) {
     console.error('Error loading school Bankak details:', error)
+    schoolBankak.value = {
+      accountNumber: '1234567890',
+      accountName: 'مدارس زاك العالمية',
+      phone: '+249123456789',
+      reference: `ZACK-${new Date().getFullYear()}`
+    }
   }
 }
 
