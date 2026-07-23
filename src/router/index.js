@@ -136,7 +136,6 @@ const routes = [
                 name: 'PaymentApproval',
                 component: () => import('../modules/admin/Payments/PaymentApproval.vue')
             },
-            // ✅ Added missing payment edit routes
             {
                 path: 'payments/:id',
                 name: 'PaymentDetails',
@@ -433,57 +432,57 @@ const router = createRouter({
     }
 })
 
+// Track if auth has been initialized
+let authInitialized = false
+
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore()
-    
-    if (!authStore.isAuthenticated) {
-        await authStore.getCurrentUser()
+
+    // ✅ FIX: Only initialize auth once
+    if (!authInitialized) {
+        await authStore.initialize()
+        authInitialized = true
     }
-    
+
+    // If already authenticated and trying to go to login, redirect to dashboard
     if (to.path === '/login' && authStore.isAuthenticated) {
-        if (authStore.role === 'super_admin') {
-            next('/super-admin')
-        } else if (authStore.role === 'admin') {
-            next('/admin')
-        } else if (authStore.role === 'teacher') {
-            next('/teacher')
-        } else if (authStore.role === 'accountant') {
-            next('/accountant')
-        } else if (authStore.role === 'parent') {
-            next('/parent')
-        } else if (authStore.role === 'student') {
-            next('/student')
-        } else {
-            next('/')
+        const role = authStore.role
+        const redirectMap = {
+            'super_admin': '/super-admin',
+            'admin': '/admin',
+            'teacher': '/teacher',
+            'accountant': '/accountant',
+            'parent': '/parent',
+            'student': '/student'
         }
+        const redirectPath = redirectMap[role] || '/'
+        next(redirectPath)
         return
     }
-    
+
+    // Check if route requires authentication
     if (to.meta.requiresAuth) {
         if (!authStore.isAuthenticated) {
             next('/login')
             return
         }
-        
+
+        // Check if user has required role
         if (to.meta.roles && !to.meta.roles.includes(authStore.role)) {
-            if (authStore.role === 'super_admin') {
-                next('/super-admin')
-            } else if (authStore.role === 'admin') {
-                next('/admin')
-            } else if (authStore.role === 'teacher') {
-                next('/teacher')
-            } else if (authStore.role === 'accountant') {
-                next('/accountant')
-            } else if (authStore.role === 'parent') {
-                next('/parent')
-            } else if (authStore.role === 'student') {
-                next('/student')
-            } else {
-                next('/')
+            const role = authStore.role
+            const redirectMap = {
+                'super_admin': '/super-admin',
+                'admin': '/admin',
+                'teacher': '/teacher',
+                'accountant': '/accountant',
+                'parent': '/parent',
+                'student': '/student'
             }
+            const redirectPath = redirectMap[role] || '/'
+            next(redirectPath)
             return
         }
-        
+
         next()
     } else if (to.meta.public) {
         next()
