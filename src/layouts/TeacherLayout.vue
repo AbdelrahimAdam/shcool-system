@@ -31,8 +31,8 @@
     </div>
 
     <!-- Main Content -->
-    <div class="lg:ml-72 flex flex-col min-h-screen lg:min-h-0">
-      <main class="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 mt-16 overflow-y-auto overflow-x-hidden">
+    <div class="lg:ml-72 flex flex-col">
+      <main class="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 mt-16">
         <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col">
           <router-view v-slot="{ Component }">
             <transition name="fade" mode="out-in" class="flex-1 flex flex-col">
@@ -108,7 +108,7 @@ onUnmounted(() => {
   transform: translateX(-100%);
 }
 
-/* Ensure all child components can scroll properly */
+/* Ensure router-view content takes full height */
 main :deep(.router-view-wrapper),
 main :deep(.fade-enter-active),
 main :deep(.fade-leave-active),
@@ -118,18 +118,6 @@ main :deep(.fade-leave-to) {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-}
-
-/* Fix for any nested scroll containers */
-main :deep(.overflow-auto),
-main :deep(.overflow-y-auto) {
-  max-height: 100%;
-}
-
-/* Ensure table containers work properly */
-main :deep(.table-container) {
-  overflow: auto;
-  max-height: 100%;
 }
 
 /* Fix for transition wrapper */
@@ -149,18 +137,10 @@ main :deep(.router-view-wrapper) {
   min-height: 0;
 }
 
-/* Fix for any direct child of main that isn't the wrapper */
-main > * {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-/* Mobile bottom nav spacing - CRITICAL FIX */
+/* Mobile bottom nav spacing */
 @media (max-width: 1023px) {
   main {
-    padding-bottom: 6rem !important; /* Increased from 5rem to 6rem for more space */
+    padding-bottom: 5rem;
   }
   
   /* Ensure main content takes full height on mobile */
@@ -182,7 +162,7 @@ main > * {
   }
 }
 
-/* CRITICAL FIXES FOR ATTENDANCE TABLE ON MOBILE */
+/* Allow tables and cards to scroll naturally */
 main :deep(.attendance-table-container) {
   overflow: visible !important;
   max-height: none !important;
@@ -202,11 +182,6 @@ main :deep(.card) {
 main :deep(.overflow-auto) {
   overflow: auto !important;
   max-height: none !important;
-}
-
-main {
-  overflow-y: auto;
-  overflow-x: hidden;
 }
 
 main :deep(.max-w-7xl) {
