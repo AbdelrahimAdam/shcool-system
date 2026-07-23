@@ -16,7 +16,7 @@
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">{{ languageStore.t('createAccount') }}</p>
         </div>
 
-        <!-- Success Message - Registration Complete (No Login) -->
+        <!-- Success Message - Registration Complete -->
         <div v-if="registrationSuccess" class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
           <div class="flex items-start gap-2">
             <svg class="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -290,7 +290,7 @@
           </button>
         </form>
 
-        <!-- Login Link (Hidden after success - user will click "Go to Login") -->
+        <!-- Login Link (Hidden after success) -->
         <div v-if="!registrationSuccess" class="mt-6 text-center">
           <p class="text-sm text-gray-600 dark:text-gray-400">
             {{ languageStore.t('alreadyHaveAccount') }}
@@ -411,7 +411,7 @@ const handleRegister = async () => {
       .maybeSingle()
     
     if (existingUser) {
-      errorMessage.value = 'An account with this email already exists. Please login instead.'
+      errorMessage.value = 'هذا البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول.'
       setTimeout(() => router.push('/login'), 2500)
       isLoading.value = false
       return
@@ -434,7 +434,7 @@ const handleRegister = async () => {
     if (authError) {
       if (authError.message?.includes('User already registered') || 
           authError.status === 400) {
-        errorMessage.value = 'An account with this email already exists. Please login instead.'
+        errorMessage.value = 'هذا البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول.'
         setTimeout(() => router.push('/login'), 2500)
         return
       }
@@ -454,7 +454,7 @@ const handleRegister = async () => {
       email: form.value.email,
       address: form.value.address || null,
       relationship: form.value.relationship,
-      status: 'pending'  // ← PENDING - NOT active
+      status: 'pending'
     }
     
     const { error: parentError } = await supabase
@@ -463,7 +463,7 @@ const handleRegister = async () => {
     
     if (parentError) throw parentError
     
-    // Step 3: Upsert user record in public.users (NOT active)
+    // Step 3: Upsert user record in public.users with is_active: false
     const userData = {
       id: authData.user.id,
       email: form.value.email,
@@ -471,7 +471,7 @@ const handleRegister = async () => {
       phone: form.value.phone,
       role: 'parent',
       school_id: form.value.school_id,
-      is_active: false,  // ← FALSE - Account is not active until approved
+      is_active: false,  // ← CRITICAL: Prevents login until approved
       updated_at: new Date().toISOString()
     }
     
@@ -481,7 +481,7 @@ const handleRegister = async () => {
     
     if (userError) throw userError
     
-    // Show success message (NO AUTO-LOGIN)
+    // Step 4: Show success message (NO AUTO-LOGIN)
     registrationSuccess.value = true
     errorMessage.value = ''
     
@@ -501,7 +501,7 @@ const handleRegister = async () => {
     console.error('Registration error details:', error)
     
     if (error.message?.includes('duplicate key')) {
-      errorMessage.value = 'This email is already registered. Please login or use a different email.'
+      errorMessage.value = 'هذا البريد الإلكتروني مسجل بالفعل. يرجى استخدام بريد إلكتروني آخر.'
     } else {
       errorMessage.value = error.message || languageStore.t('registrationFailed')
     }
