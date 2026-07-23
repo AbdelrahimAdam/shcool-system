@@ -170,6 +170,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useLanguageStore } from "@/stores/language";
 import PublicHeader from "@/components/public/PublicHeader.vue";
 import PublicFooter from "@/components/public/PublicFooter.vue";
+import { supabase } from "@/services/supabase";
 
 export default {
   name: "Login",
@@ -263,6 +264,27 @@ export default {
         await authStore.getCurrentUser();
         
         const role = authStore.role;
+        
+        // 🔒 SECURITY CHECK: Prevent pending parents from logging in
+        if (role === 'parent') {
+          const { data: parentData, error: parentError } = await supabase
+            .from('parents')
+            .select('status')
+            .eq('user_id', authStore.user?.id)
+            .maybeSingle();
+          
+          if (parentError) {
+            console.error('Error checking parent status:', parentError);
+          }
+          
+          // If parent status is 'pending', prevent login
+          if (parentData?.status === 'pending') {
+            this.errorMessage = 'حسابك قيد المراجعة من قبل الإدارة. يرجى الانتظار حتى يتم الموافقة على حسابك.';
+            await authStore.logout();
+            this.loading = false;
+            return;
+          }
+        }
         
         const redirectMap = {
           'super_admin': '/super-admin',
