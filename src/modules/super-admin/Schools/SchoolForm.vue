@@ -36,19 +36,38 @@
               required 
               class="form-input w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
               :placeholder="languageStore.t('enterSchoolName')"
+              @input="autoGenerateSlug"
             />
           </div>
 
           <div>
             <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('slug') }} *</label>
-            <input 
-              v-model="form.slug" 
-              type="text" 
-              required 
-              class="form-input w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              :placeholder="languageStore.t('enterSlug')"
-            />
-            <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1">{{ languageStore.t('slugHelp') }}</p>
+            <div class="relative">
+              <input 
+                v-model="form.slug" 
+                type="text" 
+                required 
+                class="form-input w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                :placeholder="languageStore.t('enterSlug')"
+                @input="onSlugManualEdit"
+              />
+              <span v-if="!isEdit && form.slug" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">
+                {{ form.slug }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+              <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+                {{ languageStore.t('slugHelp') }}
+              </p>
+              <button 
+                v-if="form.name && !isEdit"
+                type="button"
+                @click="regenerateSlug"
+                class="text-[10px] sm:text-xs text-primary-600 dark:text-primary-400 hover:underline"
+              >
+                {{ languageStore.t('regenerate') }}
+              </button>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -81,50 +100,17 @@
               :placeholder="languageStore.t('enterAddress')"
             ></textarea>
           </div>
-        </div>
-
-        <!-- Subscription Information -->
-        <div class="space-y-3 sm:space-y-4">
-          <h2 class="text-sm sm:text-base font-medium text-gray-900 dark:text-white flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {{ languageStore.t('subscriptionInformation') }}
-          </h2>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('status') }}</label>
-              <select 
-                v-model="form.status" 
-                class="form-select w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              >
-                <option value="active">{{ languageStore.t('active') }}</option>
-                <option value="suspended">{{ languageStore.t('suspended') }}</option>
-                <option value="pending">{{ languageStore.t('pending') }}</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('subscriptionPlan') }}</label>
-              <select 
-                v-model="form.subscription_plan" 
-                class="form-select w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              >
-                <option value="basic">{{ languageStore.t('basic') }}</option>
-                <option value="pro">{{ languageStore.t('pro') }}</option>
-                <option value="enterprise">{{ languageStore.t('enterprise') }}</option>
-              </select>
-            </div>
-          </div>
 
           <div>
-            <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('subscriptionEndDate') }}</label>
-            <input 
-              v-model="form.subscription_end_date" 
-              type="date" 
-              class="form-input w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-            />
+            <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('status') }}</label>
+            <select 
+              v-model="form.status" 
+              class="form-select w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            >
+              <option value="active">{{ languageStore.t('active') }}</option>
+              <option value="suspended">{{ languageStore.t('suspended') }}</option>
+              <option value="pending">{{ languageStore.t('pending') }}</option>
+            </select>
           </div>
         </div>
 
@@ -159,7 +145,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useSchoolStore } from '../../../stores/school'
 import { useLanguageStore } from '../../../stores/language'
@@ -179,26 +165,79 @@ const form = ref({
   phone: '',
   address: '',
   status: 'pending',
-  subscription_plan: 'basic',
-  subscription_end_date: ''
+  _slugAutoGenerated: true
+})
+
+// Slug generation function
+const generateSlug = (text) => {
+  if (!text) return ''
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Remove multiple hyphens
+    .trim()
+}
+
+// Auto-generate slug from name
+const autoGenerateSlug = () => {
+  if (form.value._slugAutoGenerated) {
+    form.value.slug = generateSlug(form.value.name)
+  }
+}
+
+// Regenerate slug manually
+const regenerateSlug = () => {
+  form.value.slug = generateSlug(form.value.name)
+  form.value._slugAutoGenerated = true
+}
+
+// When user manually edits slug, stop auto-generation
+const onSlugManualEdit = () => {
+  form.value._slugAutoGenerated = false
+}
+
+// Watch name changes only for new schools
+watch(() => form.value.name, (newName) => {
+  if (!isEdit.value && form.value._slugAutoGenerated) {
+    form.value.slug = generateSlug(newName)
+  }
 })
 
 const loadSchool = async () => {
   if (isEdit.value) {
     const school = await schoolStore.getSchoolById(route.params.id)
     if (school) {
-      form.value = { ...school }
+      form.value = { 
+        name: school.name || '',
+        slug: school.slug || '',
+        email: school.email || '',
+        phone: school.phone || '',
+        address: school.address || '',
+        status: school.status || 'pending',
+        _slugAutoGenerated: false // Don't auto-generate for existing schools
+      }
     }
   }
 }
 
 const handleSubmit = async () => {
   isLoading.value = true
+  
+  const schoolData = {
+    name: form.value.name,
+    slug: form.value.slug,
+    email: form.value.email || null,
+    phone: form.value.phone || null,
+    address: form.value.address || null,
+    status: form.value.status || 'pending'
+  }
+
   let result
   if (isEdit.value) {
-    result = await schoolStore.updateSchool(route.params.id, form.value)
+    result = await schoolStore.updateSchool(route.params.id, schoolData)
   } else {
-    result = await schoolStore.createSchool(form.value)
+    result = await schoolStore.createSchool(schoolData)
   }
   isLoading.value = false
   if (result.success) {
