@@ -223,21 +223,22 @@ const handleLogout = async () => {
   router.push('/login')
 }
 
-// FIX: Watch for route changes and close sidebar on mobile
+// ✅ FIX: Watch for route changes and close sidebar on mobile
 watch(() => route.path, () => {
   if (window.innerWidth < 1024) {
     emit('close')
   }
 }, { immediate: false })
 
-// Also watch isOpen to handle body scroll lock
-watch(() => props.isOpen, (isOpen) => {
-  if (isOpen && window.innerWidth < 1024) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
-  }
-}, { immediate: true })
+// ✅ FIX: Remove body overflow manipulation - this was causing the scroll freeze
+// The overlay already handles the backdrop, and the sidebar doesn't need to lock body scroll
+// watch(() => props.isOpen, (isOpen) => {
+//   if (isOpen && window.innerWidth < 1024) {
+//     document.body.style.overflow = 'hidden'
+//   } else {
+//     document.body.style.overflow = ''
+//   }
+// }, { immediate: true })
 </script>
 
 <style scoped>
