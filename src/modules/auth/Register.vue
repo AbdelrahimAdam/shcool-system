@@ -16,6 +16,19 @@
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">{{ languageStore.t('createAccount') }}</p>
         </div>
 
+        <!-- Success Message -->
+        <div v-if="registrationSuccess" class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+          <div class="flex items-start gap-2">
+            <svg class="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p class="text-sm text-green-800 dark:text-green-200 font-medium">{{ languageStore.t('registrationSuccess') }}</p>
+              <p class="text-xs text-green-700 dark:text-green-300 mt-1">{{ languageStore.t('pendingApprovalMessage') }}</p>
+            </div>
+          </div>
+        </div>
+
         <form @submit.prevent="handleRegister" class="space-y-4 sm:space-y-5">
           <!-- Full Name -->
           <div>
@@ -249,14 +262,19 @@
           </div>
 
           <!-- Error Message -->
-          <div v-if="errorMessage" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 animate-shake">
+          <div v-if="errorMessage" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
             <p class="text-red-600 dark:text-red-400 text-sm text-center">{{ errorMessage }}</p>
+          </div>
+
+          <!-- Success Message -->
+          <div v-if="registrationSuccess" class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-3">
+            <p class="text-green-600 dark:text-green-400 text-sm text-center">{{ languageStore.t('registrationSuccess') }}</p>
           </div>
 
           <!-- Submit Button -->
           <button
             type="submit"
-            :disabled="isLoading"
+            :disabled="isLoading || registrationSuccess"
             class="w-full bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 text-white py-3 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span v-if="!isLoading">{{ languageStore.t('register') }}</span>
@@ -315,6 +333,7 @@ const form = ref({
 const errors = ref({})
 const errorMessage = ref('')
 const isLoading = ref(false)
+const registrationSuccess = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 
@@ -382,6 +401,20 @@ const handleRegister = async () => {
   isLoading.value = true
   
   try {
+    // FIRST: Check if user already exists in auth
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('email', form.value.email)
+      .maybeSingle()
+    
+    if (existingUser) {
+      errorMessage.value = 'An account with this email already exists. Please login instead.'
+      setTimeout(() => router.push('/login'), 2500)
+      isLoading.value = false
+      return
+    }
+    
     // Step 1: Create auth user with 'parent' role
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: form.value.email,
@@ -396,11 +429,13 @@ const handleRegister = async () => {
       }
     })
     
-    // Handle case where user already exists
+    // Handle auth errors
     if (authError) {
-      if (authError.message?.includes('User already registered') || authError.status === 400) {
+      if (authError.message?.includes('User already registered') || 
+          authError.status === 400 ||
+          authError.message?.includes('duplicate')) {
         errorMessage.value = 'An account with this email already exists. Please login instead.'
-        setTimeout(() => router.push('/login'), 2000)
+        setTimeout(() => router.push('/login'), 2500)
         return
       }
       throw authError
@@ -446,14 +481,21 @@ const handleRegister = async () => {
     
     if (userError) throw userError
     
-    // Step 4: Wait for auth session
-    await new Promise(resolve => setTimeout(resolve, 500))
+    // Show success message
+    registrationSuccess.value = true
+    errorMessage.value = ''
     
-    // Refresh auth store
-    await authStore.getCurrentUser()
-    
-    // Redirect to parent dashboard
-    router.push('/parent')
+    // Reset form
+    form.value = {
+      full_name: '',
+      email: '',
+      phone: '',
+      address: '',
+      school_id: null,
+      relationship: 'guardian',
+      password: '',
+      confirm_password: ''
+    }
     
   } catch (error) {
     console.error('Registration error details:', error)
