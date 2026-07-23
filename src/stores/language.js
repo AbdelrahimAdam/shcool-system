@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 
 export const useLanguageStore = defineStore('language', () => {
   const currentLocale = ref(localStorage.getItem('locale') || 'en')
-  
+
   const translations = {
     en: {
       // ==================== COMMON ====================
@@ -68,7 +68,7 @@ export const useLanguageStore = defineStore('language', () => {
       searchPlaceholder: 'Search...',
       filterOptions: 'Filter options',
       noResults: 'No results found',
-      
+
       // ==================== ROLES ====================
       superAdmin: 'Super Admin',
       admin: 'Admin',
@@ -76,7 +76,7 @@ export const useLanguageStore = defineStore('language', () => {
       accountant: 'Accountant',
       parent: 'Parent',
       student: 'Student',
-      
+
       // ==================== SCHOOL & PUBLIC ====================
       schoolName: 'Zack International Schools and Kindergarten',
       schoolNameShort: 'Zack Schools',
@@ -85,7 +85,7 @@ export const useLanguageStore = defineStore('language', () => {
       accountantPortal: 'Accountant Portal',
       managementPortal: 'Management Portal',
       teacherPortal: 'Teacher Portal',
-      
+
       // ==================== AUTH & REGISTRATION ====================
       parentRegistration: 'Parent Registration',
       createAccount: 'Create Account',
@@ -113,7 +113,16 @@ export const useLanguageStore = defineStore('language', () => {
       pendingApprovalMessage: 'Your account is pending approval from the school administrator. Once approved, you will be able to register children and access all features.',
       contactSchoolAdminForActivation: 'Please contact the school administrator to activate your account.',
       loginFailed: 'Login failed. Please check your credentials.',
-      
+      loggingIn: 'Logging in...',
+      registering: 'Registering...',
+      willNotifyOnApproval: 'You will be notified via email when your account is approved.',
+      goToLogin: 'Go to Login',
+      goToDashboard: 'Go to Dashboard',
+      demoCredentials: 'Demo Credentials',
+      editParentDescription: 'Edit parent information',
+      addParentDescription: 'Add a new parent',
+      editMode: 'Edit Mode',
+
       // ==================== PARENT DASHBOARD ====================
       parentDashboard: 'Parent Dashboard',
       myChildren: 'My Children',
@@ -131,7 +140,7 @@ export const useLanguageStore = defineStore('language', () => {
       trackYourChildrenAttendance: 'Track your children attendance records',
       manageYourChildren: 'Manage your children and their academic progress',
       registerChildToGetStarted: 'Register a child to get started',
-      
+
       // ==================== ADMIN DASHBOARD - PENDING APPROVALS ====================
       pendingParentRegistrations: 'Pending Parent Registrations',
       reviewAndApproveParents: 'Review and approve parent registrations',
@@ -167,7 +176,7 @@ export const useLanguageStore = defineStore('language', () => {
       viewAndExportAttendance: 'View and export attendance records',
       tryDifferentFilters: 'Try different filters',
       noAttendanceRecords: 'No attendance records found',
-      
+
       // ==================== TEACHER MANAGEMENT ====================
       teacherName: 'Teacher Name',
       teacherCode: 'Teacher Code',
@@ -200,7 +209,7 @@ export const useLanguageStore = defineStore('language', () => {
       addSubject: 'Add Subject',
       addSubjectPlaceholder: 'Add subject (e.g., Mathematics)',
       noSubjectsAdded: 'No subjects added. Click "Add Subject" to add.',
-      
+
       // ==================== STUDENT MANAGEMENT ====================
       studentName: 'Student Name',
       studentNumber: 'Student Number',
@@ -243,7 +252,7 @@ export const useLanguageStore = defineStore('language', () => {
       studentConvertedSuccessfully: 'Student converted successfully!',
       conversionFailed: 'Conversion failed',
       studentFullName: 'Student Full Name',
-      
+
       // ==================== CLASS MANAGEMENT ====================
       className: 'Class Name',
       gradeLevel: 'Grade Level',
@@ -256,7 +265,7 @@ export const useLanguageStore = defineStore('language', () => {
       allClasses: 'All Classes',
       noStudentsInClass: 'No students in this class',
       noClassesAssigned: 'No classes assigned',
-      
+
       // ==================== ATTENDANCE ====================
       present: 'Present',
       absent: 'Absent',
@@ -279,7 +288,7 @@ export const useLanguageStore = defineStore('language', () => {
       errorSavingAttendance: 'Error saving attendance. Please try again.',
       attendanceSaved: 'Attendance saved successfully!',
       cannotMarkFutureAttendance: 'Cannot mark attendance for future dates',
-      
+
       // ==================== PAYMENTS ====================
       amount: 'Amount',
       paymentMethod: 'Payment Method',
@@ -323,7 +332,7 @@ export const useLanguageStore = defineStore('language', () => {
       paymentProof: 'Payment Proof',
       bankakInformation: 'Bankak Information',
       dateInformation: 'Date Information',
-      
+
       // Payment Form
       selectFromList: 'Select from List',
       manualEntry: 'Manual Entry',
@@ -338,12 +347,27 @@ export const useLanguageStore = defineStore('language', () => {
       noSchoolAssignedError: 'You are not assigned to any school. Please contact the super administrator.',
       validAmountRequired: 'Please enter a valid amount',
       pleaseSelectStudent: 'Please select a student',
-      
+      addPaymentDescription: 'Add a new payment',
+      editPaymentDescription: 'Edit payment information',
+      createPaymentNote: 'A new payment will be created for the selected student',
+      editPaymentNote: 'Edit payment information',
+      allPaymentsApproved: 'All payments have been approved',
+      confirmApprovePayment: 'Are you sure you want to approve this payment?',
+      confirmRejectPayment: 'Are you sure you want to reject this payment?',
+      typeToSearchStudents: 'Type to search for a student',
+      manualStudentRequired: 'Please enter student name and number',
+      totalRevenue: 'Total Revenue',
+      revenue: 'Revenue',
+      pendingPayments: 'Pending Payments',
+      noPaymentsFound: 'No payments found',
+      totalPayments: 'Total Payments',
+      paymentDetails: 'Payment Details',
+
       // File Uploader
       clickOrDrag: 'Click or drag file to upload',
       acceptedFileTypes: 'Accepted file types:',
       uploaded: 'uploaded',
-      
+
       // ==================== STUDENT DASHBOARD ====================
       studentDashboard: 'Student Dashboard',
       myProfile: 'My Profile',
@@ -363,7 +387,7 @@ export const useLanguageStore = defineStore('language', () => {
       maxScore: 'Max Score',
       proof: 'Proof',
       viewProof: 'View Payment Proof',
-      
+
       // ==================== PROFILE ====================
       manageYourAccount: 'Manage your account',
       emailCannotBeChanged: 'Email cannot be changed',
@@ -371,11 +395,10 @@ export const useLanguageStore = defineStore('language', () => {
       currentPassword: 'Current Password',
       newPassword: 'New Password',
       confirmNewPassword: 'Confirm New Password',
-      saving: 'Saving...',
       saveChanges: 'Save Changes',
       profileUpdatedSuccessfully: 'Profile updated successfully!',
       updateFailed: 'Failed to update profile. Please try again.',
-      
+
       // ==================== CRM (Leads) ====================
       leads: 'Leads',
       leadStatus: 'Lead Status',
@@ -399,7 +422,25 @@ export const useLanguageStore = defineStore('language', () => {
       inquiryFailed: 'Failed to submit inquiry. Please try again.',
       submitInquiry: 'Submit Inquiry',
       existingAccountNote: 'If you already have an account, please login or register as a parent.',
-      
+      lead: 'Lead',
+      editLead: 'Edit Lead',
+      addLead: 'Add Lead',
+      editLeadDescription: 'Edit lead information',
+      addLeadDescription: 'Add a new lead',
+      totalLeads: 'Total Leads',
+      noLeadsFound: 'No leads found',
+      call: 'Call',
+      whatsapp: 'WhatsApp',
+      viewAllLeads: 'View All Leads',
+      leadStatus: 'Lead Status',
+      studentInformation: 'Student Information',
+      enterInterestedProgram: 'Enter interested program',
+      selectGrade: 'Select Grade',
+      markContacted: 'Mark as Contacted',
+      statusUpdated: 'Status updated',
+      updateFailed: 'Update failed',
+      quickActions: 'Quick Actions',
+
       // Follow‑ups
       followUps: 'Follow‑ups',
       call: 'Call',
@@ -408,7 +449,7 @@ export const useLanguageStore = defineStore('language', () => {
       note: 'Note',
       noFollowUps: 'No follow‑ups yet',
       status_change: 'Status Change',
-      
+
       // ==================== REPORTS ====================
       performanceReport: 'Performance Report',
       revenueReport: 'Revenue Report',
@@ -423,7 +464,31 @@ export const useLanguageStore = defineStore('language', () => {
       revenueBreakdownByMonth: 'Revenue breakdown by month',
       noPaymentDataAvailable: 'No payment data available',
       startProcessingPaymentsToSeeReports: 'Start processing payments to see reports',
-      
+      globalAnalytics: 'Global Analytics',
+      schoolGrowth: 'School Growth',
+      revenueOverTime: 'Revenue Over Time',
+      topSchools: 'Top Schools',
+      byRevenue: 'by Revenue',
+      last12Months: 'Last 12 Months',
+      totalRevenue: 'Total Revenue',
+      pendingPaymentsReport: 'Pending Payments Report',
+      generateAndExportReports: 'Generate and export reports',
+      performanceReportDesc: 'View student performance in exams',
+      attendanceReportDesc: 'View attendance records',
+      revenueReportDesc: 'View total revenue and payments',
+      pendingPaymentsReportDesc: 'View pending payments',
+      generate: 'Generate Report',
+      export: 'Export',
+      selectReportToGenerate: 'Select a report to generate',
+      totalRecords: 'Total Records',
+      noData: 'No Data',
+      tryDifferentReport: 'Try a different report',
+      attendanceRate: 'Attendance Rate',
+      examFees: 'Exam Fees',
+      activityFees: 'Activity Fees',
+      tuition: 'Tuition',
+      other: 'Other',
+
       // ==================== SUPER ADMIN ====================
       superAdminDashboard: 'Super Admin Dashboard',
       totalSchools: 'Total Schools',
@@ -455,7 +520,25 @@ export const useLanguageStore = defineStore('language', () => {
       addUser: 'Add User',
       editUser: 'Edit User',
       superAdminNoSchool: 'Super admins are not tied to any school',
-      
+      schoolInformation: 'School Information',
+      subscriptionInformation: 'Subscription Information',
+      basic: 'Basic',
+      pro: 'Pro',
+      enterprise: 'Enterprise',
+      editSchool: 'Edit School',
+      addSchool: 'Add School',
+      editSchoolDescription: 'Edit school information',
+      addSchoolDescription: 'Add a new school',
+      createSchoolNote: 'A new school will be created in the system',
+      editSchoolNote: 'Edit school information',
+      enterSlug: 'Enter slug',
+      regenerate: 'Regenerate',
+      allSchools: 'All Schools',
+      noSchoolsFound: 'No schools found',
+      activeSchools: 'Active Schools',
+      recentSchools: 'Recent Schools',
+      overviewOfAllSchools: 'Overview of all schools',
+
       // ==================== PUBLIC WEBSITE ====================
       enrollNow: 'Enroll Now',
       whyChooseUs: 'Why Choose Us',
@@ -497,7 +580,7 @@ export const useLanguageStore = defineStore('language', () => {
       startYourJourneyDesc: 'Join our community of learners and discover the joy of education at Zack International Schools',
       contactUsToday: 'Contact Us Today',
       grades: 'Grades',
-      
+
       // ==================== PARENT MANAGEMENT (ADMIN) ====================
       manageParentAccounts: 'Manage parent accounts',
       addParent: 'Add Parent',
@@ -514,7 +597,7 @@ export const useLanguageStore = defineStore('language', () => {
       accountInformation: 'Account Information',
       children: 'Children',
       parentAccount: 'Parent Account',
-      
+
       // ==================== TEACHER DASHBOARD & SIDEBAR ====================
       manageYourClasses: 'Manage your classes',
       myClasses: 'My Classes',
@@ -527,7 +610,19 @@ export const useLanguageStore = defineStore('language', () => {
       markAttendance: 'Mark Attendance',
       viewStudents: 'View Students',
       accessDenied: 'Access denied',
-      
+      teacherDashboard: 'Teacher Dashboard',
+      welcomeBackTeacher: 'Welcome back teacher',
+      allClasses: 'All Classes',
+      addExam: 'Add Exam',
+      recentActivities: 'Recent Activities',
+      noRecentActivity: 'No recent activity',
+      minutesAgo: 'minutes ago',
+      hoursAgo: 'hours ago',
+      daysAgo: 'days ago',
+      noClassesAssigned: 'No classes assigned to you',
+      noClassesFound: 'No classes found',
+      examGrades: 'Exam Results',
+
       // ==================== ADDITIONAL KEYS ====================
       clickRegisterToAddChild: 'Click "Register Child" to add your first child',
       studentId: 'Student ID',
@@ -544,7 +639,7 @@ export const useLanguageStore = defineStore('language', () => {
       registerChildToGetStarted: 'Register a child to get started',
       upcomingExams: 'Upcoming Exams',
       todayAttendance: 'Today\'s Attendance',
-      
+
       // Navigation & Footer
       home: 'Home',
       about: 'About',
@@ -559,7 +654,7 @@ export const useLanguageStore = defineStore('language', () => {
       closed: 'Closed',
       saturday: 'Saturday',
       allRightsReserved: 'All rights reserved',
-      
+
       // Schedule
       previousWeek: 'Previous Week',
       nextWeek: 'Next Week',
@@ -572,7 +667,7 @@ export const useLanguageStore = defineStore('language', () => {
       activity: 'Activity',
       holiday: 'Holiday',
       noSchedule: 'No classes scheduled for this day',
-      
+
       // Dashboard Stats
       totalStudents: 'Total Students',
       totalTeachers: 'Total Teachers',
@@ -580,7 +675,7 @@ export const useLanguageStore = defineStore('language', () => {
       pendingStudents: 'Pending Students',
       newLeads: 'New Leads',
       conversionRate: 'Conversion Rate',
-      
+
       // Messages
       confirmDelete: 'Are you sure you want to delete this?',
       operationSuccessful: 'Operation completed successfully',
@@ -652,7 +747,7 @@ export const useLanguageStore = defineStore('language', () => {
       searchPlaceholder: 'بحث...',
       filterOptions: 'خيارات التصفية',
       noResults: 'لا توجد نتائج',
-      
+
       // ==================== ROLES ====================
       superAdmin: 'مشرف عام',
       admin: 'مدير مدرسة',
@@ -660,7 +755,7 @@ export const useLanguageStore = defineStore('language', () => {
       accountant: 'محاسب',
       parent: 'ولي أمر',
       student: 'طالب',
-      
+
       // ==================== SCHOOL & PUBLIC ====================
       schoolName: 'رياض ومدارس زاك العالمية',
       schoolNameShort: 'مدارس زاك',
@@ -669,7 +764,7 @@ export const useLanguageStore = defineStore('language', () => {
       accountantPortal: 'بوابة المحاسب',
       managementPortal: 'بوابة الإدارة',
       teacherPortal: 'بوابة المعلم',
-      
+
       // ==================== AUTH & REGISTRATION ====================
       parentRegistration: 'تسجيل ولي الأمر',
       createAccount: 'إنشاء حساب',
@@ -697,7 +792,16 @@ export const useLanguageStore = defineStore('language', () => {
       pendingApprovalMessage: 'حسابك قيد موافقة مسؤول المدرسة. بمجرد الموافقة، ستتمكن من تسجيل الأطفال والوصول إلى جميع الميزات.',
       contactSchoolAdminForActivation: 'يرجى الاتصال بمسؤول المدرسة لتفعيل حسابك.',
       loginFailed: 'فشل تسجيل الدخول. يرجى التحقق من بيانات الدخول.',
-      
+      loggingIn: 'جاري تسجيل الدخول...',
+      registering: 'جاري التسجيل...',
+      willNotifyOnApproval: 'سيتم إشعارك عبر البريد الإلكتروني عند الموافقة على حسابك.',
+      goToLogin: 'الذهاب إلى تسجيل الدخول',
+      goToDashboard: 'الذهاب إلى لوحة التحكم',
+      demoCredentials: 'بيانات الدخول التجريبية',
+      editParentDescription: 'تعديل معلومات ولي الأمر',
+      addParentDescription: 'إضافة ولي أمر جديد',
+      editMode: 'وضع التعديل',
+
       // ==================== PARENT DASHBOARD ====================
       parentDashboard: 'لوحة تحكم ولي الأمر',
       myChildren: 'أطفالي',
@@ -715,7 +819,7 @@ export const useLanguageStore = defineStore('language', () => {
       trackYourChildrenAttendance: 'تتبع سجلات حضور أطفالك',
       manageYourChildren: 'إدارة أطفالك وتقدمهم الأكاديمي',
       registerChildToGetStarted: 'سجل طفلاً للبدء',
-      
+
       // ==================== ADMIN DASHBOARD - PENDING APPROVALS ====================
       pendingParentRegistrations: 'تسجيلات أولياء الأمور المعلقة',
       reviewAndApproveParents: 'مراجعة والموافقة على تسجيلات أولياء الأمور',
@@ -751,7 +855,7 @@ export const useLanguageStore = defineStore('language', () => {
       viewAndExportAttendance: 'عرض وتصدير سجلات الحضور',
       tryDifferentFilters: 'جرب عوامل تصفية مختلفة',
       noAttendanceRecords: 'لا توجد سجلات حضور',
-      
+
       // ==================== TEACHER MANAGEMENT ====================
       teacherName: 'اسم المعلم',
       teacherCode: 'رمز المعلم',
@@ -784,7 +888,7 @@ export const useLanguageStore = defineStore('language', () => {
       addSubject: 'إضافة مادة',
       addSubjectPlaceholder: 'أضف مادة (مثل: رياضيات)',
       noSubjectsAdded: 'لم يتم إضافة مواد. انقر "إضافة مادة" للإضافة.',
-      
+
       // ==================== STUDENT MANAGEMENT ====================
       studentName: 'اسم الطالب',
       studentNumber: 'رقم الطالب',
@@ -827,7 +931,7 @@ export const useLanguageStore = defineStore('language', () => {
       studentConvertedSuccessfully: 'تم تحويل الطالب بنجاح!',
       conversionFailed: 'فشل التحويل',
       studentFullName: 'اسم الطالب الكامل',
-      
+
       // ==================== CLASS MANAGEMENT ====================
       className: 'اسم الفصل',
       gradeLevel: 'الصف الدراسي',
@@ -840,7 +944,7 @@ export const useLanguageStore = defineStore('language', () => {
       allClasses: 'جميع الفصول',
       noStudentsInClass: 'لا يوجد طلاب في هذا الفصل',
       noClassesAssigned: 'لا توجد فصول مخصصة',
-      
+
       // ==================== ATTENDANCE ====================
       present: 'حاضر',
       absent: 'غائب',
@@ -863,7 +967,7 @@ export const useLanguageStore = defineStore('language', () => {
       errorSavingAttendance: 'خطأ في حفظ الحضور. يرجى المحاولة مرة أخرى.',
       attendanceSaved: 'تم حفظ الحضور بنجاح!',
       cannotMarkFutureAttendance: 'لا يمكن تسجيل الحضور للتواريخ المستقبلية',
-      
+
       // ==================== PAYMENTS ====================
       amount: 'المبلغ',
       paymentMethod: 'طريقة الدفع',
@@ -907,7 +1011,7 @@ export const useLanguageStore = defineStore('language', () => {
       paymentProof: 'إثبات الدفع',
       bankakInformation: 'معلومات بنكك',
       dateInformation: 'معلومات التاريخ',
-      
+
       // Payment Form
       selectFromList: 'اختر من القائمة',
       manualEntry: 'إدخال يدوي',
@@ -922,12 +1026,27 @@ export const useLanguageStore = defineStore('language', () => {
       noSchoolAssignedError: 'أنت غير مرتبط بأي مدرسة. يرجى الاتصال بالمشرف العام.',
       validAmountRequired: 'يرجى إدخال مبلغ صحيح',
       pleaseSelectStudent: 'يرجى اختيار الطالب',
-      
+      addPaymentDescription: 'إضافة دفعة جديدة',
+      editPaymentDescription: 'تعديل معلومات الدفعة',
+      createPaymentNote: 'سيتم إنشاء دفعة جديدة للطالب المحدد',
+      editPaymentNote: 'تعديل معلومات الدفعة',
+      allPaymentsApproved: 'جميع المدفوعات تمت الموافقة عليها',
+      confirmApprovePayment: 'هل أنت متأكد من الموافقة على هذه الدفعة؟',
+      confirmRejectPayment: 'هل أنت متأكد من رفض هذه الدفعة؟',
+      typeToSearchStudents: 'اكتب للبحث عن طالب',
+      manualStudentRequired: 'يرجى إدخال اسم الطالب ورقمه',
+      totalRevenue: 'إجمالي الإيرادات',
+      revenue: 'الإيرادات',
+      pendingPayments: 'المدفوعات المعلقة',
+      noPaymentsFound: 'لا يوجد مدفوعات',
+      totalPayments: 'إجمالي المدفوعات',
+      paymentDetails: 'تفاصيل الدفعة',
+
       // File Uploader
       clickOrDrag: 'انقر أو اسحب الملف للتحميل',
       acceptedFileTypes: 'أنواع الملفات المقبولة:',
       uploaded: 'تم التحميل',
-      
+
       // ==================== STUDENT DASHBOARD ====================
       studentDashboard: 'لوحة تحكم الطالب',
       myProfile: 'ملفي الشخصي',
@@ -947,7 +1066,7 @@ export const useLanguageStore = defineStore('language', () => {
       maxScore: 'الدرجة القصوى',
       proof: 'إثبات',
       viewProof: 'عرض إثبات الدفع',
-      
+
       // ==================== PROFILE ====================
       manageYourAccount: 'إدارة حسابك',
       emailCannotBeChanged: 'لا يمكن تغيير البريد الإلكتروني',
@@ -955,11 +1074,10 @@ export const useLanguageStore = defineStore('language', () => {
       currentPassword: 'كلمة المرور الحالية',
       newPassword: 'كلمة المرور الجديدة',
       confirmNewPassword: 'تأكيد كلمة المرور الجديدة',
-      saving: 'جاري الحفظ...',
       saveChanges: 'حفظ التغييرات',
       profileUpdatedSuccessfully: 'تم تحديث الملف الشخصي بنجاح!',
       updateFailed: 'فشل تحديث الملف الشخصي. يرجى المحاولة مرة أخرى.',
-      
+
       // ==================== CRM (Leads) ====================
       leads: 'العملاء المتوقعين',
       leadStatus: 'حالة العميل',
@@ -983,7 +1101,25 @@ export const useLanguageStore = defineStore('language', () => {
       inquiryFailed: 'فشل إرسال الاستفسار. يرجى المحاولة مرة أخرى.',
       submitInquiry: 'إرسال استفسار',
       existingAccountNote: 'إذا كان لديك حساب بالفعل، يرجى تسجيل الدخول أو التسجيل كولي أمر.',
-      
+      lead: 'عميل محتمل',
+      editLead: 'تعديل العميل المحتمل',
+      addLead: 'إضافة عميل محتمل',
+      editLeadDescription: 'تعديل معلومات العميل المحتمل',
+      addLeadDescription: 'إضافة عميل محتمل جديد',
+      totalLeads: 'إجمالي العملاء المحتملين',
+      noLeadsFound: 'لا يوجد عملاء محتملين',
+      call: 'اتصال',
+      whatsapp: 'واتساب',
+      viewAllLeads: 'عرض جميع العملاء المحتملين',
+      leadStatus: 'حالة العميل المحتمل',
+      studentInformation: 'معلومات الطالب',
+      enterInterestedProgram: 'أدخل البرنامج المهتم به',
+      selectGrade: 'اختر الصف',
+      markContacted: 'تحديد كمتواصل',
+      statusUpdated: 'تم تحديث الحالة',
+      updateFailed: 'فشل التحديث',
+      quickActions: 'إجراءات سريعة',
+
       // Follow‑ups
       followUps: 'المتابعات',
       call: 'اتصال',
@@ -992,7 +1128,7 @@ export const useLanguageStore = defineStore('language', () => {
       note: 'ملاحظة',
       noFollowUps: 'لا توجد متابعات بعد',
       status_change: 'تغيير الحالة',
-      
+
       // ==================== REPORTS ====================
       performanceReport: 'تقرير الأداء',
       revenueReport: 'تقرير الإيرادات',
@@ -1007,7 +1143,31 @@ export const useLanguageStore = defineStore('language', () => {
       revenueBreakdownByMonth: 'تفصيل الإيرادات حسب الشهر',
       noPaymentDataAvailable: 'لا توجد بيانات دفع متاحة',
       startProcessingPaymentsToSeeReports: 'ابدأ معالجة المدفوعات لرؤية التقارير',
-      
+      globalAnalytics: 'التحليلات العالمية',
+      schoolGrowth: 'نمو المدارس',
+      revenueOverTime: 'الإيرادات بمرور الوقت',
+      topSchools: 'أفضل المدارس',
+      byRevenue: 'حسب الإيرادات',
+      last12Months: 'آخر 12 شهراً',
+      totalRevenue: 'إجمالي الإيرادات',
+      pendingPaymentsReport: 'تقرير المدفوعات المعلقة',
+      generateAndExportReports: 'إنشاء وتصدير التقارير',
+      performanceReportDesc: 'عرض أداء الطلاب في الاختبارات',
+      attendanceReportDesc: 'عرض سجلات الحضور والغياب',
+      revenueReportDesc: 'عرض إجمالي الإيرادات والمدفوعات',
+      pendingPaymentsReportDesc: 'عرض المدفوعات المعلقة',
+      generate: 'إنشاء التقرير',
+      export: 'تصدير',
+      selectReportToGenerate: 'اختر التقرير المطلوب',
+      totalRecords: 'إجمالي السجلات',
+      noData: 'لا توجد بيانات',
+      tryDifferentReport: 'جرب تقريراً آخر',
+      attendanceRate: 'نسبة الحضور',
+      examFees: 'رسوم الامتحانات',
+      activityFees: 'رسوم الأنشطة',
+      tuition: 'الرسوم الدراسية',
+      other: 'أخرى',
+
       // ==================== SUPER ADMIN ====================
       superAdminDashboard: 'لوحة تحكم المشرف العام',
       totalSchools: 'إجمالي المدارس',
@@ -1039,7 +1199,25 @@ export const useLanguageStore = defineStore('language', () => {
       addUser: 'إضافة مستخدم',
       editUser: 'تعديل مستخدم',
       superAdminNoSchool: 'المشرف العام غير مرتبط بأي مدرسة',
-      
+      schoolInformation: 'معلومات المدرسة',
+      subscriptionInformation: 'معلومات الاشتراك',
+      basic: 'أساسي',
+      pro: 'احترافي',
+      enterprise: 'مؤسسات',
+      editSchool: 'تعديل المدرسة',
+      addSchool: 'إضافة مدرسة',
+      editSchoolDescription: 'تعديل معلومات المدرسة',
+      addSchoolDescription: 'إضافة مدرسة جديدة',
+      createSchoolNote: 'سيتم إنشاء مدرسة جديدة في النظام',
+      editSchoolNote: 'تعديل معلومات المدرسة',
+      enterSlug: 'أدخل المعرف المختصر',
+      regenerate: 'إعادة إنشاء',
+      allSchools: 'جميع المدارس',
+      noSchoolsFound: 'لم يتم العثور على مدارس',
+      activeSchools: 'المدارس النشطة',
+      recentSchools: 'أحدث المدارس',
+      overviewOfAllSchools: 'نظرة عامة على جميع المدارس',
+
       // ==================== PUBLIC WEBSITE ====================
       enrollNow: 'سجل الآن',
       whyChooseUs: 'لماذا نحن',
@@ -1081,7 +1259,7 @@ export const useLanguageStore = defineStore('language', () => {
       startYourJourneyDesc: 'انضم إلى مجتمعنا التعليمي واكتشف متعة التعلم في مدارس زاك العالمية',
       contactUsToday: 'اتصل بنا اليوم',
       grades: 'الصفوف',
-      
+
       // ==================== PARENT MANAGEMENT (ADMIN) ====================
       manageParentAccounts: 'إدارة حسابات أولياء الأمور',
       addParent: 'إضافة ولي أمر',
@@ -1098,7 +1276,7 @@ export const useLanguageStore = defineStore('language', () => {
       accountInformation: 'معلومات الحساب',
       children: 'الأطفال',
       parentAccount: 'حساب ولي الأمر',
-      
+
       // ==================== TEACHER DASHBOARD & SIDEBAR ====================
       manageYourClasses: 'إدارة فصولك',
       myClasses: 'فصولي',
@@ -1111,7 +1289,19 @@ export const useLanguageStore = defineStore('language', () => {
       markAttendance: 'تسجيل الحضور',
       viewStudents: 'عرض الطلاب',
       accessDenied: 'وصول ممنوع',
-      
+      teacherDashboard: 'لوحة تحكم المعلم',
+      welcomeBackTeacher: 'مرحباً بك مرة أخرى أيها المعلم',
+      allClasses: 'جميع الفصول',
+      addExam: 'إضافة اختبار',
+      recentActivities: 'الأنشطة الأخيرة',
+      noRecentActivity: 'لا توجد أنشطة حديثة',
+      minutesAgo: 'دقائق مضت',
+      hoursAgo: 'ساعات مضت',
+      daysAgo: 'أيام مضت',
+      noClassesAssigned: 'لا توجد فصول مخصصة لك',
+      noClassesFound: 'لم يتم العثور على فصول',
+      examGrades: 'نتائج الاختبارات',
+
       // ==================== ADDITIONAL KEYS ====================
       clickRegisterToAddChild: 'انقر "تسجيل طفل" لإضافة طفلك الأول',
       studentId: 'رقم الطالب',
@@ -1128,7 +1318,7 @@ export const useLanguageStore = defineStore('language', () => {
       registerChildToGetStarted: 'سجل طفلاً للبدء',
       upcomingExams: 'الامتحانات القادمة',
       todayAttendance: 'حضور اليوم',
-      
+
       // Navigation & Footer
       home: 'الرئيسية',
       about: 'عن المدرسة',
@@ -1143,7 +1333,7 @@ export const useLanguageStore = defineStore('language', () => {
       closed: 'مغلق',
       saturday: 'السبت',
       allRightsReserved: 'جميع الحقوق محفوظة',
-      
+
       // Schedule
       previousWeek: 'الأسبوع السابق',
       nextWeek: 'الأسبوع التالي',
@@ -1156,7 +1346,7 @@ export const useLanguageStore = defineStore('language', () => {
       activity: 'نشاط',
       holiday: 'عطلة',
       noSchedule: 'لا توجد حصص م scheduled لهذا اليوم',
-      
+
       // Dashboard Stats
       totalStudents: 'إجمالي الطلاب',
       totalTeachers: 'إجمالي المعلمين',
@@ -1164,7 +1354,7 @@ export const useLanguageStore = defineStore('language', () => {
       pendingStudents: 'طلاب معلقين',
       newLeads: 'عملاء جدد',
       conversionRate: 'نسبة التحويل',
-      
+
       // Messages
       confirmDelete: 'هل أنت متأكد من الحذف؟',
       operationSuccessful: 'تمت العملية بنجاح',
@@ -1174,21 +1364,21 @@ export const useLanguageStore = defineStore('language', () => {
       submitting: 'جاري الإرسال...'
     }
   }
-  
+
   const t = (key) => {
     const translation = translations[currentLocale.value][key]
     return translation || key
   }
-  
+
   const setLocale = (locale) => {
     currentLocale.value = locale
     localStorage.setItem('locale', locale)
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'
     document.documentElement.lang = locale
   }
-  
+
   const isRTL = computed(() => currentLocale.value === 'ar')
-  
+
   return {
     currentLocale,
     t,
