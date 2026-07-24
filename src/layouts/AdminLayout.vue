@@ -184,6 +184,23 @@
             <span class="flex-1 truncate">{{ languageStore.t('parents') }}</span>
           </router-link>
 
+          <!-- Exams Link -->
+          <router-link
+            to="/admin/exams"
+            @click="closeMobileMenu"
+            class="flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group"
+            :class="[
+              isActiveRoute('/admin/exams')
+                ? 'bg-yellow-500/15 text-yellow-400 shadow-sm'
+                : 'text-gray-400 dark:text-gray-500 hover:bg-gray-800/50 dark:hover:bg-gray-800/30 hover:text-gray-200 dark:hover:text-gray-300'
+            ]"
+          >
+            <svg class="w-5 h-5 mr-3 flex-shrink-0 transition-colors" :class="isActiveRoute('/admin/exams') ? 'text-yellow-400' : 'text-gray-500 dark:text-gray-600 group-hover:text-gray-300'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span class="flex-1 truncate">{{ languageStore.t('exams') }}</span>
+          </router-link>
+
           <!-- Settings Link -->
           <router-link
             to="/admin/settings"
@@ -299,15 +316,12 @@ const userInitials = computed(() => {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
 })
 
-// Clean computed property for sidebar classes
 const sidebarClasses = computed(() => {
   const classes = ['sidebar']
   
-  // Mobile: control with mobileMenuOpen
   if (window.innerWidth < 1024) {
     classes.push(mobileMenuOpen.value ? 'mobile-open' : 'mobile-closed')
   } else {
-    // Desktop: always visible
     classes.push('desktop-visible')
   }
   
@@ -338,7 +352,6 @@ const handleResize = () => {
   }
 }
 
-// Lock body scroll when sidebar is open on mobile
 watch(mobileMenuOpen, (isOpen) => {
   if (isOpen && window.innerWidth < 1024) {
     document.body.style.overflow = 'hidden'
@@ -358,7 +371,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Fade animations */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -372,7 +384,6 @@ onUnmounted(() => {
   transform: translateY(-10px);
 }
 
-/* Custom scrollbar for sidebar */
 aside::-webkit-scrollbar {
   width: 6px;
 }
@@ -387,7 +398,6 @@ aside::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }
 
-/* Sidebar base styles */
 .sidebar {
   top: 4rem;
   z-index: 20;
@@ -396,7 +406,6 @@ aside::-webkit-scrollbar-thumb:hover {
   will-change: transform;
 }
 
-/* Mobile states */
 @media (max-width: 1023px) {
   .sidebar {
     top: 0;
@@ -420,7 +429,6 @@ aside::-webkit-scrollbar-thumb:hover {
   }
 }
 
-/* Desktop state - always visible */
 @media (min-width: 1024px) {
   .sidebar.desktop-visible {
     transform: translateX(0);
