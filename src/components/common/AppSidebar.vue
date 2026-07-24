@@ -1,7 +1,16 @@
 <template>
+  <!-- Mobile Menu Overlay - Fixed z-index and click handler -->
+  <transition name="fade">
+    <div 
+      v-if="isOpen" 
+      class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
+      @click="closeSidebarOnMobile"
+    ></div>
+  </transition>
+
   <aside 
-    class="sidebar fixed top-16 left-0 w-72 h-full bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transition-transform duration-300 ease-in-out z-40 overflow-y-auto lg:translate-x-0"
-    :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
+    class="sidebar fixed top-0 lg:top-16 left-0 w-72 h-full lg:h-[calc(100vh-4rem)] bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transition-transform duration-300 ease-in-out z-50 overflow-y-auto"
+    :class="isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
   >
     <!-- Sidebar Header -->
     <div class="p-5 border-b border-gray-700 sticky top-0 bg-gray-900 z-10">
@@ -16,6 +25,16 @@
           <p class="text-xs text-gray-400 mt-0.5 truncate">{{ languageStore.t('managementPortal') }}</p>
         </div>
       </div>
+      <!-- Close button for mobile -->
+      <button 
+        @click="closeSidebarOnMobile"
+        class="lg:hidden absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-700/50 transition-colors z-20"
+        aria-label="Close menu"
+      >
+        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
 
     <!-- User Profile Section -->
@@ -34,8 +53,8 @@
       </div>
     </div>
 
-    <!-- Navigation -->
-    <nav class="py-6 pb-32">
+    <!-- Navigation - Fixed padding to prevent overlap -->
+    <nav class="py-6 pb-24">
       <div class="px-4 space-y-1.5">
         <router-link 
           v-for="item in menuItems" 
@@ -94,10 +113,20 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
 
+          <!-- Exams Icon -->
+          <svg v-else-if="item.icon === 'ExamsIcon'" class="w-5 h-5 mr-3 flex-shrink-0 transition-all duration-200" :class="isActiveRoute(item.path) ? 'text-yellow-400' : 'text-gray-500 group-hover:text-gray-300'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+
           <!-- Settings Icon -->
           <svg v-else-if="item.icon === 'SettingsIcon'" class="w-5 h-5 mr-3 flex-shrink-0 transition-all duration-200" :class="isActiveRoute(item.path) ? 'text-yellow-400' : 'text-gray-500 group-hover:text-gray-300'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+
+          <!-- Profile Icon -->
+          <svg v-else-if="item.icon === 'ProfileIcon'" class="w-5 h-5 mr-3 flex-shrink-0 transition-all duration-200" :class="isActiveRoute(item.path) ? 'text-yellow-400' : 'text-gray-500 group-hover:text-gray-300'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
 
           <span class="flex-1 truncate">{{ languageStore.t(item.label) }}</span>
@@ -108,7 +137,7 @@
       </div>
     </nav>
 
-    <!-- Sidebar Footer -->
+    <!-- Sidebar Footer - Fixed positioning -->
     <div class="sidebar-footer absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700 bg-gray-900">
       <button 
         @click="handleLogout" 
@@ -136,7 +165,6 @@ const languageStore = useLanguageStore()
 
 const isOpen = ref(false)
 
-// Computed properties
 const userFullName = computed(() => authStore.profile?.full_name || 'Admin User')
 const userInitials = computed(() => {
   if (!userFullName.value) return 'AU'
@@ -153,14 +181,13 @@ const userRole = computed(() => {
   return 'Staff'
 })
 
-// Check if route is active
 const isActiveRoute = (path) => {
   if (path === '/admin') return route.path === '/admin'
   return route.path.startsWith(path)
 }
 
 const menuItems = computed(() => {
-  const baseItems = [
+  const items = [
     { path: '/admin', label: 'dashboard', icon: 'DashboardIcon' },
     { path: '/admin/students', label: 'students', icon: 'StudentsIcon' },
     { path: '/admin/teachers', label: 'teachers', icon: 'TeachersIcon' },
@@ -169,26 +196,26 @@ const menuItems = computed(() => {
   ]
   
   if (authStore.isAdmin || authStore.isAccountant) {
-    baseItems.push({ path: '/admin/payments', label: 'payments', icon: 'PaymentsIcon' })
+    items.push({ path: '/admin/payments', label: 'payments', icon: 'PaymentsIcon' })
   }
   
   if (authStore.isAdmin) {
-    baseItems.push({ path: '/admin/crm', label: 'crm', icon: 'CRMIcon' })
-    baseItems.push({ path: '/admin/reports', label: 'reports', icon: 'ReportsIcon' })
+    items.push({ path: '/admin/crm', label: 'crm', icon: 'CRMIcon' })
+    items.push({ path: '/admin/reports', label: 'reports', icon: 'ReportsIcon' })
   }
   
-  // Always show Parents link for admin sidebar
-  baseItems.push({ path: '/admin/parents', label: 'parents', icon: 'ParentsIcon' })
+  items.push({ path: '/admin/parents', label: 'parents', icon: 'ParentsIcon' })
   
-  // ✅ NEW: Add Settings link for admin users
   if (authStore.isAdmin) {
-    baseItems.push({ path: '/admin/settings', label: 'settings', icon: 'SettingsIcon' })
+    items.push({ path: '/admin/exams', label: 'exams', icon: 'ExamsIcon' })
+    items.push({ path: '/admin/settings', label: 'settings', icon: 'SettingsIcon' })
   }
   
-  return baseItems
+  items.push({ path: '/admin/profile', label: 'myProfile', icon: 'ProfileIcon' })
+  
+  return items
 })
 
-// Toggle sidebar on mobile
 const toggleSidebar = () => {
   isOpen.value = !isOpen.value
 }
@@ -199,13 +226,11 @@ const closeSidebarOnMobile = () => {
   }
 }
 
-// Handle logout
 const handleLogout = async () => {
   await authStore.logout()
   router.push('/login')
 }
 
-// Handle window resize
 const handleResize = () => {
   if (window.innerWidth >= 1024) {
     isOpen.value = true
@@ -214,10 +239,8 @@ const handleResize = () => {
   }
 }
 
-// Expose toggle function for parent component
 defineExpose({ toggleSidebar })
 
-// Watch for route changes to close sidebar on mobile
 watch(() => route.path, () => {
   if (window.innerWidth < 1024) {
     isOpen.value = false
@@ -225,7 +248,6 @@ watch(() => route.path, () => {
 })
 
 onMounted(() => {
-  // Ensure sidebar is open on desktop, closed on mobile
   handleResize()
   window.addEventListener('resize', handleResize)
 })
@@ -236,7 +258,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Custom scrollbar */
 .sidebar::-webkit-scrollbar {
   width: 4px;
 }
@@ -254,14 +275,12 @@ onUnmounted(() => {
   background: #6b7280;
 }
 
-/* Smooth transitions */
 .transition-all {
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 200ms;
 }
 
-/* Active indicator animation */
 .router-link-active .w-1 {
   animation: slideIn 0.3s ease-out;
 }
@@ -277,11 +296,12 @@ onUnmounted(() => {
   }
 }
 
-/* Mobile styles - prevent flashing */
 @media (max-width: 1023px) {
   .sidebar {
+    top: 0;
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    z-index: 50;
   }
   
   .sidebar.translate-x-0 {
@@ -293,10 +313,13 @@ onUnmounted(() => {
   }
 }
 
-/* Desktop styles - always visible */
 @media (min-width: 1024px) {
   .sidebar {
     transform: translateX(0) !important;
+  }
+  
+  .sidebar-footer {
+    bottom: 0;
   }
 }
 </style>
