@@ -31,17 +31,17 @@
     </div>
 
     <!-- Main Content -->
-    <div class="lg:ml-72 flex flex-col" style="min-height: 100vh; height: 100%;">
-      <main class="flex-1 p-4 sm:p-6 lg:p-8 mt-16" style="min-height: calc(100vh - 4rem); height: 100%;">
-        <div class="max-w-7xl mx-auto" style="height: 100%;">
+    <main :class="mainContentClasses">
+      <div class="p-4 sm:p-6 lg:p-8">
+        <div class="max-w-7xl mx-auto">
           <router-view v-slot="{ Component }">
             <transition name="fade" mode="out-in">
               <component :is="Component" />
             </transition>
           </router-view>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
 
     <!-- Bottom Navigation (mobile only) -->
     <BottomNav />
@@ -49,23 +49,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useLanguageStore } from '@/stores/language'
 import AppHeader from '@/components/common/AppHeader.vue'
 import TeacherSidebar from '@/components/teacher/TeacherSidebar.vue'
 import BottomNav from '@/components/common/BottomNav.vue'
 
+const languageStore = useLanguageStore()
 const mobileMenuOpen = ref(false)
+
+const isRTL = computed(() => languageStore.isRTL)
+
+const mainContentClasses = computed(() => {
+  const classes = ['pt-16', 'pb-16', 'lg:pb-0', 'flex-1', 'transition-all', 'duration-300']
+  
+  if (isRTL.value) {
+    classes.push('lg:pr-72')
+  } else {
+    classes.push('lg:pl-72')
+  }
+  
+  return classes
+})
 
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value
-  // ✅ FIX: Don't set body overflow to hidden
-  // This was causing the scroll freeze
-  // The sidebar overlay already handles the backdrop
 }
 
 const closeMobileMenu = () => {
   mobileMenuOpen.value = false
-  // ✅ FIX: No need to reset body overflow
 }
 
 const handleResize = () => {
@@ -74,40 +86,35 @@ const handleResize = () => {
   }
 }
 
-// ✅ FIX: Force a scroll reset on mount
-const fixScroll = () => {
-  nextTick(() => {
-    const mainElement = document.querySelector('main')
-    if (mainElement) {
-      // Force browser to recalculate layout
-      mainElement.style.overflow = 'auto'
-      mainElement.style.height = '100%'
-      // Trigger reflow
-      void mainElement.offsetHeight
-    }
-  })
+// Close sidebar with Escape key
+const handleEscape = (event) => {
+  if (event.key === 'Escape' && mobileMenuOpen.value) {
+    closeMobileMenu()
+  }
 }
 
+// Lifecycle
 onMounted(() => {
   window.addEventListener('resize', handleResize)
-  // ✅ FIX: Ensure scroll works on mount
-  fixScroll()
-  
-  // ✅ FIX: Also fix scroll after a small delay (when content loads)
-  setTimeout(fixScroll, 500)
+  document.addEventListener('keydown', handleEscape)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
-  // ✅ FIX: Don't reset body overflow on unmount
+  document.removeEventListener('keydown', handleEscape)
 })
 </script>
 
 <style scoped>
+/* ============================================
+   TRANSITIONS
+   ============================================ */
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
@@ -118,55 +125,45 @@ onUnmounted(() => {
 .slide-leave-active {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .slide-enter-from {
   transform: translateX(-100%);
 }
+
 .slide-leave-to {
   transform: translateX(-100%);
 }
 
-/* ✅ FIX: Main content scroll */
+/* RTL slide */
+.rtl .slide-enter-from,
+.rtl .slide-leave-to {
+  transform: translateX(100%);
+}
+
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
+
 main {
-  overflow-y: auto;
-  overflow-x: hidden;
-  height: 100%;
-  flex: 1;
-  -webkit-overflow-scrolling: touch;
+  transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              padding-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: calc(100vh - 4rem);
 }
 
-/* Ensure content can grow */
-main :deep(.router-view-wrapper),
-main :deep(.fade-enter-active),
-main :deep(.fade-leave-active) {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
+/* ============================================
+   MOBILE ADJUSTMENTS
+   ============================================ */
 
-/* Mobile bottom nav spacing */
 @media (max-width: 1023px) {
   main {
     padding-bottom: 5rem;
   }
-  
-  .lg\:ml-72 {
-    margin-left: 0;
-  }
 }
 
-/* Desktop fixes */
-@media (min-width: 1024px) {
-  .lg\:mt-16 {
-    margin-top: 4rem;
-  }
-  
-  .lg\:ml-72 {
-    margin-left: 18rem;
-  }
-}
+/* ============================================
+   SCROLLABLE TABLES
+   ============================================ */
 
-/* Allow tables to scroll horizontally */
 main :deep(.attendance-table-container) {
   overflow: visible !important;
   max-height: none !important;
@@ -184,13 +181,10 @@ main :deep(.overflow-auto) {
   max-height: none !important;
 }
 
-/* ✅ FIX: Prevent body overflow manipulation */
-body {
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-}
+/* ============================================
+   MOBILE TABLE FIXES
+   ============================================ */
 
-/* Ensure radio buttons and controls are accessible on mobile */
 @media (max-width: 640px) {
   main :deep(.attendance-table) {
     min-width: 600px !important;
