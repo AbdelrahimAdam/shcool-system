@@ -122,7 +122,7 @@
             </div>
           </div>
 
-          <!-- Preview Section -->
+          <!-- Preview Section - NO HARDCODED FALLBACKS -->
           <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <h4 class="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,11 +132,26 @@
               {{ languageStore.t('parentViewPreview') }}
             </h4>
             <div class="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-              <p><span class="font-medium">{{ languageStore.t('accountNumber') }}:</span> <span class="font-mono">{{ form.bankak_account_number || '1234567890' }}</span></p>
-              <p><span class="font-medium">{{ languageStore.t('accountName') }}:</span> {{ form.bankak_account_name || 'مدارس زاك العالمية' }}</p>
-              <p><span class="font-medium">{{ languageStore.t('phone') }}:</span> {{ form.bankak_phone || '+249123456789' }}</p>
-              <p><span class="font-medium">{{ languageStore.t('reference') }}:</span> <span class="font-mono">{{ form.bankak_reference_prefix || 'ZACK' }}-2024</span></p>
+              <p>
+                <span class="font-medium">{{ languageStore.t('accountNumber') }}:</span> 
+                <span class="font-mono">{{ form.bankak_account_number || '❌ Not set' }}</span>
+              </p>
+              <p>
+                <span class="font-medium">{{ languageStore.t('accountName') }}:</span> 
+                {{ form.bankak_account_name || '❌ Not set' }}
+              </p>
+              <p>
+                <span class="font-medium">{{ languageStore.t('phone') }}:</span> 
+                {{ form.bankak_phone || '❌ Not set' }}
+              </p>
+              <p>
+                <span class="font-medium">{{ languageStore.t('reference') }}:</span> 
+                <span class="font-mono">{{ form.bankak_reference_prefix ? form.bankak_reference_prefix + '-2024' : '❌ Not set' }}</span>
+              </p>
             </div>
+            <p v-if="!form.bankak_account_number || !form.bankak_account_name || !form.bankak_phone" class="text-xs text-amber-600 dark:text-amber-400 mt-2">
+              ⚠️ {{ languageStore.t('fillRequiredFieldsToEnableBankak') }}
+            </p>
           </div>
         </div>
 
@@ -202,6 +217,14 @@ const loadSchoolSettings = async () => {
 
     if (error) throw error
 
+    // 🔍 Debug log
+    console.log('📊 School Bankak Settings:', {
+      accountNumber: data?.bankak_account_number,
+      accountName: data?.bankak_account_name,
+      phone: data?.bankak_phone,
+      prefix: data?.bankak_reference_prefix
+    })
+
     schoolData.value = data || {}
     
     form.value = {
@@ -230,15 +253,19 @@ const saveSettings = async () => {
   try {
     const schoolId = authStore.profile?.school_id || authStore.schoolId
     
+    const updateData = {
+      bankak_account_number: form.value.bankak_account_number.trim(),
+      bankak_account_name: form.value.bankak_account_name.trim(),
+      bankak_phone: form.value.bankak_phone.trim(),
+      bankak_reference_prefix: form.value.bankak_reference_prefix?.trim() || 'ZACK',
+      updated_at: new Date().toISOString()
+    }
+
+    console.log('💾 Saving Bankak settings:', updateData)
+    
     const { error } = await supabase
       .from('schools')
-      .update({
-        bankak_account_number: form.value.bankak_account_number,
-        bankak_account_name: form.value.bankak_account_name,
-        bankak_phone: form.value.bankak_phone,
-        bankak_reference_prefix: form.value.bankak_reference_prefix || 'ZACK',
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', schoolId)
 
     if (error) throw error
@@ -247,6 +274,9 @@ const saveSettings = async () => {
     setTimeout(() => { showSuccess.value = false }, 3000)
     
     await loadSchoolSettings()
+    
+    // Show confirmation with the saved data
+    alert(`✅ Bankak settings saved successfully!\n\nAccount: ${form.value.bankak_account_number}\nName: ${form.value.bankak_account_name}\nPhone: ${form.value.bankak_phone}`)
   } catch (error) {
     console.error('Error saving settings:', error)
     alert(error.message || languageStore.t('errorSavingSettings'))
