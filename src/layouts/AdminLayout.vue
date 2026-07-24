@@ -184,9 +184,8 @@
             <span class="flex-1 truncate">{{ languageStore.t('parents') }}</span>
           </router-link>
 
-          <!-- ✅ NEW: Settings Link (Admin only) -->
+          <!-- Settings Link -->
           <router-link
-            v-if="authStore.isAdmin"
             to="/admin/settings"
             @click="closeMobileMenu"
             class="flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group"
