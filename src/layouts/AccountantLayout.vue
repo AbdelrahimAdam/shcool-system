@@ -3,10 +3,34 @@
     <!-- Header -->
     <AppHeader @toggle-sidebar="toggleMobileMenu" />
 
-    <!-- Sidebar Component - handles its own overlay and responsive behavior -->
-    <AccountantSidebar ref="sidebarRef" />
+    <!-- Mobile Sidebar Overlay -->
+    <transition name="fade">
+      <div 
+        v-if="mobileMenuOpen" 
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
+        @click="closeMobileMenu"
+      ></div>
+    </transition>
 
-    <!-- Main Content - adjusts based on RTL/LTR -->
+    <!-- Mobile Sidebar -->
+    <transition name="slide">
+      <AccountantSidebar 
+        v-if="mobileMenuOpen"
+        :is-open="mobileMenuOpen"
+        @close="closeMobileMenu"
+        class="fixed top-0 left-0 z-50 lg:hidden"
+      />
+    </transition>
+
+    <!-- Desktop Sidebar - Always visible -->
+    <div class="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:mt-16">
+      <AccountantSidebar 
+        :is-open="true"
+        class="relative h-full"
+      />
+    </div>
+
+    <!-- Main Content -->
     <main :class="mainContentClasses">
       <div class="p-4 sm:p-6 lg:p-8">
         <div class="max-w-7xl mx-auto">
@@ -19,21 +43,28 @@
       </div>
     </main>
 
-    <!-- Bottom Navigation -->
+    <!-- Bottom Navigation (mobile only) -->
     <BottomNav />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useLanguageStore } from '@/stores/language'
 import AppHeader from '@/components/common/AppHeader.vue'
 import AccountantSidebar from '@/components/accountant/AccountantSidebar.vue'
 import BottomNav from '@/components/common/BottomNav.vue'
 
+const router = useRouter()
+const route = useRoute()
 const languageStore = useLanguageStore()
-const sidebarRef = ref(null)
 
+// State
+const mobileMenuOpen = ref(false)
+const isMobile = ref(window.innerWidth < 1024)
+
+// Computed
 const isRTL = computed(() => languageStore.isRTL)
 
 const mainContentClasses = computed(() => {
@@ -48,26 +79,52 @@ const mainContentClasses = computed(() => {
   return classes
 })
 
+// Methods
 const toggleMobileMenu = () => {
-  if (sidebarRef.value) {
-    sidebarRef.value.toggleSidebar()
+  mobileMenuOpen.value = !mobileMenuOpen.value
+}
+
+const closeMobileMenu = () => {
+  mobileMenuOpen.value = false
+}
+
+const handleResize = () => {
+  const newIsMobile = window.innerWidth < 1024
+  isMobile.value = newIsMobile
+  
+  if (!newIsMobile && mobileMenuOpen.value) {
+    closeMobileMenu()
   }
 }
 
-// Close sidebar on escape key
-const handleEscape = (event) => {
-  if (event.key === 'Escape' && sidebarRef.value?.isMobile) {
-    sidebarRef.value.closeSidebar()
+// Watch for route changes to close mobile menu
+watch(() => route.path, () => {
+  if (mobileMenuOpen.value) {
+    closeMobileMenu()
   }
-}
+})
 
 // Lifecycle
 onMounted(() => {
+  // Set initial state
+  handleResize()
+  
+  // Add event listeners
+  window.addEventListener('resize', handleResize)
+  
+  // Close sidebar on escape key
+  const handleEscape = (event) => {
+    if (event.key === 'Escape' && mobileMenuOpen.value) {
+      closeMobileMenu()
+    }
+  }
   document.addEventListener('keydown', handleEscape)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleEscape)
+  
+  // Clean up on unmount
+  onUnmounted(() => {
+    window.removeEventListener('resize', handleResize)
+    document.removeEventListener('keydown', handleEscape)
+  })
 })
 </script>
 
@@ -84,6 +141,26 @@ onUnmounted(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* Slide transition for mobile sidebar */
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-enter-from {
+  transform: translateX(-100%);
+}
+
+.slide-leave-to {
+  transform: translateX(-100%);
+}
+
+/* RTL slide */
+.rtl .slide-enter-from,
+.rtl .slide-leave-to {
+  transform: translateX(100%);
 }
 
 /* ============================================
@@ -203,11 +280,6 @@ main :deep(.btn-primary:hover) {
   background-color: #2563eb;
 }
 
-main :deep(.btn-primary:focus-visible) {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
 /* Link hover effects */
 main :deep(a:not(.no-hover)) {
   color: #3b82f6;
@@ -234,43 +306,6 @@ main :deep(.badge-warning) {
   color: #92400e;
 }
 
-main :deep(.badge-danger) {
-  background-color: #fecaca;
-  color: #991b1b;
-}
-
-/* Input focus states */
-main :deep(input:focus),
-main :deep(select:focus),
-main :deep(textarea:focus) {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Table header styling */
-main :deep(table thead th) {
-  background-color: #f1f5f9;
-  color: #1e293b;
-  font-weight: 600;
-}
-
-main :deep(.dark table thead th) {
-  background-color: #1e293b;
-  color: #e2e8f0;
-}
-
-/* Progress bars */
-main :deep(.progress-bar) {
-  background-color: #e2e8f0;
-  border-radius: 9999px;
-  overflow: hidden;
-}
-
-main :deep(.progress-bar .progress-fill) {
-  background: linear-gradient(to right, #3b82f6, #60a5fa);
-  transition: width 0.5s ease;
-}
-
 /* Dark mode overrides for better contrast */
 @media (prefers-color-scheme: dark) {
   main :deep(.card) {
@@ -295,22 +330,6 @@ main :deep(.progress-bar .progress-fill) {
   main :deep(.badge-warning) {
     background-color: #78350f;
     color: #fcd34d;
-  }
-  
-  main :deep(.badge-danger) {
-    background-color: #7f1d1d;
-    color: #fca5a5;
-  }
-  
-  main :deep(input:focus),
-  main :deep(select:focus),
-  main :deep(textarea:focus) {
-    border-color: #60a5fa;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
-  }
-  
-  main :deep(.progress-bar) {
-    background-color: #374151;
   }
 }
 </style>
