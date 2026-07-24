@@ -201,6 +201,12 @@ const routes = [
                 name: 'EditExam',
                 component: () => import('../modules/admin/Exams/ExamForm.vue')
             },
+            // ✅ NEW: School Settings Route
+            {
+                path: 'settings',
+                name: 'SchoolSettings',
+                component: () => import('../modules/admin/Settings/SchoolSettings.vue')
+            },
             {
                 path: 'profile',
                 name: 'AdminProfile',
