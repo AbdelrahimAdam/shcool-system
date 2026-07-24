@@ -11,7 +11,8 @@ export const usePaymentStore = defineStore('payment', {
         isLoading: false,
         pendingApprovals: 0,
         totalRevenue: 0,
-        parentRequests: 0
+        parentRequests: 0,
+        schoolBankakDetails: null // New state for school Bankak details
     }),
 
     actions: {
@@ -57,6 +58,89 @@ export const usePaymentStore = defineStore('payment', {
             const randomPart = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
             return `REQ-${datePart}-${randomPart}`
         },
+
+        // ============================================
+        // NEW: Bankak Details Methods
+        // ============================================
+
+        // Get school Bankak details
+        async getSchoolBankakDetails() {
+            const authStore = useAuthStore()
+            const schoolId = authStore.profile?.school_id || authStore.schoolId
+
+            if (!schoolId) {
+                console.log('❌ No school ID found for Bankak details')
+                this.schoolBankakDetails = null
+                return null
+            }
+
+            try {
+                console.log('🔍 Fetching Bankak details for school:', schoolId)
+
+                const { data, error } = await supabase
+                    .from('schools')
+                    .select('bankak_account_number, bankak_account_name, bankak_phone, bankak_reference_prefix')
+                    .eq('id', schoolId)
+                    .single()
+
+                if (error) {
+                    console.error('❌ Error fetching Bankak details:', error)
+                    this.schoolBankakDetails = null
+                    return null
+                }
+
+                console.log('📊 Bankak details from DB:', data)
+
+                if (data && data.bankak_account_number && data.bankak_account_name) {
+                    this.schoolBankakDetails = {
+                        accountNumber: data.bankak_account_number,
+                        accountName: data.bankak_account_name,
+                        phone: data.bankak_phone || '',
+                        reference: data.bankak_reference_prefix 
+                            ? `${data.bankak_reference_prefix}-${new Date().getFullYear()}`
+                            : '',
+                        isConfigured: true
+                    }
+                } else {
+                    this.schoolBankakDetails = {
+                        isConfigured: false,
+                        accountNumber: null,
+                        accountName: null,
+                        phone: null,
+                        reference: null
+                    }
+                }
+
+                return this.schoolBankakDetails
+            } catch (error) {
+                console.error('❌ Error in getSchoolBankakDetails:', error)
+                this.schoolBankakDetails = null
+                return null
+            }
+        },
+
+        // Check if school has Bankak details configured
+        async hasBankakDetails() {
+            const details = await this.getSchoolBankakDetails()
+            return details?.isConfigured === true
+        },
+
+        // Get Bankak details from cache or fetch fresh
+        async getBankakDetailsCached() {
+            if (this.schoolBankakDetails) {
+                return this.schoolBankakDetails
+            }
+            return await this.getSchoolBankakDetails()
+        },
+
+        // Clear cached Bankak details
+        clearBankakCache() {
+            this.schoolBankakDetails = null
+        },
+
+        // ============================================
+        // End of Bankak Details Methods
+        // ============================================
 
         async fetchPayments(page = 1, filters = {}) {
             this.isLoading = true
@@ -105,10 +189,10 @@ export const usePaymentStore = defineStore('payment', {
             }
         },
 
-        // NEW: Get parent-initiated payment requests
+        // Get parent-initiated payment requests
         async getParentPaymentRequests() {
             const authStore = useAuthStore()
-            
+
             try {
                 const { data, error } = await supabase
                     .from('payments')
@@ -117,9 +201,9 @@ export const usePaymentStore = defineStore('payment', {
                     .eq('status', 'pending')
                     .not('created_by', 'is', null)
                     .order('created_at', { ascending: false })
-                
+
                 if (error) throw error
-                
+
                 this.parentRequests = data?.length || 0
                 return { success: true, data }
             } catch (error) {
@@ -128,10 +212,10 @@ export const usePaymentStore = defineStore('payment', {
             }
         },
 
-        // NEW: Mark payment as received by admin
+        // Mark payment as received by admin
         async markPaymentAsReceived(paymentId) {
             const authStore = useAuthStore()
-            
+
             try {
                 const { data, error } = await supabase
                     .from('payments')
@@ -144,9 +228,9 @@ export const usePaymentStore = defineStore('payment', {
                     .eq('id', paymentId)
                     .select()
                     .single()
-                
+
                 if (error) throw error
-                
+
                 cacheService.clear()
                 return { success: true, data }
             } catch (error) {
@@ -155,12 +239,21 @@ export const usePaymentStore = defineStore('payment', {
             }
         },
 
-        // NEW: Create payment request from parent
+        // Create payment request from parent
         async createParentPaymentRequest(paymentData) {
             this.isLoading = true
             try {
                 const authStore = useAuthStore()
-                
+
+                // First, check if Bankak details exist
+                const hasBankak = await this.hasBankakDetails()
+                if (!hasBankak) {
+                    return { 
+                        success: false, 
+                        error: 'Bankak details are not configured. Please contact the school administration.' 
+                    }
+                }
+
                 // Generate payment number
                 const paymentNumber = this.generatePaymentRequestNumber()
 
@@ -169,7 +262,7 @@ export const usePaymentStore = defineStore('payment', {
                     student_id: paymentData.student_id,
                     amount: parseFloat(paymentData.amount),
                     payment_type: paymentData.payment_type || 'tuition',
-                    payment_method: paymentData.payment_method || 'cash',
+                    payment_method: paymentData.payment_method || 'bankak',
                     due_date: new Date().toISOString().split('T')[0],
                     bankak_number: paymentData.bankak_number || null,
                     notes: paymentData.notes || `Payment requested by parent ${authStore.user?.email}`,
@@ -179,19 +272,28 @@ export const usePaymentStore = defineStore('payment', {
                     status: 'pending'
                 }
 
+                console.log('📝 Creating parent payment request:', insertData)
+
                 const { data, error } = await supabase
                     .from('payments')
                     .insert([insertData])
                     .select()
                     .single()
 
-                if (error) throw error
+                if (error) {
+                    console.error('❌ Supabase error:', error)
+                    throw error
+                }
+
+                console.log('✅ Payment request created successfully:', data)
 
                 cacheService.clear()
+                // Add to local state
+                this.payments.unshift(data)
 
                 return { success: true, data }
             } catch (error) {
-                console.error('Create parent payment request error:', error)
+                console.error('❌ Create parent payment request error:', error)
                 return { success: false, error: error.message }
             } finally {
                 this.isLoading = false
@@ -273,6 +375,8 @@ export const usePaymentStore = defineStore('payment', {
                 if (error) throw error
 
                 cacheService.clear()
+                // Add to local state
+                this.payments.unshift(data)
 
                 return { success: true, data }
             } catch (error) {
@@ -384,18 +488,18 @@ export const usePaymentStore = defineStore('payment', {
             }
         },
 
-        // NEW: Get comprehensive payment statistics
+        // Get comprehensive payment statistics
         async getPaymentStats() {
             const authStore = useAuthStore()
-            
+
             try {
                 const { data, error } = await supabase
                     .from('payments')
                     .select('status, amount, payment_method, created_by')
                     .eq('school_id', authStore.profile?.school_id)
-                
+
                 if (error) throw error
-                
+
                 const total = data?.length || 0
                 const pending = data?.filter(p => p.status === 'pending').length || 0
                 const approved = data?.filter(p => p.status === 'approved').length || 0
@@ -403,11 +507,11 @@ export const usePaymentStore = defineStore('payment', {
                 const processing = data?.filter(p => p.status === 'processing').length || 0
                 const parentRequests = data?.filter(p => p.created_by && p.status === 'pending').length || 0
                 const totalRevenue = data?.filter(p => p.status === 'approved').reduce((sum, p) => sum + (p.amount || 0), 0) || 0
-                
+
                 this.pendingApprovals = pending
                 this.parentRequests = parentRequests
                 this.totalRevenue = totalRevenue
-                
+
                 return {
                     total,
                     pending,
@@ -460,10 +564,10 @@ export const usePaymentStore = defineStore('payment', {
             }
         },
 
-        // NEW: Get payments for a specific student
+        // Get payments for a specific student
         async getStudentPayments(studentId) {
             const authStore = useAuthStore()
-            
+
             try {
                 const { data, error } = await supabase
                     .from('payments')
@@ -471,9 +575,9 @@ export const usePaymentStore = defineStore('payment', {
                     .eq('school_id', authStore.profile?.school_id)
                     .eq('student_id', studentId)
                     .order('created_at', { ascending: false })
-                
+
                 if (error) throw error
-                
+
                 return { success: true, data }
             } catch (error) {
                 console.error('Get student payments error:', error)
@@ -481,15 +585,15 @@ export const usePaymentStore = defineStore('payment', {
             }
         },
 
-        // NEW: Get payment summary for a student
+        // Get payment summary for a student
         async getStudentPaymentSummary(studentId) {
             const result = await this.getStudentPayments(studentId)
             if (!result.success) return result
-            
+
             const payments = result.data || []
             const totalPaid = payments.filter(p => p.status === 'approved').reduce((sum, p) => sum + (p.amount || 0), 0)
             const pendingAmount = payments.filter(p => p.status === 'pending').reduce((sum, p) => sum + (p.amount || 0), 0)
-            
+
             return {
                 success: true,
                 totalPaid,
