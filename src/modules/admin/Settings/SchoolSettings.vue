@@ -17,6 +17,19 @@
 
     <div v-else class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       <form @submit.prevent="saveSettings" class="p-4 sm:p-6 space-y-6">
+        <!-- Debug Info -->
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
+          <h4 class="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">🔍 Debug Info</h4>
+          <div class="text-xs font-mono space-y-1">
+            <p><span class="text-gray-500">School ID:</span> <span class="text-gray-900 dark:text-white">{{ schoolId }}</span></p>
+            <p><span class="text-gray-500">School Name:</span> <span class="text-gray-900 dark:text-white">{{ schoolData.name || 'Not loaded' }}</span></p>
+            <p><span class="text-gray-500">Account Number (Form):</span> <span class="text-blue-600 dark:text-blue-400">{{ form.bankak_account_number || 'EMPTY' }}</span></p>
+            <p><span class="text-gray-500">Account Name (Form):</span> <span class="text-blue-600 dark:text-blue-400">{{ form.bankak_account_name || 'EMPTY' }}</span></p>
+            <p><span class="text-gray-500">Phone (Form):</span> <span class="text-blue-600 dark:text-blue-400">{{ form.bankak_phone || 'EMPTY' }}</span></p>
+            <p><span class="text-gray-500">Prefix (Form):</span> <span class="text-blue-600 dark:text-blue-400">{{ form.bankak_reference_prefix || 'EMPTY' }}</span></p>
+          </div>
+        </div>
+
         <!-- School Information -->
         <div>
           <h2 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-3">
@@ -122,7 +135,7 @@
             </div>
           </div>
 
-          <!-- Preview Section - NO HARDCODED FALLBACKS -->
+          <!-- Preview Section -->
           <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <h4 class="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,18 +192,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/services/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
+import { usePaymentStore } from '@/stores/payment'
 
 const authStore = useAuthStore()
 const languageStore = useLanguageStore()
+const paymentStore = usePaymentStore()
 
 const isLoading = ref(true)
 const isSaving = ref(false)
 const showSuccess = ref(false)
 const schoolData = ref({})
+
+const schoolId = computed(() => authStore.profile?.school_id || authStore.schoolId)
 
 const form = ref({
   bankak_account_number: '',
@@ -200,25 +217,24 @@ const form = ref({
 })
 
 const loadSchoolSettings = async () => {
-  const schoolId = authStore.profile?.school_id || authStore.schoolId
-  
-  if (!schoolId) {
+  if (!schoolId.value) {
     alert(languageStore.t('noSchoolFound'))
     isLoading.value = false
     return
   }
 
   try {
+    console.log('🔍 Loading school settings for ID:', schoolId.value)
+    
     const { data, error } = await supabase
       .from('schools')
       .select('id, name, slug, bankak_account_number, bankak_account_name, bankak_phone, bankak_reference_prefix')
-      .eq('id', schoolId)
+      .eq('id', schoolId.value)
       .single()
 
     if (error) throw error
 
-    // 🔍 Debug log
-    console.log('📊 School Bankak Settings:', {
+    console.log('📊 School data from DB:', {
       accountNumber: data?.bankak_account_number,
       accountName: data?.bankak_account_name,
       phone: data?.bankak_phone,
@@ -233,8 +249,13 @@ const loadSchoolSettings = async () => {
       bankak_phone: data?.bankak_phone || '',
       bankak_reference_prefix: data?.bankak_reference_prefix || 'ZACK'
     }
+    
+    // Clear the payment store cache so it fetches fresh data
+    paymentStore.clearBankakCache()
+    
+    console.log('✅ Form values set:', form.value)
   } catch (error) {
-    console.error('Error loading school settings:', error)
+    console.error('❌ Error loading school settings:', error)
     alert(error.message || languageStore.t('errorLoadingSettings'))
   } finally {
     isLoading.value = false
@@ -244,15 +265,13 @@ const loadSchoolSettings = async () => {
 const saveSettings = async () => {
   // Validate required fields
   if (!form.value.bankak_account_number || !form.value.bankak_account_name || !form.value.bankak_phone) {
-    alert(languageStore.t('pleaseFillRequiredFields'))
+    alert('⚠️ Please fill in all required fields:\n- Bankak Account Number\n- Bankak Account Name\n- Bankak Phone')
     return
   }
 
   isSaving.value = true
 
   try {
-    const schoolId = authStore.profile?.school_id || authStore.schoolId
-    
     const updateData = {
       bankak_account_number: form.value.bankak_account_number.trim(),
       bankak_account_name: form.value.bankak_account_name.trim(),
@@ -262,24 +281,36 @@ const saveSettings = async () => {
     }
 
     console.log('💾 Saving Bankak settings:', updateData)
+    console.log('🏫 School ID:', schoolId.value)
     
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('schools')
       .update(updateData)
-      .eq('id', schoolId)
+      .eq('id', schoolId.value)
+      .select()
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ Supabase error:', error)
+      throw error
+    }
 
+    console.log('✅ Settings saved successfully! Response:', data)
+
+    // Reload the data to confirm it was saved
+    await loadSchoolSettings()
+    
+    // Clear the payment store cache so parents get fresh data
+    paymentStore.clearBankakCache()
+    
     showSuccess.value = true
     setTimeout(() => { showSuccess.value = false }, 3000)
     
-    await loadSchoolSettings()
+    // Show success with the saved data
+    alert(`✅ Bankak settings saved successfully!\n\nAccount: ${form.value.bankak_account_number}\nName: ${form.value.bankak_account_name}\nPhone: ${form.value.bankak_phone}\n\nParents will now see these details when making payments.`)
     
-    // Show confirmation with the saved data
-    alert(`✅ Bankak settings saved successfully!\n\nAccount: ${form.value.bankak_account_number}\nName: ${form.value.bankak_account_name}\nPhone: ${form.value.bankak_phone}`)
   } catch (error) {
-    console.error('Error saving settings:', error)
-    alert(error.message || languageStore.t('errorSavingSettings'))
+    console.error('❌ Error saving settings:', error)
+    alert(`❌ Error saving settings: ${error.message || 'Unknown error'}\n\nPlease check the console for details.`)
   } finally {
     isSaving.value = false
   }
