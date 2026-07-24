@@ -100,159 +100,23 @@
       ></div>
     </transition>
 
-    <!-- Sidebar - Fixed with proper mobile/desktop behavior -->
-    <aside 
-      class="sidebar fixed top-0 lg:top-16 w-72 bg-gray-900 dark:bg-gray-950 shadow-2xl border-r border-gray-800 dark:border-gray-700 z-50 lg:z-20 overflow-hidden flex flex-col transition-transform duration-300 ease-in-out"
-      :class="[
-        mobileMenuOpen ? 'sidebar-open' : 'sidebar-closed',
-        isRTL ? 'rtl-sidebar' : 'ltr-sidebar'
-      ]"
-    >
-      <!-- Close button for mobile -->
-      <button 
-        @click="closeMobileMenu"
-        class="lg:hidden absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-700/50 transition-colors z-20"
-        aria-label="Close menu"
-      >
-        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
+    <!-- Mobile Sidebar -->
+    <transition name="slide">
+      <SuperAdminSidebar 
+        v-if="mobileMenuOpen"
+        :is-open="mobileMenuOpen"
+        @close="closeMobileMenu"
+        class="fixed top-0 left-0 z-50 lg:hidden"
+      />
+    </transition>
 
-      <!-- Sidebar Header -->
-      <div class="flex-shrink-0 p-5 border-b border-gray-800 dark:border-gray-700 bg-gray-900 dark:bg-gray-950">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-          </div>
-          <div class="min-w-0 flex-1">
-            <span class="font-bold text-white text-lg truncate block">Super Admin</span>
-            <p class="text-xs text-gray-400 mt-0.5 truncate">{{ languageStore.t('managementPortal') }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- User Profile Section -->
-      <div class="flex-shrink-0 p-5 border-b border-gray-800 dark:border-gray-700">
-        <div class="flex items-center gap-3">
-          <div class="relative flex-shrink-0">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 flex items-center justify-center border-2 border-yellow-500/30">
-              <span class="text-base font-bold text-yellow-400">{{ userInitials }}</span>
-            </div>
-            <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-800"></div>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-white truncate">{{ userFullName }}</p>
-            <p class="text-xs text-gray-400 truncate">Super Admin</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Navigation - Scrollable -->
-      <nav class="flex-1 overflow-y-auto py-6 px-4">
-        <div class="space-y-1.5">
-          <router-link
-            to="/super-admin"
-            @click="closeMobileMenu"
-            class="flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group"
-            :class="[
-              isActiveRoute('/super-admin')
-                ? 'bg-yellow-500/15 text-yellow-400 shadow-sm'
-                : 'text-gray-400 dark:text-gray-500 hover:bg-gray-800/50 dark:hover:bg-gray-800/30 hover:text-gray-200 dark:hover:text-gray-300'
-            ]"
-          >
-            <svg class="w-5 h-5 flex-shrink-0" :class="[isActiveRoute('/super-admin') ? 'text-yellow-400' : 'text-gray-500 dark:text-gray-600 group-hover:text-gray-300', isRTL ? 'ml-3' : 'mr-3']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            <span class="flex-1">{{ languageStore.t('dashboard') }}</span>
-            <div v-if="isActiveRoute('/super-admin')" class="w-1 h-8 bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-full"></div>
-          </router-link>
-
-          <router-link
-            to="/super-admin/schools"
-            @click="closeMobileMenu"
-            class="flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group"
-            :class="[
-              isActiveRoute('/super-admin/schools')
-                ? 'bg-yellow-500/15 text-yellow-400 shadow-sm'
-                : 'text-gray-400 dark:text-gray-500 hover:bg-gray-800/50 dark:hover:bg-gray-800/30 hover:text-gray-200 dark:hover:text-gray-300'
-            ]"
-          >
-            <svg class="w-5 h-5 flex-shrink-0" :class="[isActiveRoute('/super-admin/schools') ? 'text-yellow-400' : 'text-gray-500 dark:text-gray-600 group-hover:text-gray-300', isRTL ? 'ml-3' : 'mr-3']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-            </svg>
-            <span class="flex-1">{{ languageStore.t('schools') }}</span>
-            <div v-if="isActiveRoute('/super-admin/schools')" class="w-1 h-8 bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-full"></div>
-          </router-link>
-
-          <router-link
-            to="/super-admin/users"
-            @click="closeMobileMenu"
-            class="flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group"
-            :class="[
-              isActiveRoute('/super-admin/users')
-                ? 'bg-yellow-500/15 text-yellow-400 shadow-sm'
-                : 'text-gray-400 dark:text-gray-500 hover:bg-gray-800/50 dark:hover:bg-gray-800/30 hover:text-gray-200 dark:hover:text-gray-300'
-            ]"
-          >
-            <svg class="w-5 h-5 flex-shrink-0" :class="[isActiveRoute('/super-admin/users') ? 'text-yellow-400' : 'text-gray-500 dark:text-gray-600 group-hover:text-gray-300', isRTL ? 'ml-3' : 'mr-3']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <span class="flex-1">{{ languageStore.t('userManagement') }}</span>
-            <div v-if="isActiveRoute('/super-admin/users')" class="w-1 h-8 bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-full"></div>
-          </router-link>
-
-          <router-link
-            to="/super-admin/analytics"
-            @click="closeMobileMenu"
-            class="flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group"
-            :class="[
-              isActiveRoute('/super-admin/analytics')
-                ? 'bg-yellow-500/15 text-yellow-400 shadow-sm'
-                : 'text-gray-400 dark:text-gray-500 hover:bg-gray-800/50 dark:hover:bg-gray-800/30 hover:text-gray-200 dark:hover:text-gray-300'
-            ]"
-          >
-            <svg class="w-5 h-5 flex-shrink-0" :class="[isActiveRoute('/super-admin/analytics') ? 'text-yellow-400' : 'text-gray-500 dark:text-gray-600 group-hover:text-gray-300', isRTL ? 'ml-3' : 'mr-3']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            <span class="flex-1">{{ languageStore.t('analytics') }}</span>
-            <div v-if="isActiveRoute('/super-admin/analytics')" class="w-1 h-8 bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-full"></div>
-          </router-link>
-
-          <router-link
-            to="/super-admin/profile"
-            @click="closeMobileMenu"
-            class="flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group"
-            :class="[
-              isActiveRoute('/super-admin/profile')
-                ? 'bg-yellow-500/15 text-yellow-400 shadow-sm'
-                : 'text-gray-400 dark:text-gray-500 hover:bg-gray-800/50 dark:hover:bg-gray-800/30 hover:text-gray-200 dark:hover:text-gray-300'
-            ]"
-          >
-            <svg class="w-5 h-5 flex-shrink-0" :class="[isActiveRoute('/super-admin/profile') ? 'text-yellow-400' : 'text-gray-500 dark:text-gray-600 group-hover:text-gray-300', isRTL ? 'ml-3' : 'mr-3']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <span class="flex-1">{{ languageStore.t('myProfile') }}</span>
-            <div v-if="isActiveRoute('/super-admin/profile')" class="w-1 h-8 bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-full"></div>
-          </router-link>
-        </div>
-      </nav>
-
-      <!-- Sidebar Footer -->
-      <div class="flex-shrink-0 p-4 border-t border-gray-800 dark:border-gray-700 bg-gray-900 dark:bg-gray-950">
-        <button 
-          @click="handleLogout" 
-          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 text-gray-400 hover:bg-red-500/10 hover:text-red-400 group"
-        >
-          <svg class="w-5 h-5 transition-colors group-hover:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          <span class="truncate">{{ languageStore.t('logout') }}</span>
-        </button>
-      </div>
-    </aside>
+    <!-- Desktop Sidebar - Always visible -->
+    <div class="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:mt-16">
+      <SuperAdminSidebar 
+        :is-open="true"
+        class="relative h-full"
+      />
+    </div>
 
     <!-- Main Content -->
     <main :class="mainContentClasses">
@@ -273,10 +137,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
+import SuperAdminSidebar from '@/components/super-admin/SuperAdminSidebar.vue'
 import BottomNav from '@/components/common/BottomNav.vue'
 
 const router = useRouter()
@@ -312,11 +177,6 @@ const mainContentClasses = computed(() => {
   return classes
 })
 
-const isActiveRoute = (path) => {
-  if (path === '/super-admin') return route.path === '/super-admin'
-  return route.path.startsWith(path)
-}
-
 // Methods
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value
@@ -337,6 +197,7 @@ const toggleLanguage = () => {
 
 const handleLogout = async () => {
   closeMobileMenu()
+  showUserMenu.value = false
   await authStore.logout()
   router.push('/login')
 }
@@ -356,13 +217,25 @@ const handleClickOutside = (event) => {
   }
 }
 
-// Watch route changes to close mobile menu
+// Watch for route changes to close mobile menu
 watch(() => route.path, () => {
-  closeMobileMenu()
+  if (mobileMenuOpen.value) {
+    closeMobileMenu()
+  }
+})
+
+// Watch for language changes to update RTL
+watch(() => languageStore.isRTL, () => {
+  // Force re-render if needed
+  nextTick()
 })
 
 // Lifecycle
 onMounted(() => {
+  // Set initial state
+  handleResize()
+  
+  // Add event listeners
   window.addEventListener('resize', handleResize)
   document.addEventListener('click', handleClickOutside)
   
@@ -374,7 +247,7 @@ onMounted(() => {
   }
   document.addEventListener('keydown', handleEscape)
   
-  // Clean up
+  // Clean up on unmount
   onUnmounted(() => {
     window.removeEventListener('resize', handleResize)
     document.removeEventListener('click', handleClickOutside)
@@ -384,118 +257,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* ============================================
-   SIDEBAR POSITIONING & VISIBILITY
-   ============================================ */
-
-.sidebar {
-  position: fixed;
-  top: 0;
-  width: 288px; /* w-72 */
-  height: 100vh;
-  height: 100dvh;
-  z-index: 50;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
-}
-
-/* LTR - Left side */
-.sidebar.ltr-sidebar {
-  left: 0;
-  right: auto;
-}
-
-/* RTL - Right side */
-.sidebar.rtl-sidebar {
-  left: auto;
-  right: 0;
-}
-
-/* ============================================
-   MOBILE STYLES (default: hidden)
-   ============================================ */
-
-@media (max-width: 1023px) {
-  /* LTR - Hidden off-screen to the left */
-  .sidebar.ltr-sidebar {
-    transform: translateX(-100%);
-  }
-  
-  /* RTL - Hidden off-screen to the right */
-  .sidebar.rtl-sidebar {
-    transform: translateX(100%);
-  }
-  
-  /* Open state - slide in from correct side */
-  .sidebar.ltr-sidebar.sidebar-open {
-    transform: translateX(0);
-  }
-  
-  .sidebar.rtl-sidebar.sidebar-open {
-    transform: translateX(0);
-  }
-  
-  /* Closed state - ensure hidden */
-  .sidebar.ltr-sidebar.sidebar-closed {
-    transform: translateX(-100%);
-  }
-  
-  .sidebar.rtl-sidebar.sidebar-closed {
-    transform: translateX(100%);
-  }
-}
-
-/* ============================================
-   DESKTOP STYLES (always visible)
-   ============================================ */
-
-@media (min-width: 1024px) {
-  .sidebar {
-    top: 4rem !important;
-    z-index: 20 !important;
-    height: calc(100vh - 4rem) !important;
-    height: calc(100dvh - 4rem) !important;
-    transition: none !important;
-  }
-  
-  .sidebar.ltr-sidebar {
-    transform: translateX(0) !important;
-    left: 0;
-  }
-  
-  .sidebar.rtl-sidebar {
-    transform: translateX(0) !important;
-    right: 0;
-  }
-  
-  /* Override any open/closed states on desktop */
-  .sidebar.sidebar-open,
-  .sidebar.sidebar-closed {
-    transform: translateX(0) !important;
-  }
-}
-
-/* ============================================
-   SCROLLBAR STYLING
-   ============================================ */
-
-.sidebar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-  background: #1f2937;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background: #4b5563;
-  border-radius: 4px;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
-}
-
 /* ============================================
    TRANSITIONS
    ============================================ */
@@ -510,6 +271,27 @@ onMounted(() => {
   opacity: 0;
 }
 
+/* Slide transition for mobile sidebar */
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-enter-from {
+  transform: translateX(-100%);
+}
+
+.slide-leave-to {
+  transform: translateX(-100%);
+}
+
+/* RTL slide */
+.rtl .slide-enter-from,
+.rtl .slide-leave-to {
+  transform: translateX(100%);
+}
+
+/* Dropdown transitions */
 .dropdown-enter-active,
 .dropdown-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -542,6 +324,73 @@ main {
 @media (max-width: 1023px) {
   main {
     padding-bottom: 5rem;
+  }
+}
+
+/* ============================================
+   SCROLLABLE TABLES & CONTENT
+   ============================================ */
+
+main :deep(.attendance-table-container) {
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+main :deep(.table-scroll-wrapper) {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  max-height: none !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+main :deep(.overflow-auto) {
+  overflow: auto !important;
+  max-height: none !important;
+}
+
+/* ============================================
+   MOBILE TABLE FIXES
+   ============================================ */
+
+@media (max-width: 640px) {
+  main :deep(.attendance-table) {
+    min-width: 600px !important;
+  }
+  
+  main :deep(.sticky-col) {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 10 !important;
+    background-color: #f9fafb !important;
+  }
+  
+  main :deep(.dark .sticky-col) {
+    background-color: #1f2937 !important;
+  }
+  
+  main :deep(.attendance-table td),
+  main :deep(.attendance-table th) {
+    padding: 0.5rem 0.75rem !important;
+  }
+  
+  main :deep(.radio-label) {
+    padding: 8px !important;
+    display: inline-block !important;
+  }
+  
+  main :deep(.table-scroll-wrapper) {
+    padding-bottom: 4px !important;
+    margin-bottom: -4px !important;
+  }
+}
+
+/* ============================================
+   HEADER DARK MODE OVERRIDES
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  header {
+    background-color: rgba(31, 41, 55, 0.95) !important;
   }
 }
 </style>
