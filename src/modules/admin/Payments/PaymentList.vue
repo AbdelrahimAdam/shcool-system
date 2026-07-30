@@ -213,32 +213,52 @@
               {{ formatDate(payment.due_date) }}
             </td>
             <td class="px-4 py-3 text-sm text-center">
-              <div class="flex flex-wrap items-center justify-center gap-1.5">
+              <div class="flex items-center justify-center gap-1">
+                <!-- View Details -->
                 <button 
-                  @click="handleEdit(payment)"
-                  class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-xs font-medium"
+                  @click="viewPaymentDetails(payment)"
+                  class="p-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+                  :title="languageStore.t('viewDetails')"
                 >
-                  {{ languageStore.t('edit') }}
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
                 </button>
+
+                <!-- Add Note -->
                 <button 
-                  @click="handleDelete(payment)"
-                  class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-xs font-medium"
+                  @click="addNote(payment)"
+                  class="p-1.5 text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded transition-colors"
+                  :title="languageStore.t('addNote')"
                 >
-                  {{ languageStore.t('delete') }}
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
                 </button>
+
+                <!-- Approve (only for pending) -->
                 <button 
                   v-if="payment.status === 'pending'"
                   @click="approvePayment(payment)"
-                  class="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 text-xs font-medium"
+                  class="p-1.5 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
+                  :title="languageStore.t('approve')"
                 >
-                  {{ languageStore.t('approve') }}
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
                 </button>
+
+                <!-- Reject (only for pending) -->
                 <button 
                   v-if="payment.status === 'pending'"
                   @click="rejectPayment(payment)"
-                  class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-xs font-medium"
+                  class="p-1.5 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
+                  :title="languageStore.t('reject')"
                 >
-                  {{ languageStore.t('reject') }}
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
             </td>
@@ -331,33 +351,53 @@
           </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="flex flex-wrap gap-1.5 sm:gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+        <!-- Action Buttons - Compact inline layout -->
+        <div class="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+          <!-- View Details -->
           <button 
-            @click="handleEdit(payment)"
-            class="flex-1 min-w-[40px] text-center px-2 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+            @click="viewPaymentDetails(payment)"
+            class="p-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+            :title="languageStore.t('viewDetails')"
           >
-            {{ languageStore.t('edit') }}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
           </button>
+
+          <!-- Add Note -->
           <button 
-            @click="handleDelete(payment)"
-            class="flex-1 min-w-[40px] text-center px-2 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-xs font-medium hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+            @click="addNote(payment)"
+            class="p-2 text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg transition-colors"
+            :title="languageStore.t('addNote')"
           >
-            {{ languageStore.t('delete') }}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
           </button>
+
+          <!-- Approve -->
           <button 
             v-if="payment.status === 'pending'"
             @click="approvePayment(payment)"
-            class="flex-1 min-w-[40px] text-center px-2 py-1.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-xs font-medium hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
+            class="p-2 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
+            :title="languageStore.t('approve')"
           >
-            {{ languageStore.t('approve') }}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
           </button>
+
+          <!-- Reject -->
           <button 
             v-if="payment.status === 'pending'"
             @click="rejectPayment(payment)"
-            class="flex-1 min-w-[40px] text-center px-2 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-xs font-medium hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+            class="p-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+            :title="languageStore.t('reject')"
           >
-            {{ languageStore.t('reject') }}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
       </div>
@@ -383,21 +423,50 @@
         </button>
       </div>
     </div>
+
+    <!-- Note Modal -->
+    <div v-if="showNoteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @click.self="closeNoteModal">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          {{ languageStore.t('addNote') }}
+        </h3>
+        <textarea
+          v-model="noteText"
+          rows="4"
+          class="w-full p-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          :placeholder="languageStore.t('enterNote')"
+        ></textarea>
+        <div class="flex justify-end gap-2 mt-4">
+          <button @click="closeNoteModal" class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+            {{ languageStore.t('cancel') }}
+          </button>
+          <button @click="saveNote" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors">
+            {{ languageStore.t('save') }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { supabase } from '@/services/supabase'
 import { usePaymentStore } from '../../../stores/payment'
 import { useLanguageStore } from '../../../stores/language'
+import { useAuthStore } from '../../../stores/auth'
 
 const router = useRouter()
 const paymentStore = usePaymentStore()
 const languageStore = useLanguageStore()
+const authStore = useAuthStore()
 
 const currentPage = ref(1)
 const showParentRequests = ref(false)
+const showNoteModal = ref(false)
+const noteText = ref('')
+const selectedPayment = ref(null)
 let searchTimeout = null
 
 const filters = ref({
@@ -493,18 +562,41 @@ const handlePageChange = async (page) => {
   await applyFilters()
 }
 
-const handleEdit = (payment) => {
+const viewPaymentDetails = (payment) => {
   router.push(`/admin/payments/${payment.id}`)
 }
 
-const handleDelete = async (payment) => {
-  if (confirm(languageStore.t('confirmDelete'))) {
-    const result = await paymentStore.deletePayment(payment.id)
-    if (result.success) {
-      await applyFilters()
-    } else {
-      alert(result.error || languageStore.t('deleteFailed'))
-    }
+const addNote = (payment) => {
+  selectedPayment.value = payment
+  noteText.value = payment.admin_notes || ''
+  showNoteModal.value = true
+}
+
+const closeNoteModal = () => {
+  showNoteModal.value = false
+  noteText.value = ''
+  selectedPayment.value = null
+}
+
+const saveNote = async () => {
+  if (!selectedPayment.value) return
+  
+  try {
+    const { error } = await supabase
+      .from('payments')
+      .update({ 
+        admin_notes: noteText.value,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', selectedPayment.value.id)
+    
+    if (error) throw error
+    
+    closeNoteModal()
+    await applyFilters()
+  } catch (error) {
+    console.error('Error saving note:', error)
+    alert(languageStore.t('saveNoteFailed'))
   }
 }
 
@@ -642,5 +734,19 @@ onMounted(() => {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Compact action buttons */
+.action-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .action-btn {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.65rem;
+  }
 }
 </style>
