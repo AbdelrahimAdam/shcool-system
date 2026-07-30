@@ -6,20 +6,20 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
             <h1 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
-              {{ isEdit ? languageStore.t('editPayment') : languageStore.t('addPayment') }}
+              {{ languageStore.t('viewPayment') }}
             </h1>
             <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              {{ isEdit ? languageStore.t('editPaymentDescription') : languageStore.t('addPaymentDescription') }}
+              {{ languageStore.t('viewPaymentDescription') }}
             </p>
           </div>
-          <span v-if="isEdit" class="text-xs px-2.5 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full self-start sm:self-auto">
-            {{ languageStore.t('editMode') }}
+          <span class="text-xs px-2.5 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full self-start sm:self-auto">
+            {{ languageStore.t('viewOnly') }}
           </span>
         </div>
       </div>
 
-      <form @submit.prevent="handleSubmit" class="p-3 sm:p-4 md:p-6 space-y-5 sm:space-y-6">
-        <!-- Student Selection -->
+      <div class="p-3 sm:p-4 md:p-6 space-y-5 sm:space-y-6">
+        <!-- Student Information -->
         <div class="space-y-3">
           <h2 class="text-sm sm:text-base font-medium text-gray-900 dark:text-white flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
             <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,160 +28,24 @@
             {{ languageStore.t('studentInformation') }}
           </h2>
 
-          <!-- Toggle Buttons -->
-          <div class="flex flex-wrap gap-2">
-            <button 
-              type="button"
-              @click="studentInputMode = 'select'"
-              class="flex-1 min-w-[80px] px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-colors"
-              :class="studentInputMode === 'select' 
-                ? 'bg-primary-600 text-white dark:bg-primary-500' 
-                : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
-            >
-              {{ languageStore.t('selectFromList') }}
-            </button>
-            <button 
-              type="button"
-              @click="studentInputMode = 'manual'"
-              class="flex-1 min-w-[80px] px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-colors"
-              :class="studentInputMode === 'manual' 
-                ? 'bg-primary-600 text-white dark:bg-primary-500' 
-                : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
-            >
-              {{ languageStore.t('manualEntry') }}
-            </button>
-          </div>
-
-          <!-- Select from existing students -->
-          <div v-if="studentInputMode === 'select'">
-            <div class="relative">
-              <input 
-                v-model="studentSearch" 
-                type="text" 
-                :placeholder="languageStore.t('searchStudentsByNameClassPhone')"
-                class="form-input w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white pl-9"
-                @input="filterStudents"
-              />
-              <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <div class="max-h-48 sm:max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 mt-2">
-              <div 
-                v-for="student in filteredStudents" 
-                :key="student.id"
-                @click="selectStudent(student)"
-                class="p-2 sm:p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 border-b last:border-b-0 border-gray-100 dark:border-gray-700 transition-colors"
-                :class="{ 'bg-primary-50 dark:bg-primary-900/30': selectedStudentId === student.id }"
-              >
-                <div class="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{{ student.full_name }}</div>
-                <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                  <span class="font-mono">{{ student.student_number || '-' }}</span>
-                  <span class="mx-1">|</span>
-                  {{ student.class_name || '-' }}
-                  <span v-if="student.phone" class="hidden sm:inline">
-                    <span class="mx-1">|</span>
-                    {{ student.phone }}
-                  </span>
+          <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-sm sm:text-base text-gray-900 dark:text-white truncate">
+                  {{ displayStudent?.full_name || languageStore.t('unknownStudent') }}
+                </p>
+                <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  <span>{{ languageStore.t('studentNumber') }}: <span class="font-mono">{{ displayStudent?.student_number || manualStudentData?.student_number || '-' }}</span></span>
+                  <span>{{ languageStore.t('class') }}: {{ displayStudent?.class_name || manualStudentData?.class_name || '-' }}</span>
+                  <span v-if="displayStudent?.phone" class="hidden sm:inline">{{ languageStore.t('phone') }}: {{ displayStudent?.phone }}</span>
+                </div>
+                <div v-if="manualStudentData" class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  {{ languageStore.t('manualEntryNote') }}
                 </div>
               </div>
-              <div v-if="filteredStudents.length === 0 && studentSearch" class="p-3 text-center text-sm text-gray-500 dark:text-gray-400">
-                {{ languageStore.t('noStudentsFound') }}
-              </div>
-              <div v-if="filteredStudents.length === 0 && !studentSearch" class="p-3 text-center text-sm text-gray-500 dark:text-gray-400">
-                {{ languageStore.t('typeToSearchStudents') }}
-              </div>
-            </div>
-
-            <!-- Selected Student Display -->
-            <div v-if="selectedStudent" class="mt-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-green-200 dark:border-green-800">
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div class="flex-1 min-w-0">
-                  <p class="font-medium text-sm sm:text-base text-gray-900 dark:text-white truncate">
-                    {{ selectedStudent.full_name }}
-                  </p>
-                  <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                    <span>{{ languageStore.t('studentNumber') }}: <span class="font-mono">{{ selectedStudent.student_number || '-' }}</span></span>
-                    <span>{{ languageStore.t('class') }}: {{ selectedStudent.class_name || '-' }}</span>
-                    <span v-if="selectedStudent.phone" class="hidden sm:inline">{{ languageStore.t('phone') }}: {{ selectedStudent.phone }}</span>
-                  </div>
-                </div>
-                <button 
-                  type="button"
-                  @click="clearSelectedStudent"
-                  class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs sm:text-sm font-medium flex-shrink-0"
-                >
-                  {{ languageStore.t('change') }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Manual Student Entry -->
-          <div v-if="studentInputMode === 'manual'" class="space-y-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-700">
-            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {{ languageStore.t('manualEntryNote') }}
-            </p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('fullName') }} *</label>
-                <input 
-                  v-model="manualStudent.full_name" 
-                  type="text" 
-                  required 
-                  class="form-input w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  :placeholder="languageStore.t('enterFullName')"
-                />
-              </div>
-              <div>
-                <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('studentNumber') }} *</label>
-                <input 
-                  v-model="manualStudent.student_number" 
-                  type="text" 
-                  required 
-                  class="form-input w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  :placeholder="languageStore.t('enterStudentNumber')"
-                />
-              </div>
-              <div>
-                <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('class') }}</label>
-                <input 
-                  v-model="manualStudent.class_name" 
-                  type="text" 
-                  class="form-input w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  :placeholder="languageStore.t('enterClass')"
-                />
-              </div>
-              <div>
-                <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('phone') }}</label>
-                <input 
-                  v-model="manualStudent.phone" 
-                  type="tel" 
-                  class="form-input w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  :placeholder="languageStore.t('enterPhone')"
-                />
-              </div>
-              <div>
-                <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('parentName') }}</label>
-                <input 
-                  v-model="manualStudent.parent_name" 
-                  type="text" 
-                  class="form-input w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  :placeholder="languageStore.t('enterParentName')"
-                />
-              </div>
-              <div>
-                <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('parentPhone') }}</label>
-                <input 
-                  v-model="manualStudent.parent_phone" 
-                  type="tel" 
-                  class="form-input w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  :placeholder="languageStore.t('enterParentPhone')"
-                />
-              </div>
+              <span v-if="form.created_by" class="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full flex-shrink-0">
+                {{ languageStore.t('parentSubmitted') }}
+              </span>
             </div>
           </div>
         </div>
@@ -197,78 +61,126 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('amount') }} *</label>
+              <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('amount') }}</label>
               <div class="relative">
                 <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 text-sm sm:text-base">SDG</span>
-                <input 
-                  v-model.number="form.amount" 
-                  type="number" 
-                  step="0.01" 
-                  required 
-                  class="form-input w-full mt-1 pl-12 pr-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  :placeholder="languageStore.t('enterAmount')"
-                />
+                <div class="w-full mt-1 pl-12 pr-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-medium">
+                  {{ formatCurrency(form.amount) }}
+                </div>
               </div>
             </div>
             <div>
-              <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('paymentType') }} *</label>
-              <select 
-                v-model="form.payment_type" 
-                required 
-                class="form-select w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              >
-                <option value="tuition">{{ languageStore.t('tuition') }}</option>
-                <option value="exam_fees">{{ languageStore.t('examFees') }}</option>
-                <option value="activity_fees">{{ languageStore.t('activityFees') }}</option>
-                <option value="other">{{ languageStore.t('other') }}</option>
-              </select>
+              <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('paymentType') }}</label>
+              <div class="w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+                {{ languageStore.t(form.payment_type) }}
+              </div>
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('paymentMethod') }} *</label>
-              <select 
-                v-model="form.payment_method" 
-                required 
-                class="form-select w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              >
-                <option value="cash">{{ languageStore.t('cash') }}</option>
-                <option value="bankak">{{ languageStore.t('bankak') }}</option>
-              </select>
+              <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('paymentMethod') }}</label>
+              <div class="w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+                {{ languageStore.t(form.payment_method) }}
+              </div>
             </div>
             <div>
-              <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('dueDate') }} *</label>
-              <input 
-                v-model="form.due_date" 
-                type="date" 
-                required 
-                class="form-input w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              />
+              <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('dueDate') }}</label>
+              <div class="w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+                {{ formatDate(form.due_date) }}
+              </div>
             </div>
           </div>
 
           <!-- Bankak Number -->
           <div v-if="form.payment_method === 'bankak'">
             <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('bankakNumber') }}</label>
-            <input 
-              v-model="form.bankak_number" 
-              type="text" 
-              class="form-input w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              :placeholder="languageStore.t('enterBankakNumber')"
-            />
+            <div class="w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-mono">
+              {{ form.bankak_number || '-' }}
+            </div>
+          </div>
+
+          <!-- Payment Status -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div>
+              <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('status') }}</label>
+              <div class="mt-1">
+                <span :class="getStatusClass(form.status || 'pending')" class="px-3 py-1.5 rounded-full text-sm font-medium inline-block">
+                  {{ languageStore.t(form.status || 'pending') }}
+                </span>
+              </div>
+            </div>
+            <div v-if="form.approved_by">
+              <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('approvedBy') }}</label>
+              <div class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ form.approved_by }}</div>
+            </div>
+          </div>
+
+          <!-- Payment Date (if approved) -->
+          <div v-if="form.payment_date">
+            <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('paymentDate') }}</label>
+            <div class="w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+              {{ formatDate(form.payment_date) }}
+            </div>
           </div>
         </div>
 
-        <!-- Notes -->
+        <!-- Parent Notes -->
+        <div v-if="form.notes">
+          <div class="space-y-1">
+            <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('parentNotes') }}</label>
+            <div class="w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white whitespace-pre-wrap">
+              {{ form.notes }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Notes (Editable) -->
         <div>
-          <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('notes') }}</label>
+          <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('adminNotes') }}</label>
           <textarea 
-            v-model="form.notes" 
+            v-model="form.admin_notes" 
             rows="3" 
             class="form-textarea w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-            :placeholder="languageStore.t('enterNotes')"
+            :placeholder="languageStore.t('enterAdminNotes')"
           ></textarea>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+            {{ languageStore.t('adminNotesHelp') }}
+          </p>
+        </div>
+
+        <!-- Proof Image -->
+        <div v-if="form.proof_image_url">
+          <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('proofImage') }}</label>
+          <div class="mt-1">
+            <a 
+              :href="form.proof_image_url" 
+              target="_blank" 
+              class="inline-flex items-center gap-2 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 transition-colors"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              {{ languageStore.t('viewProofImage') }}
+            </a>
+          </div>
+        </div>
+
+        <!-- Audit Information -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <div>
+            <label class="form-label text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">{{ languageStore.t('submittedBy') }}</label>
+            <div class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+              {{ form.created_by ? languageStore.t('parent') : languageStore.t('system') }}
+            </div>
+          </div>
+          <div>
+            <label class="form-label text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">{{ languageStore.t('submittedAt') }}</label>
+            <div class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+              {{ formatDateTime(form.created_at) }}
+            </div>
+          </div>
         </div>
 
         <!-- Info Note -->
@@ -278,25 +190,34 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p class="text-xs sm:text-sm text-yellow-800 dark:text-yellow-300">
-              {{ isEdit ? languageStore.t('editPaymentNote') : languageStore.t('createPaymentNote') }}
+              {{ languageStore.t('viewOnlyPaymentNote') }}
             </p>
           </div>
         </div>
 
         <!-- Form Actions -->
         <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <button type="button" @click="$router.back()" class="btn-secondary w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors order-2 sm:order-1">
-            {{ languageStore.t('cancel') }}
-          </button>
-          <button type="submit" :disabled="isLoading" class="btn-primary w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white transition-colors disabled:opacity-50 order-1 sm:order-2 flex items-center justify-center">
+          <button 
+            type="button" 
+            @click="saveAdminNotes" 
+            :disabled="isLoading" 
+            class="btn-primary w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white transition-colors disabled:opacity-50 flex items-center justify-center"
+          >
             <svg v-if="isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            {{ isLoading ? languageStore.t('saving') : languageStore.t('savePayment') }}
+            {{ isLoading ? languageStore.t('saving') : languageStore.t('saveNotes') }}
+          </button>
+          <button 
+            type="button" 
+            @click="$router.back()" 
+            class="btn-secondary w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          >
+            {{ languageStore.t('back') }}
           </button>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 </template>
@@ -315,165 +236,145 @@ const paymentStore = usePaymentStore()
 const languageStore = useLanguageStore()
 const authStore = useAuthStore()
 
-const isEdit = ref(!!route.params.id)
 const isLoading = ref(false)
 const students = ref([])
-const studentSearch = ref('')
-const selectedStudentId = ref(null)
-const selectedStudent = ref(null)
-const studentInputMode = ref('select')
-
-const manualStudent = ref({
-  full_name: '',
-  student_number: '',
-  class_name: '',
-  phone: '',
-  parent_name: '',
-  parent_phone: ''
-})
+const displayStudent = ref(null)
+const manualStudentData = ref(null)
 
 const form = ref({
   student_id: null,
   amount: '',
   payment_type: 'tuition',
   payment_method: 'cash',
-  due_date: new Date().toISOString().split('T')[0],
+  due_date: '',
   bankak_number: '',
   notes: '',
+  admin_notes: '',
+  status: 'pending',
+  created_by: null,
+  approved_by: null,
+  proof_image_url: null,
+  payment_date: null,
+  created_at: null,
+  updated_at: null,
   manual_student_data: null
 })
 
-const filteredStudents = computed(() => {
-  if (!studentSearch.value) return students.value
-  const search = studentSearch.value.toLowerCase()
-  return students.value.filter(student => 
-    student.full_name.toLowerCase().includes(search) ||
-    student.student_number.toLowerCase().includes(search) ||
-    (student.class_name && student.class_name.toLowerCase().includes(search)) ||
-    (student.phone && student.phone.includes(search))
-  )
-})
+const getStatusClass = (status) => {
+  const map = {
+    pending: 'text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-900/30',
+    approved: 'text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30',
+    rejected: 'text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/30',
+    cancelled: 'text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800'
+  }
+  return map[status] || map.pending
+}
 
-const loadStudents = async () => {
-  const schoolId = authStore.profile?.school_id
-  if (!schoolId) return
-  const { data } = await supabase
-    .from('students')
-    .select(`
-      id, 
-      full_name, 
-      student_number, 
-      phone,
-      class:classes(name)
-    `)
-    .eq('school_id', schoolId)
-    .eq('status', 'active')
-    .order('full_name')
+const formatCurrency = (value) => {
+  if (!value) return 'SDG 0'
+  return `SDG ${Number(value).toLocaleString()}`
+}
+
+const formatDate = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString()
+}
+
+const formatDateTime = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleString()
+}
+
+const loadStudentData = async (studentId) => {
+  if (!studentId) return
   
-  students.value = (data || []).map(student => ({
-    ...student,
-    class_name: student.class?.name || null
-  }))
-}
-
-const selectStudent = (student) => {
-  selectedStudentId.value = student.id
-  selectedStudent.value = student
-  form.value.student_id = student.id
-  form.value.manual_student_data = null
-  studentSearch.value = ''
-}
-
-const clearSelectedStudent = () => {
-  selectedStudentId.value = null
-  selectedStudent.value = null
-  form.value.student_id = null
-  studentSearch.value = ''
-}
-
-const filterStudents = () => {}
-
-const loadPayment = async () => {
-  if (isEdit.value) {
-    const payment = await paymentStore.getPaymentById(route.params.id)
-    if (payment) {
-      form.value = { ...payment }
-      if (payment.student_id) {
-        selectedStudentId.value = payment.student_id
-        const student = students.value.find(s => s.id === payment.student_id)
-        if (student) {
-          selectedStudent.value = student
-          studentInputMode.value = 'select'
-        }
-      } else if (payment.manual_student_data) {
-        studentInputMode.value = 'manual'
-        manualStudent.value = payment.manual_student_data
-      }
+  try {
+    const { data, error } = await supabase
+      .from('students')
+      .select(`
+        id, 
+        full_name, 
+        student_number, 
+        phone,
+        class:classes(name)
+      `)
+      .eq('id', studentId)
+      .single()
+    
+    if (error) throw error
+    
+    displayStudent.value = {
+      ...data,
+      class_name: data.class?.name || null
     }
+  } catch (error) {
+    console.error('Error loading student:', error)
+    displayStudent.value = null
   }
 }
 
-const handleSubmit = async () => {
-  isLoading.value = true
-
+const loadPayment = async () => {
   try {
-    if (!form.value.amount || form.value.amount <= 0) {
-      alert(languageStore.t('validAmountRequired'))
-      isLoading.value = false
+    const paymentId = route.params.id
+    if (!paymentId) {
+      router.push('/admin/payments')
       return
     }
 
-    let paymentData = {
-      amount: parseFloat(form.value.amount),
-      payment_type: form.value.payment_type,
-      payment_method: form.value.payment_method,
-      due_date: form.value.due_date,
-      bankak_number: form.value.bankak_number || null,
-      notes: form.value.notes || null,
-      school_id: authStore.profile?.school_id
-    }
-
-    if (studentInputMode.value === 'select') {
-      if (!selectedStudent.value) {
-        alert(languageStore.t('pleaseSelectStudent'))
-        isLoading.value = false
-        return
-      }
-      paymentData.student_id = selectedStudent.value.id
-      paymentData.manual_student_data = null
-    } else {
-      if (!manualStudent.value.full_name || !manualStudent.value.student_number) {
-        alert(languageStore.t('manualStudentRequired'))
-        isLoading.value = false
-        return
-      }
-      paymentData.student_id = null
-      paymentData.manual_student_data = { ...manualStudent.value }
-    }
-
-    let result
-    if (isEdit.value) {
-      result = await paymentStore.updatePayment(route.params.id, paymentData)
-    } else {
-      result = await paymentStore.createPayment(paymentData, null)
-    }
-
-    if (result.success) {
+    const payment = await paymentStore.getPaymentById(paymentId)
+    if (!payment) {
+      alert(languageStore.t('paymentNotFound'))
       router.push('/admin/payments')
-    } else {
-      alert(result.error || languageStore.t('errorOccurred'))
+      return
+    }
+
+    form.value = { ...payment }
+    
+    // Format dates
+    if (form.value.due_date) {
+      form.value.due_date = form.value.due_date.split('T')[0]
+    }
+    
+    // Load student if exists
+    if (payment.student_id) {
+      await loadStudentData(payment.student_id)
+    } else if (payment.manual_student_data) {
+      manualStudentData.value = payment.manual_student_data
     }
   } catch (error) {
-    console.error('Error saving payment:', error)
-    alert(error.message || languageStore.t('errorOccurred'))
+    console.error('Error loading payment:', error)
+    alert(languageStore.t('errorLoadingPayment'))
+    router.push('/admin/payments')
+  }
+}
+
+const saveAdminNotes = async () => {
+  if (!form.value.id) return
+  
+  isLoading.value = true
+  
+  try {
+    const { error } = await supabase
+      .from('payments')
+      .update({
+        admin_notes: form.value.admin_notes || null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', form.value.id)
+    
+    if (error) throw error
+    
+    alert(languageStore.t('notesSaved'))
+  } catch (error) {
+    console.error('Error saving admin notes:', error)
+    alert(error.message || languageStore.t('errorSavingNotes'))
   } finally {
     isLoading.value = false
   }
 }
 
-onMounted(() => {
-  loadStudents()
-  loadPayment()
+onMounted(async () => {
+  await loadPayment()
 })
 </script>
 
@@ -510,7 +411,7 @@ onMounted(() => {
   background-color: #1f2937;
 }
 
-.form-input, .form-select, .form-textarea {
+.form-textarea {
   width: 100%;
   padding: 0.5rem 0.75rem;
   border: 1px solid #d1d5db;
@@ -521,15 +422,13 @@ onMounted(() => {
   color: #1f2937;
 }
 
-.dark .form-input,
-.dark .form-select,
 .dark .form-textarea {
   background-color: #374151;
   border-color: #4b5563;
   color: #f3f4f6;
 }
 
-.form-input:focus, .form-select:focus, .form-textarea:focus {
+.form-textarea:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
