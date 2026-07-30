@@ -272,13 +272,10 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { supabase } from '@/services/supabase'
 import { usePaymentStore } from '@/stores/payment'
-import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
 
 const paymentStore = usePaymentStore()
-const authStore = useAuthStore()
 const languageStore = useLanguageStore()
 
 const isLoading = ref(false)
@@ -295,20 +292,15 @@ const approvePayment = async (paymentId) => {
   isProcessing.value = paymentId
 
   try {
-    const { error } = await supabase
-      .from('payments')
-      .update({
-        status: 'approved',
-        approved_by: authStore.user?.id,
-        approved_at: new Date().toISOString()
-      })
-      .eq('id', paymentId)
-
-    if (error) throw error
-
-    await paymentStore.fetchPayments(1, { status: 'pending' })
+    const result = await paymentStore.approvePayment(paymentId, true)
+    if (result.success) {
+      await paymentStore.fetchPayments(1, { status: 'pending' })
+    } else {
+      alert(result.error || languageStore.t('approvalFailed'))
+    }
   } catch (error) {
     console.error('Error approving payment:', error)
+    alert(languageStore.t('approvalFailed'))
   } finally {
     isProcessing.value = null
   }
@@ -319,20 +311,15 @@ const rejectPayment = async (paymentId) => {
   isProcessing.value = paymentId
 
   try {
-    const { error } = await supabase
-      .from('payments')
-      .update({
-        status: 'rejected',
-        approved_by: authStore.user?.id,
-        approved_at: new Date().toISOString()
-      })
-      .eq('id', paymentId)
-
-    if (error) throw error
-
-    await paymentStore.fetchPayments(1, { status: 'pending' })
+    const result = await paymentStore.approvePayment(paymentId, false)
+    if (result.success) {
+      await paymentStore.fetchPayments(1, { status: 'pending' })
+    } else {
+      alert(result.error || languageStore.t('rejectionFailed'))
+    }
   } catch (error) {
     console.error('Error rejecting payment:', error)
+    alert(languageStore.t('rejectionFailed'))
   } finally {
     isProcessing.value = null
   }
@@ -371,7 +358,6 @@ onMounted(async () => {
   }
 }
 
-/* Mobile Card Styles */
 .card {
   transition: box-shadow 0.2s ease;
 }
