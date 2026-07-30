@@ -16,7 +16,7 @@ export const useClassStore = defineStore('class', {
         async fetchClasses(page = 1, filters = {}) {
             this.isLoading = true
             const authStore = useAuthStore()
-            
+
             try {
                 let query = supabase
                     .from('classes')
@@ -38,7 +38,7 @@ export const useClassStore = defineStore('class', {
 
                 this.classes = data
                 this.totalCount = count || 0
-                
+
                 return { data, count }
             } catch (error) {
                 console.error('Fetch classes error:', error)
@@ -53,7 +53,7 @@ export const useClassStore = defineStore('class', {
             this.isLoading = true
             try {
                 const authStore = useAuthStore()
-                
+
                 const { data, error } = await supabase
                     .from('classes')
                     .insert([{
@@ -130,15 +130,23 @@ export const useClassStore = defineStore('class', {
 
                 const { data, error } = await supabase
                     .from('classes')
-                    .select('*, teacher:teachers(*), students:students(count)')
+                    .select('*, teacher:teachers(*)')
                     .eq('id', id)
                     .single()
 
                 if (error) throw error
 
-                this.currentClass = data
-                cacheService.set(`class_${id}`, data)
-                return data
+                const students = await this.getClassStudents(id)
+                const studentCount = students ? students.length : 0
+
+                const classData = {
+                    ...data,
+                    student_count: studentCount
+                }
+
+                this.currentClass = classData
+                cacheService.set(`class_${id}`, classData)
+                return classData
             } catch (error) {
                 console.error('Get class error:', error)
                 return null
@@ -149,10 +157,12 @@ export const useClassStore = defineStore('class', {
 
         async getClassStudents(classId) {
             try {
+                const authStore = useAuthStore()
                 const { data, error } = await supabase
                     .from('students')
                     .select('*')
                     .eq('class_id', classId)
+                    .eq('school_id', authStore.profile?.school_id)
                     .eq('status', 'active')
                     .order('full_name')
 
