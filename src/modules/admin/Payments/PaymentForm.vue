@@ -32,7 +32,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div class="flex-1 min-w-0">
                 <p class="font-medium text-sm sm:text-base text-gray-900 dark:text-white truncate">
-                  {{ displayStudent?.full_name || languageStore.t('unknownStudent') }}
+                  {{ displayStudent?.full_name || manualStudentData?.full_name || languageStore.t('unknownStudent') }}
                 </p>
                 <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   <span>{{ languageStore.t('studentNumber') }}: <span class="font-mono">{{ displayStudent?.student_number || manualStudentData?.student_number || '-' }}</span></span>
@@ -92,11 +92,50 @@
             </div>
           </div>
 
-          <!-- Bankak Number -->
-          <div v-if="form.payment_method === 'bankak'">
-            <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('bankakNumber') }}</label>
-            <div class="w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-mono">
-              {{ form.bankak_number || '-' }}
+          <!-- Bankak Details Section -->
+          <div v-if="form.payment_method === 'bankak'" class="space-y-3 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <h3 class="text-sm font-medium text-blue-800 dark:text-blue-300 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              {{ languageStore.t('bankakDetails') }}
+            </h3>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- School Bankak Account Number (from school settings) -->
+              <div>
+                <label class="form-label text-xs font-medium text-gray-600 dark:text-gray-400">{{ languageStore.t('bankakAccountNumber') }}</label>
+                <div class="w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-mono">
+                  {{ schoolBankakDetails?.accountNumber || '-' }}
+                </div>
+              </div>
+              
+              <!-- School Bankak Account Name -->
+              <div>
+                <label class="form-label text-xs font-medium text-gray-600 dark:text-gray-400">{{ languageStore.t('bankakAccountName') }}</label>
+                <div class="w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+                  {{ schoolBankakDetails?.accountName || '-' }}
+                </div>
+              </div>
+              
+              <!-- Parent's Bankak Transaction/Reference Number -->
+              <div>
+                <label class="form-label text-xs font-medium text-gray-600 dark:text-gray-400">{{ languageStore.t('bankakTransactionNumber') }}</label>
+                <div class="w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-mono">
+                  {{ form.bankak_number || '-' }}
+                </div>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  {{ languageStore.t('bankakTransactionHelp') }}
+                </p>
+              </div>
+              
+              <!-- School Phone (if available) -->
+              <div v-if="schoolBankakDetails?.phone">
+                <label class="form-label text-xs font-medium text-gray-600 dark:text-gray-400">{{ languageStore.t('bankakPhone') }}</label>
+                <div class="w-full mt-1 px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+                  {{ schoolBankakDetails.phone }}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -112,7 +151,9 @@
             </div>
             <div v-if="form.approved_by">
               <label class="form-label text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{{ languageStore.t('approvedBy') }}</label>
-              <div class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ form.approved_by }}</div>
+              <div class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                {{ approvedByName || form.approved_by || '-' }}
+              </div>
             </div>
           </div>
 
@@ -240,8 +281,11 @@ const isLoading = ref(false)
 const students = ref([])
 const displayStudent = ref(null)
 const manualStudentData = ref(null)
+const schoolBankakDetails = ref(null)
+const approvedByName = ref(null)
 
 const form = ref({
+  id: null,
   student_id: null,
   amount: '',
   payment_type: 'tuition',
@@ -283,6 +327,52 @@ const formatDate = (date) => {
 const formatDateTime = (date) => {
   if (!date) return '-'
   return new Date(date).toLocaleString()
+}
+
+const loadSchoolBankakDetails = async () => {
+  const schoolId = authStore.profile?.school_id
+  if (!schoolId) return
+  
+  try {
+    const { data, error } = await supabase
+      .from('schools')
+      .select('bankak_account_number, bankak_account_name, bankak_phone, bankak_reference_prefix')
+      .eq('id', schoolId)
+      .single()
+    
+    if (error) throw error
+    
+    if (data && data.bankak_account_number) {
+      schoolBankakDetails.value = {
+        accountNumber: data.bankak_account_number,
+        accountName: data.bankak_account_name || '',
+        phone: data.bankak_phone || '',
+        referencePrefix: data.bankak_reference_prefix || ''
+      }
+    }
+  } catch (error) {
+    console.error('Error loading school Bankak details:', error)
+    schoolBankakDetails.value = null
+  }
+}
+
+const loadApprovedByName = async (userId) => {
+  if (!userId) return
+  
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('full_name')
+      .eq('id', userId)
+      .single()
+    
+    if (error) throw error
+    
+    approvedByName.value = data?.full_name || userId
+  } catch (error) {
+    console.error('Error loading approved by name:', error)
+    approvedByName.value = userId
+  }
 }
 
 const loadStudentData = async (studentId) => {
@@ -333,6 +423,14 @@ const loadPayment = async () => {
     // Format dates
     if (form.value.due_date) {
       form.value.due_date = form.value.due_date.split('T')[0]
+    }
+    
+    // Load school Bankak details
+    await loadSchoolBankakDetails()
+    
+    // Load approved by name
+    if (payment.approved_by) {
+      await loadApprovedByName(payment.approved_by)
     }
     
     // Load student if exists
