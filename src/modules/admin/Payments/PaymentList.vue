@@ -41,80 +41,243 @@
       </div>
     </div>
 
-    <!-- Filter: Show Parent Requests Toggle -->
-    <div class="flex flex-wrap items-center gap-4">
-      <button
-        @click="showParentRequests = !showParentRequests"
-        class="inline-flex items-center gap-2 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-colors"
-        :class="showParentRequests 
-          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
-          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-        </svg>
-        {{ languageStore.t('parentPaymentRequests') }}
-        <span v-if="parentRequestCount" class="ml-1 text-xs text-blue-600 dark:text-blue-400">{{ parentRequestCount }}</span>
-      </button>
+    <!-- Search and Filters -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <!-- Search Input -->
+        <div class="relative">
+          <input
+            v-model="filters.search"
+            type="text"
+            :placeholder="languageStore.t('searchPayments')"
+            class="input-field w-full pl-9 pr-8 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent"
+            @input="debouncedSearch"
+          />
+          <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <button
+            v-if="filters.search"
+            @click="clearSearch"
+            class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Status Filter -->
+        <div>
+          <select v-model="filters.status" class="input-field w-full py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent" @change="applyFilters">
+            <option value="">{{ languageStore.t('allStatuses') }}</option>
+            <option value="pending">{{ languageStore.t('pending') }}</option>
+            <option value="approved">{{ languageStore.t('approved') }}</option>
+            <option value="rejected">{{ languageStore.t('rejected') }}</option>
+            <option value="cancelled">{{ languageStore.t('cancelled') }}</option>
+          </select>
+        </div>
+
+        <!-- Payment Method Filter -->
+        <div>
+          <select v-model="filters.payment_method" class="input-field w-full py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent" @change="applyFilters">
+            <option value="">{{ languageStore.t('allMethods') }}</option>
+            <option value="bankak">{{ languageStore.t('bankak') }}</option>
+            <option value="cash">{{ languageStore.t('cash') }}</option>
+          </select>
+        </div>
+
+        <!-- Parent Requests Toggle -->
+        <div class="flex items-center">
+          <button
+            @click="toggleParentRequests"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors w-full"
+            :class="showParentRequests 
+              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-2 border-blue-300 dark:border-blue-700' 
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-2 border-transparent'"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            {{ languageStore.t('parentRequests') }}
+            <span v-if="parentRequestCount" class="ml-1 px-2 py-0.5 text-xs bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded-full">
+              {{ parentRequestCount }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Filters Display -->
+      <div v-if="hasActiveFilters" class="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+        <span class="text-sm text-gray-600 dark:text-gray-400">{{ languageStore.t('activeFilters') }}:</span>
+        <span v-if="filters.search" class="filter-badge">
+          {{ languageStore.t('search') }}: "{{ filters.search }}"
+          <button @click="filters.search = ''; applyFilters()" class="ml-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">×</button>
+        </span>
+        <span v-if="filters.status" class="filter-badge">
+          {{ languageStore.t(filters.status) }}
+          <button @click="filters.status = ''; applyFilters()" class="ml-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">×</button>
+        </span>
+        <span v-if="filters.payment_method" class="filter-badge">
+          {{ languageStore.t(filters.payment_method) }}
+          <button @click="filters.payment_method = ''; applyFilters()" class="ml-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">×</button>
+        </span>
+        <span v-if="showParentRequests" class="filter-badge bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+          {{ languageStore.t('parentRequests') }}
+          <button @click="showParentRequests = false; applyFilters()" class="ml-1 text-blue-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300">×</button>
+        </span>
+        <button @click="clearAllFilters" class="text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium">
+          {{ languageStore.t('clearAll') }}
+        </button>
+      </div>
+
+      <!-- Results Count -->
+      <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+        <span>{{ languageStore.t('showing') }} {{ displayPayments.length }} {{ languageStore.t('payments') }}</span>
+        <span v-if="totalCount > 0">{{ languageStore.t('total') }}: {{ totalCount }}</span>
+      </div>
     </div>
 
     <!-- Desktop Table View -->
     <div class="hidden md:block overflow-x-auto rounded-lg shadow dark:shadow-gray-800">
-      <DataTable
-        :columns="columns"
-        :data="displayPayments"
-        :total="totalCount"
-        :loading="isLoading"
-        :filter-options="filterOptions"
-        table-class="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
-        header-class="bg-gray-50 dark:bg-gray-800"
-        row-class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        cell-class="px-3 py-2.5 text-xs sm:text-sm text-gray-900 dark:text-gray-200"
-        @search="handleSearch"
-        @filter="handleFilter"
-        @page-change="handlePageChange"
-        @edit="handleEdit"
-        @delete="handleDelete"
-      >
-        <template #column-status="{ row }">
-          <span :class="getStatusClass(row.status)">
-            {{ languageStore.t(row.status) }}
-          </span>
-        </template>
+      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
+        <thead class="bg-gray-50 dark:bg-gray-700">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              {{ languageStore.t('paymentNumber') }}
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              {{ languageStore.t('student') }}
+            </th>
+            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              {{ languageStore.t('amount') }}
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              {{ languageStore.t('paymentMethod') }}
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              {{ languageStore.t('status') }}
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              {{ languageStore.t('dueDate') }}
+            </th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              {{ languageStore.t('actions') }}
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+          <tr v-if="isLoading && displayPayments.length === 0">
+            <td colspan="7" class="px-4 py-8 text-center">
+              <div class="spinner mx-auto dark:border-gray-600 dark:border-t-blue-400"></div>
+            </td>
+          </tr>
+          <tr v-else-if="displayPayments.length === 0">
+            <td colspan="7" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+              <svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <p>{{ languageStore.t('noPaymentsFound') }}</p>
+            </td>
+          </tr>
+          <tr 
+            v-for="payment in displayPayments" 
+            :key="payment.id" 
+            class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+          >
+            <td class="px-4 py-3 text-sm">
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono text-xs text-gray-900 dark:text-white">{{ payment.payment_number }}</span>
+                <span v-if="payment.created_by && payment.status === 'pending'" class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                  {{ languageStore.t('parentRequest') }}
+                </span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">
+              {{ payment.student?.full_name || '-' }}
+            </td>
+            <td class="px-4 py-3 text-sm text-right font-medium text-gray-900 dark:text-white">
+              {{ formatCurrency(payment.amount) }}
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <span class="px-2 py-1 bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full text-xs font-medium">
+                {{ languageStore.t(payment.payment_method) }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <span :class="getStatusClass(payment.status)">
+                {{ languageStore.t(payment.status) }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+              {{ formatDate(payment.due_date) }}
+            </td>
+            <td class="px-4 py-3 text-sm text-center">
+              <div class="flex flex-wrap items-center justify-center gap-1.5">
+                <button 
+                  @click="handleEdit(payment)"
+                  class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-xs font-medium"
+                >
+                  {{ languageStore.t('edit') }}
+                </button>
+                <button 
+                  @click="handleDelete(payment)"
+                  class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-xs font-medium"
+                >
+                  {{ languageStore.t('delete') }}
+                </button>
+                <button 
+                  v-if="payment.status === 'pending'"
+                  @click="approvePayment(payment)"
+                  class="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 text-xs font-medium"
+                >
+                  {{ languageStore.t('approve') }}
+                </button>
+                <button 
+                  v-if="payment.status === 'pending'"
+                  @click="rejectPayment(payment)"
+                  class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-xs font-medium"
+                >
+                  {{ languageStore.t('reject') }}
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-        <template #column-amount="{ row }">
-          <span class="font-medium">{{ formatCurrency(row.amount) }}</span>
-        </template>
-
-        <template #column-student="{ row }">
-          {{ row.student?.full_name || '-' }}
-        </template>
-
-        <!-- Add badge for parent-requested payments -->
-        <template #column-payment_number="{ row }">
-          <div class="flex items-center gap-1.5">
-            <span class="font-mono text-xs">{{ row.payment_number }}</span>
-            <span v-if="row.created_by && row.status === 'pending'" class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-              {{ languageStore.t('parentRequest') }}
-            </span>
-          </div>
-        </template>
-      </DataTable>
+      <!-- Pagination -->
+      <div v-if="totalCount > 10" class="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 flex justify-between items-center">
+        <button 
+          @click="handlePageChange(currentPage - 1)" 
+          :disabled="currentPage <= 1"
+          class="px-3 py-1.5 text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors"
+        >
+          {{ languageStore.t('previous') }}
+        </button>
+        <span class="text-sm text-gray-600 dark:text-gray-300">
+          {{ languageStore.t('page') }} {{ currentPage }} {{ languageStore.t('of') }} {{ totalPages }}
+        </span>
+        <button 
+          @click="handlePageChange(currentPage + 1)" 
+          :disabled="currentPage >= totalPages"
+          class="px-3 py-1.5 text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors"
+        >
+          {{ languageStore.t('next') }}
+        </button>
+      </div>
     </div>
 
     <!-- Mobile Card View -->
     <div class="md:hidden space-y-3">
-      <!-- Loading State -->
       <div v-if="isLoading && displayPayments.length === 0" class="flex justify-center py-8">
         <div class="spinner dark:border-gray-600 dark:border-t-blue-400"></div>
       </div>
 
-      <!-- Empty State -->
       <div v-else-if="displayPayments.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
         {{ languageStore.t('noPaymentsFound') }}
       </div>
 
-      <!-- Payment Cards -->
       <div 
         v-for="payment in displayPayments" 
         :key="payment.id" 
@@ -196,13 +359,6 @@
           >
             {{ languageStore.t('reject') }}
           </button>
-          <button 
-            v-if="payment.created_by && payment.status === 'pending'"
-            @click="markPaymentReceived(payment)"
-            class="flex-1 min-w-[40px] text-center px-2 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-          >
-            {{ languageStore.t('markReceived') }}
-          </button>
         </div>
       </div>
 
@@ -211,17 +367,17 @@
         <button 
           @click="handlePageChange(currentPage - 1)" 
           :disabled="currentPage <= 1"
-          class="px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50"
+          class="px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
         >
           {{ languageStore.t('previous') }}
         </button>
         <span class="text-xs text-gray-500 dark:text-gray-400">
-          {{ currentPage }} / {{ totalPages }}
+          {{ languageStore.t('page') }} {{ currentPage }} {{ languageStore.t('of') }} {{ totalPages }}
         </span>
         <button 
           @click="handlePageChange(currentPage + 1)" 
           :disabled="currentPage >= totalPages"
-          class="px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 rounded-lg disabled:opacity-50"
+          class="px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
         >
           {{ languageStore.t('next') }}
         </button>
@@ -231,28 +387,31 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '@/services/supabase'
 import { usePaymentStore } from '../../../stores/payment'
 import { useLanguageStore } from '../../../stores/language'
-import { useAuthStore } from '../../../stores/auth'
-import DataTable from '../../../components/common/DataTable.vue'
 
 const router = useRouter()
 const paymentStore = usePaymentStore()
 const languageStore = useLanguageStore()
-const authStore = useAuthStore()
 
 const currentPage = ref(1)
 const showParentRequests = ref(false)
-const totalPages = computed(() => Math.ceil(totalCount.value / 10))
+let searchTimeout = null
+
+const filters = ref({
+  search: '',
+  status: '',
+  payment_method: ''
+})
 
 const payments = computed(() => paymentStore.payments)
 const totalCount = computed(() => paymentStore.totalCount)
 const isLoading = computed(() => paymentStore.isLoading)
 
-// Count pending payments and parent requests
+const totalPages = computed(() => Math.ceil(totalCount.value / 20))
+
 const pendingCount = computed(() => {
   return payments.value.filter(p => p.status === 'pending').length
 })
@@ -261,42 +420,63 @@ const parentRequestCount = computed(() => {
   return payments.value.filter(p => p.created_by && p.status === 'pending').length
 })
 
-// Display filtered payments
 const displayPayments = computed(() => {
+  let result = payments.value
+  
   if (showParentRequests.value) {
-    return payments.value.filter(p => p.created_by && p.status === 'pending')
+    result = result.filter(p => p.created_by && p.status === 'pending')
   }
-  return payments.value
+  
+  return result
 })
 
-const columns = [
-  { key: 'payment_number', label: 'paymentNumber', type: 'text' },
-  { key: 'student', label: 'studentName', type: 'text' },
-  { key: 'amount', label: 'amount', type: 'currency' },
-  { key: 'payment_method', label: 'paymentMethod', type: 'text' },
-  { key: 'status', label: 'status', type: 'status' },
-  { key: 'due_date', label: 'dueDate', type: 'date' }
-]
+const hasActiveFilters = computed(() => {
+  return filters.value.search || 
+         filters.value.status || 
+         filters.value.payment_method ||
+         showParentRequests.value
+})
 
-const filterOptions = [
-  {
-    key: 'status',
-    label: 'Status',
-    options: [
-      { value: 'pending', label: 'Pending' },
-      { value: 'approved', label: 'Approved' },
-      { value: 'rejected', label: 'Rejected' }
-    ]
-  },
-  {
-    key: 'payment_method',
-    label: 'Payment Method',
-    options: [
-      { value: 'bankak', label: 'Bankak' },
-      { value: 'cash', label: 'Cash' }
-    ]
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1
+    applyFilters()
+  }, 500)
+}
+
+const clearSearch = () => {
+  filters.value.search = ''
+  applyFilters()
+}
+
+const toggleParentRequests = () => {
+  showParentRequests.value = !showParentRequests.value
+  currentPage.value = 1
+  applyFilters()
+}
+
+const applyFilters = async () => {
+  const filterParams = {}
+  
+  if (filters.value.search) filterParams.search = filters.value.search
+  if (filters.value.status) filterParams.status = filters.value.status
+  if (filters.value.payment_method) filterParams.payment_method = filters.value.payment_method
+  if (showParentRequests.value) filterParams.is_parent_request = true
+  
+  await paymentStore.fetchPayments(currentPage.value, filterParams)
+}
+
+const clearAllFilters = () => {
+  filters.value = {
+    search: '',
+    status: '',
+    payment_method: ''
   }
-]
+  showParentRequests.value = false
+  currentPage.value = 1
+  applyFilters()
+}
 
 const formatDate = (date) => {
   if (!date) return '-'
@@ -307,19 +487,10 @@ const formatCurrency = (value) => {
   return `SDG ${value?.toLocaleString() || 0}`
 }
 
-const handleSearch = async (query) => {
-  currentPage.value = 1
-  await paymentStore.fetchPayments(1, { ...paymentStore.filters, search: query })
-}
-
-const handleFilter = async (filters) => {
-  currentPage.value = 1
-  await paymentStore.fetchPayments(1, { ...paymentStore.filters, ...filters })
-}
-
 const handlePageChange = async (page) => {
+  if (page < 1 || page > totalPages.value) return
   currentPage.value = page
-  await paymentStore.fetchPayments(page, paymentStore.filters)
+  await applyFilters()
 }
 
 const handleEdit = (payment) => {
@@ -330,68 +501,31 @@ const handleDelete = async (payment) => {
   if (confirm(languageStore.t('confirmDelete'))) {
     const result = await paymentStore.deletePayment(payment.id)
     if (result.success) {
-      await paymentStore.fetchPayments(1, paymentStore.filters)
+      await applyFilters()
     } else {
-      alert(result.error)
+      alert(result.error || languageStore.t('deleteFailed'))
     }
   }
 }
 
 const approvePayment = async (payment) => {
   if (confirm(languageStore.t('confirmApprovePayment'))) {
-    const { error } = await supabase
-      .from('payments')
-      .update({ 
-        status: 'approved',
-        payment_date: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', payment.id)
-    
-    if (error) {
-      alert(error.message)
+    const result = await paymentStore.approvePayment(payment.id, true)
+    if (result.success) {
+      await applyFilters()
     } else {
-      await paymentStore.fetchPayments(currentPage.value, paymentStore.filters)
+      alert(result.error || languageStore.t('approvalFailed'))
     }
   }
 }
 
 const rejectPayment = async (payment) => {
   if (confirm(languageStore.t('confirmRejectPayment'))) {
-    const { error } = await supabase
-      .from('payments')
-      .update({ 
-        status: 'rejected',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', payment.id)
-    
-    if (error) {
-      alert(error.message)
+    const result = await paymentStore.approvePayment(payment.id, false)
+    if (result.success) {
+      await applyFilters()
     } else {
-      await paymentStore.fetchPayments(currentPage.value, paymentStore.filters)
-    }
-  }
-}
-
-// Mark parent payment as received (admin confirms parent paid)
-const markPaymentReceived = async (payment) => {
-  if (confirm(languageStore.t('confirmMarkReceived'))) {
-    const { error } = await supabase
-      .from('payments')
-      .update({ 
-        status: 'processing',
-        payment_date: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        notes: payment.notes ? `${payment.notes}\nPayment received by admin on ${new Date().toLocaleDateString()}` : `Payment received by admin on ${new Date().toLocaleDateString()}`
-      })
-      .eq('id', payment.id)
-    
-    if (error) {
-      alert(error.message)
-    } else {
-      alert(languageStore.t('paymentMarkedReceived'))
-      await paymentStore.fetchPayments(currentPage.value, paymentStore.filters)
+      alert(result.error || languageStore.t('rejectionFailed'))
     }
   }
 }
@@ -399,13 +533,21 @@ const markPaymentReceived = async (payment) => {
 const getStatusClass = (status) => {
   const map = {
     pending: 'text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-900/30 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium',
-    processing: 'text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium',
     approved: 'text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium',
     rejected: 'text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium',
     cancelled: 'text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium'
   }
-  return map[status] || 'text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium'
+  return map[status] || map.pending
 }
+
+// Watch for filter changes (except search which uses debounce)
+watch(
+  () => [filters.value.status, filters.value.payment_method],
+  () => {
+    currentPage.value = 1
+    applyFilters()
+  }
+)
 
 onMounted(() => {
   paymentStore.fetchPayments(1)
@@ -433,16 +575,72 @@ onMounted(() => {
   }
 }
 
-/* Mobile Card Styles */
 .card {
   transition: box-shadow 0.2s ease;
 }
 
-/* Button order fix for mobile */
-@media (max-width: 640px) {
-  .btn-primary {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.75rem;
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.btn-secondary {
+  background-color: #f3f4f6;
+  color: #374151;
+  transition: background-color 0.2s;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+  background-color: #e5e7eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  .btn-secondary {
+    background-color: #374151;
+    color: #d1d5db;
+    border-color: #4b5563;
   }
+  .btn-secondary:hover {
+    background-color: #4b5563;
+  }
+}
+
+.filter-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f3f4f6;
+  color: #374151;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  gap: 0.25rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .filter-badge {
+    background-color: #374151;
+    color: #d1d5db;
+  }
+}
+
+.filter-badge button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.25rem;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 </style>
