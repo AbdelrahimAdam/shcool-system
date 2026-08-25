@@ -8,7 +8,7 @@
         <div class="absolute inset-0 z-0">
           <div class="absolute inset-0 bg-black/30 z-10"></div>
           <img 
-            src="/images/school-hero.jpeg" 
+            src="/images/school-hero.jpg" 
             alt="Students learning at Zack International Schools" 
             class="w-full h-full object-cover"
             loading="eager"
